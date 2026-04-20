@@ -1,0 +1,13 @@
+[package]
+name = "rahn-store"
+description = "Content-addressed local persistence for RAHN states and commits."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+rahn-core = { workspace = true }
+rahn-state = { workspace = true }
+sha2 = { workspace = true }

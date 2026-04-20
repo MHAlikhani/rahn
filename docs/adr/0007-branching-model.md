@@ -30,6 +30,16 @@ Network evolution branches (experiments, staged changes, parallel proposals). Me
 - **CRDT-style automatic convergence**: appealing for distribution later, but silently resolving constraint conflicts violates the constitution model; revisit only for provably commutative, constraint-free object classes (Stage 6+).
 - **No branching in v0.1**: branching is cheap given references and forces the identity/ancestor machinery to exist early — where it belongs.
 
+## Implementation amendment (2026-04-20, v0.1)
+
+In the v0.1 implementation, branch refs point to **commit records** (which
+immutably name their state and parents) rather than directly to state ids.
+A branch therefore still references a state — transitively through the
+commit — and gains a walkable history for free. The common-ancestor
+machinery operates over the commit DAG (`rahn-state::history`). Merges are
+fail-closed with content-aware conflict detection (identical effects on
+both sides are permitted; anything else is rejected).
+
 ## References
 
 - docs/adr/0004-storage-model.md; docs/adr/0006-verification-model.md; docs/spec/transitions.md

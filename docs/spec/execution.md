@@ -2,7 +2,7 @@
 
 # RAHN Specification: Execution
 
-Status: **Draft — Stage 0.** Not yet normative; the normative portions below define intended v0.1 behavior and MUST be satisfied by the implementation once it exists. Changes to normative text require an ADR.
+Status: **Draft — normative for v0.1 (simulation-only).** The v0.1 implementation satisfies the normative statements below; real backends (Stage 3+) do not exist yet.
 
 Normative keywords: MUST / MUST NOT / SHOULD / SHOULD NOT / MAY (RFC 2119 sense). Normative language is used only where behavior is intentionally defined.
 

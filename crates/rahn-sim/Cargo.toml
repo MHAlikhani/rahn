@@ -1,0 +1,12 @@
+[package]
+name = "rahn-sim"
+description = "Simulation-only execution planning for RAHN. Never touches the host."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+rahn-core = { workspace = true }
+rahn-state = { workspace = true }

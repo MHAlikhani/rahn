@@ -1,0 +1,12 @@
+[package]
+name = "rahn-verify"
+description = "Deterministic invariant engine, semantic merge, and verification for RAHN."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+rahn-core = { workspace = true }
+rahn-state = { workspace = true }

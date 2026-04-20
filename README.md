@@ -34,9 +34,16 @@ It is **not** "Git for networks". Git inspires certain concepts (immutable histo
 
 ## Status
 
-**Pre-release — Stage 0 (Research / Foundation).**
+**v0.1.0-alpha.1 — Stage 1: the state engine is implemented.**
 
-The repository currently consists of the documentation and research corpus that defines the architecture. Per the project charter, documentation precedes and outlives implementation: it is part of the architecture, not a secondary artifact.
+An experimental, deterministic state engine for evolving network topologies: canonical serialization, content-addressed state identity, local persistence, explicit transitions, semantic diff, branches, fail-closed semantic merge, a deterministic invariant engine, verification-gated commits, and simulation-only execution. **No real execution exists** — `rahn apply` prints an execution plan and touches nothing.
+
+```
+cargo build --release
+cargo test
+```
+
+Per the project charter, documentation is part of the architecture, not a secondary artifact:
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — the architecture, its goals, trade-offs, and failure modes
 - [DESIGN.md](DESIGN.md) — design principles and how they shape the system

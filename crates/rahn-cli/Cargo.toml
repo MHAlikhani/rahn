@@ -1,0 +1,19 @@
+[package]
+name = "rahn-cli"
+description = "Command-line interface for the RAHN state engine (simulation-only)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "rahn"
+path = "src/main.rs"
+
+[dependencies]
+rahn-core = { workspace = true }
+rahn-state = { workspace = true }
+rahn-store = { workspace = true }
+rahn-verify = { workspace = true }
+rahn-sim = { workspace = true }

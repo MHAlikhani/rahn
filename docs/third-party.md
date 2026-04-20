@@ -4,7 +4,7 @@
 
 Authoritative record of externally sourced components used by or included in RAHN. See [licensing.md](licensing.md) for the policy.
 
-**Current status: empty.** The repository contains no third-party code, vendored source, submodules, generated artifacts, or binary dependencies. Documentation references (e.g., the Keep a Changelog format note in CHANGELOG.md, RFC 2119 keyword usage) are references to concepts, not code, and carry no licensing obligations.
+**Current status: one dependency.** `sha2` (SHA-256 for content-addressed state identity and object integrity; ADR 0002). License verified from the crate metadata at time of addition: `Apache-2.0 OR MIT` — compatible with the project's Apache-2.0 default; neither alternative imposes obligations beyond attribution.
 
 When the implementation begins (Rust workspace), every dependency must be recorded here **before or at the time it is added**, with:
 
@@ -27,4 +27,4 @@ Rules enforced by review (from docs/licensing.md):
 
 | Component | Version | Source | License (SPDX) | Vendored | Linking | Modified | Notices | Notes |
 |---|---|---|---|---|---|---|---|---|
-| *(none)* | | | | | | | | |
+| sha2 | 0.10.9 | https://github.com/RustCrypto/hashes | Apache-2.0 OR MIT | No | Static (Rust crate) | No | None required beyond license text | SHA-256; used by rahn-state (identity) and rahn-store (object integrity) |
