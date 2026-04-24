@@ -8,20 +8,48 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     Init,
-    NodeAdd { id: String, metadata: Vec<(String, String)> },
-    NodeRemove { id: String },
-    LinkAdd { a: String, b: String },
-    LinkRemove { a: String, b: String },
-    Commit { message: String },
+    NodeAdd {
+        id: String,
+        metadata: Vec<(String, String)>,
+    },
+    NodeRemove {
+        id: String,
+    },
+    LinkAdd {
+        a: String,
+        b: String,
+    },
+    LinkRemove {
+        a: String,
+        b: String,
+    },
+    Commit {
+        message: String,
+    },
     State,
     BranchList,
-    BranchCreate { name: String },
-    Diff { from: String, to: String },
-    Merge { branch: String },
+    BranchCreate {
+        name: String,
+    },
+    Checkout {
+        name: String,
+        force: bool,
+    },
+    Diff {
+        from: String,
+        to: String,
+    },
+    Merge {
+        branch: String,
+    },
     Verify,
     Log,
-    Inspect { name: String },
-    Apply { name: String },
+    Inspect {
+        name: String,
+    },
+    Apply {
+        name: String,
+    },
 }
 
 pub const USAGE: &str = r#"rahn — a stateful execution architecture for evolving networks (v0.1, simulation-only)
@@ -35,6 +63,7 @@ USAGE:
     rahn commit -m <message>
     rahn state
     rahn branch [<name>]
+    rahn checkout [--force] <branch>
     rahn diff <from-ref> <to-ref>
     rahn merge <branch>
     rahn verify
@@ -49,7 +78,9 @@ v0.1 performs NO real execution: `apply` prints an execution plan only."#;
 /// Parse raw arguments (without the program name).
 pub fn parse(args: &[String]) -> Result<Command, String> {
     let mut it = args.iter();
-    let sub = it.next().ok_or_else(|| format!("missing subcommand\n\n{USAGE}"))?;
+    let sub = it
+        .next()
+        .ok_or_else(|| format!("missing subcommand\n\n{USAGE}"))?;
     match sub.as_str() {
         "init" => {
             expect_end(&mut it, "init")?;
@@ -120,6 +151,29 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
                 Ok(Command::BranchCreate { name: name.clone() })
             }
         },
+        "checkout" => {
+            let mut force = false;
+            let mut name = None;
+            for arg in &mut it {
+                match arg.as_str() {
+                    "--force" | "-f" => {
+                        if force {
+                            return Err(format!("--force given twice\n\n{USAGE}"));
+                        }
+                        force = true;
+                    }
+                    other if name.is_none() => name = Some(other.to_owned()),
+                    _ => {
+                        return Err(format!(
+                            "unexpected argument {arg:?} for checkout\n\n{USAGE}"
+                        ))
+                    }
+                }
+            }
+            let name =
+                name.ok_or_else(|| format!("missing argument for checkout <branch>\n\n{USAGE}"))?;
+            Ok(Command::Checkout { name, force })
+        }
         "diff" => {
             let from = next(&mut it, "diff <from-ref> <to-ref>")?;
             let to = next(&mut it, "diff <from-ref> <to-ref>")?;
@@ -161,17 +215,21 @@ fn next(it: &mut std::slice::Iter<'_, String>, what: &str) -> Result<String, Str
 
 fn expect_end(it: &mut std::slice::Iter<'_, String>, sub: &str) -> Result<(), String> {
     match it.next() {
-        Some(extra) => Err(format!("unexpected argument {extra:?} for subcommand {sub:?}\n\n{USAGE}")),
+        Some(extra) => Err(format!(
+            "unexpected argument {extra:?} for subcommand {sub:?}\n\n{USAGE}"
+        )),
         None => Ok(()),
     }
 }
 
 fn parse_kv(arg: &str) -> Result<(String, String), String> {
-    let (k, v) = arg.split_once('=').ok_or_else(|| {
-        format!("metadata must be key=value (got {arg:?})\n\n{USAGE}")
-    })?;
+    let (k, v) = arg
+        .split_once('=')
+        .ok_or_else(|| format!("metadata must be key=value (got {arg:?})\n\n{USAGE}"))?;
     if k.is_empty() || v.is_empty() {
-        return Err(format!("metadata key and value must be non-empty (got {arg:?})\n\n{USAGE}"));
+        return Err(format!(
+            "metadata key and value must be non-empty (got {arg:?})\n\n{USAGE}"
+        ));
     }
     Ok((k.to_owned(), v.to_owned()))
 }
@@ -196,14 +254,22 @@ mod tests {
         );
         assert_eq!(
             parse(&args(&["link", "add", "a", "b"])).unwrap(),
-            Command::LinkAdd { a: "a".into(), b: "b".into() }
+            Command::LinkAdd {
+                a: "a".into(),
+                b: "b".into()
+            }
         );
         assert_eq!(
             parse(&args(&["commit", "-m", "msg"])).unwrap(),
-            Command::Commit { message: "msg".into() }
+            Command::Commit {
+                message: "msg".into()
+            }
         );
         assert_eq!(parse(&args(&["branch"])).unwrap(), Command::BranchList);
-        assert_eq!(parse(&args(&["branch", "exp"])).unwrap(), Command::BranchCreate { name: "exp".into() });
+        assert_eq!(
+            parse(&args(&["branch", "exp"])).unwrap(),
+            Command::BranchCreate { name: "exp".into() }
+        );
     }
 
     #[test]

@@ -24,7 +24,10 @@ pub enum ModelError {
     /// The referenced link does not exist.
     LinkMissing { a: String, b: String },
     /// A node cannot be removed while links reference it.
-    NodeInUse { id: String, links: Vec<(String, String)> },
+    NodeInUse {
+        id: String,
+        links: Vec<(String, String)>,
+    },
 }
 
 impl fmt::Display for ModelError {
@@ -34,7 +37,10 @@ impl fmt::Display for ModelError {
                 write!(f, "invalid identifier {id:?}: {reason}")
             }
             ModelError::SelfLoop { node } => {
-                write!(f, "invalid topology: self-loop on node {node:?} is prohibited")
+                write!(
+                    f,
+                    "invalid topology: self-loop on node {node:?} is prohibited"
+                )
             }
             ModelError::NodeMissing { id } => {
                 write!(f, "node {id:?} does not exist")

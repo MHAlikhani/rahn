@@ -61,7 +61,7 @@ Rules:
 ## Copyright ownership
 
 - Contributors retain copyright in their contributions; the project does not claim contributor copyright.
-- Copyright notices must be accurate. No entity (e.g., a "RAHN Foundation") may be named unless it actually owns the relevant rights. **[LEGAL REVIEW]** The initial copyright line is neutral ("The RAHN Project Contributors"); if/when an individual or entity is confirmed to hold initial rights, update the notice accordingly.
+- Copyright notices must be accurate. No entity (e.g., a "RAHN Foundation") may be named unless it actually owns the relevant rights. The project's initial copyright holder is **Mohammad Hossein Alikhani** (creator and lead developer); notices may read "Copyright 2026 Mohammad Hossein Alikhani" where a copyright line is used. Package/crate metadata uses the neutral "The RAHN Project Contributors" author field for contributor-facing listings; this is attribution, not an ownership claim.
 - As the community grows, keep ownership records accurate.
 
 ## Contributions

@@ -31,7 +31,10 @@ pub type Metadata = BTreeMap<String, String>;
 /// Validate an object identifier.
 pub fn validate_id(id: &str) -> Result<(), ModelError> {
     if id.is_empty() {
-        return Err(ModelError::InvalidId { id: id.to_owned(), reason: "must not be empty" });
+        return Err(ModelError::InvalidId {
+            id: id.to_owned(),
+            reason: "must not be empty",
+        });
     }
     if id.len() > MAX_ID_LEN {
         return Err(ModelError::InvalidId {
@@ -78,9 +81,17 @@ impl Link {
             return Err(ModelError::SelfLoop { node: a });
         }
         if a <= b {
-            Ok(Link { a, b, metadata: Metadata::new() })
+            Ok(Link {
+                a,
+                b,
+                metadata: Metadata::new(),
+            })
         } else {
-            Ok(Link { a: b, b: a, metadata: Metadata::new() })
+            Ok(Link {
+                a: b,
+                b: a,
+                metadata: Metadata::new(),
+            })
         }
     }
 
@@ -114,8 +125,13 @@ impl Network {
         if self.nodes.contains_key(id) {
             return Err(ModelError::NodeExists { id: id.to_owned() });
         }
-        self.nodes
-            .insert(id.to_owned(), Node { id: id.to_owned(), metadata });
+        self.nodes.insert(
+            id.to_owned(),
+            Node {
+                id: id.to_owned(),
+                metadata,
+            },
+        );
         Ok(())
     }
 
@@ -131,7 +147,10 @@ impl Network {
             .cloned()
             .collect();
         if !attached.is_empty() {
-            return Err(ModelError::NodeInUse { id: id.to_owned(), links: attached });
+            return Err(ModelError::NodeInUse {
+                id: id.to_owned(),
+                links: attached,
+            });
         }
         self.nodes.remove(id);
         Ok(())
@@ -162,7 +181,11 @@ impl Network {
         if !self.nodes.contains_key(b) {
             return Err(ModelError::NodeMissing { id: b.to_owned() });
         }
-        let (x, y) = if a <= b { (a.to_owned(), b.to_owned()) } else { (b.to_owned(), a.to_owned()) };
+        let (x, y) = if a <= b {
+            (a.to_owned(), b.to_owned())
+        } else {
+            (b.to_owned(), a.to_owned())
+        };
         self.links
             .remove(&(x.clone(), y.clone()))
             .ok_or(ModelError::LinkMissing { a: x, b: y })?;
@@ -201,7 +224,11 @@ impl Network {
 
     /// Look up a link regardless of endpoint argument order.
     pub fn link(&self, a: &str, b: &str) -> Option<&Link> {
-        let key = if a <= b { (a.to_owned(), b.to_owned()) } else { (b.to_owned(), a.to_owned()) };
+        let key = if a <= b {
+            (a.to_owned(), b.to_owned())
+        } else {
+            (b.to_owned(), a.to_owned())
+        };
         self.links.get(&key)
     }
 
@@ -251,11 +278,17 @@ pub struct VerificationSummary {
 
 impl VerificationSummary {
     pub fn passed() -> Self {
-        Self { passed: true, failed_invariants: Vec::new() }
+        Self {
+            passed: true,
+            failed_invariants: Vec::new(),
+        }
     }
 
     pub fn failed(ids: Vec<String>) -> Self {
-        Self { passed: false, failed_invariants: ids }
+        Self {
+            passed: false,
+            failed_invariants: ids,
+        }
     }
 }
 
@@ -273,7 +306,13 @@ mod tests {
         assert!(net.link("b", "a").is_some());
         assert_eq!(net.link_count(), 1);
         // Reversed re-add is a duplicate.
-        assert_eq!(net.add_link("a", "b"), Err(ModelError::LinkExists { a: "a".into(), b: "b".into() }));
+        assert_eq!(
+            net.add_link("a", "b"),
+            Err(ModelError::LinkExists {
+                a: "a".into(),
+                b: "b".into()
+            })
+        );
     }
 
     #[test]

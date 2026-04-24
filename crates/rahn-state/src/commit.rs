@@ -7,7 +7,9 @@
 //! verification summary at commit time. The commit's own identity is the
 //! SHA-256 of its canonical encoding.
 
-use crate::canonical::{read_verification_summary, write_verification_summary, CanonicalError, Writer};
+use crate::canonical::{
+    read_verification_summary, write_verification_summary, CanonicalError, Writer,
+};
 use crate::identity::{hash_bytes, to_hex, StateId};
 use crate::transition::Operation;
 use rahn_core::VerificationSummary;
@@ -106,8 +108,8 @@ impl CommitRecord {
     pub fn parse(bytes: &[u8]) -> Result<Self, CanonicalError> {
         let mut r = crate::canonical::Reader { buf: bytes, pos: 0 };
         let state_bytes = r.bytes()?;
-        let state_id = StateId::from_hex(&to_hex(state_bytes))
-            .ok_or_else(|| r.err("invalid state id"))?;
+        let state_id =
+            StateId::from_hex(&to_hex(state_bytes)).ok_or_else(|| r.err("invalid state id"))?;
         let parent_count = r.u64()? as usize;
         if parent_count > 2 {
             return Err(r.err("commit may have at most two parents"));
@@ -135,7 +137,13 @@ impl CommitRecord {
         if r.pos != bytes.len() {
             return Err(r.err("trailing bytes after commit record"));
         }
-        Ok(CommitRecord { state_id, parents, operations, message, verification })
+        Ok(CommitRecord {
+            state_id,
+            parents,
+            operations,
+            message,
+            verification,
+        })
     }
 }
 
@@ -148,8 +156,14 @@ fn read_operation(r: &mut crate::canonical::Reader) -> Result<Operation, Canonic
             Ok(Operation::AddNode { id, metadata })
         }
         2 => Ok(Operation::RemoveNode { id: r.string()? }),
-        3 => Ok(Operation::AddLink { a: r.string()?, b: r.string()? }),
-        4 => Ok(Operation::RemoveLink { a: r.string()?, b: r.string()? }),
+        3 => Ok(Operation::AddLink {
+            a: r.string()?,
+            b: r.string()?,
+        }),
+        4 => Ok(Operation::RemoveLink {
+            a: r.string()?,
+            b: r.string()?,
+        }),
         _ => Err(r.err(&format!("unknown operation tag {tag}"))),
     }
 }
@@ -157,8 +171,8 @@ fn read_operation(r: &mut crate::canonical::Reader) -> Result<Operation, Canonic
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rahn_core::{Metadata, Network};
     use crate::identity::StateId;
+    use rahn_core::{Metadata, Network};
 
     fn sample() -> CommitRecord {
         let mut net = Network::empty();
@@ -166,7 +180,10 @@ mod tests {
         CommitRecord {
             state_id: StateId::of(&rahn_core::State { network: net }),
             parents: vec![],
-            operations: vec![Operation::AddNode { id: "a".into(), metadata: Metadata::new() }],
+            operations: vec![Operation::AddNode {
+                id: "a".into(),
+                metadata: Metadata::new(),
+            }],
             message: "init".into(),
             verification: VerificationSummary::passed(),
         }

@@ -9,12 +9,13 @@
 use std::path::Path;
 
 use rahn_core::{Metadata, Network, State, VerificationSummary};
+use rahn_state::commit::CommitId;
 use rahn_state::commit::CommitRecord;
 use rahn_state::diff::diff;
 use rahn_state::history::common_ancestor;
 use rahn_state::transition::Operation;
 use rahn_store::{Store, StoreError};
-use rahn_verify::{verify, Constitution};use rahn_state::commit::CommitId;
+use rahn_verify::{verify, Constitution};
 
 use crate::args::Command;
 
@@ -49,6 +50,7 @@ pub fn run(dir: &Path, command: Command) -> Result<String, CliError> {
         Command::State => state(dir),
         Command::BranchList => branch_list(dir),
         Command::BranchCreate { name } => branch_create(dir, &name),
+        Command::Checkout { name, force } => checkout_cmd(dir, &name, force),
         Command::Diff { from, to } => diff_cmd(dir, from, to),
         Command::Merge { branch } => merge_cmd(dir, branch),
         Command::Verify => verify_cmd(dir),
@@ -70,8 +72,7 @@ fn open_repo(dir: &Path) -> Result<Store, CliError> {
 /// Load and parse the constitution.
 fn constitution_of(store: &Store) -> Result<Constitution, CliError> {
     let text = store.load_constitution_text()?;
-    Constitution::parse(&text)
-        .map_err(|e| CliError::Runtime(format!("invalid constitution: {e}")))
+    Constitution::parse(&text).map_err(|e| CliError::Runtime(format!("invalid constitution: {e}")))
 }
 
 fn init(dir: &Path) -> Result<String, CliError> {
@@ -83,18 +84,26 @@ fn init(dir: &Path) -> Result<String, CliError> {
         )));
     }
     Store::init(&root)?;
-    Ok(format!("initialized empty rahn repository in {}", root.display()))
+    Ok(format!(
+        "initialized empty rahn repository in {}",
+        root.display()
+    ))
 }
 
 /// Apply one operation to the working (index) state.
-fn modify(dir: &Path, make_op: impl FnOnce(&State) -> Result<Operation, CliError>) -> Result<String, CliError> {
+fn modify(
+    dir: &Path,
+    make_op: impl FnOnce(&State) -> Result<Operation, CliError>,
+) -> Result<String, CliError> {
     let store = open_repo(dir)?;
     let index = store.load_index()?;
     let op = make_op(&index)?;
     let next = rahn_state::transition::apply(&index.network, &op)
         .map_err(|e| CliError::Runtime(e.to_string()))?;
     store.save_index(&State { network: next })?;
-    Ok(format!("ok: {op} (working state, uncommitted — run `rahn commit -m \"...\"`)"))
+    Ok(format!(
+        "ok: {op} (working state, uncommitted — run `rahn commit -m \"...\"`)"
+    ))
 }
 
 fn head_commit(store: &Store) -> Result<Option<CommitId>, CliError> {
@@ -103,12 +112,15 @@ fn head_commit(store: &Store) -> Result<Option<CommitId>, CliError> {
 }
 
 fn state_of_commit(store: &Store, commit: CommitId) -> Result<State, CliError> {
-    let rec = store
-        .get_commit(commit)?
-        .ok_or_else(|| CliError::Runtime(format!("commit {} missing from store", commit.as_hex())))?;
-    store
-        .get_state(rec.state_id)?
-        .ok_or_else(|| CliError::Runtime(format!("state {} missing from store", rec.state_id.as_hex())))
+    let rec = store.get_commit(commit)?.ok_or_else(|| {
+        CliError::Runtime(format!("commit {} missing from store", commit.as_hex()))
+    })?;
+    store.get_state(rec.state_id)?.ok_or_else(|| {
+        CliError::Runtime(format!(
+            "state {} missing from store",
+            rec.state_id.as_hex()
+        ))
+    })
 }
 
 /// Derive the operation list implied by diffing `from` to `to`.
@@ -125,17 +137,26 @@ fn operations_between(from: &Network, to: &Network) -> Result<Vec<Operation>, Cl
     }
     let mut ops = Vec::new();
     for (a, b) in &d.removed_links {
-        ops.push(Operation::RemoveLink { a: a.clone(), b: b.clone() });
+        ops.push(Operation::RemoveLink {
+            a: a.clone(),
+            b: b.clone(),
+        });
     }
     for id in &d.removed_nodes {
         ops.push(Operation::RemoveNode { id: id.clone() });
     }
     for id in &d.added_nodes {
         let node = to.node(id).expect("diff added node exists in target");
-        ops.push(Operation::AddNode { id: node.id.clone(), metadata: node.metadata.clone() });
+        ops.push(Operation::AddNode {
+            id: node.id.clone(),
+            metadata: node.metadata.clone(),
+        });
     }
     for (a, b) in &d.added_links {
-        ops.push(Operation::AddLink { a: a.clone(), b: b.clone() });
+        ops.push(Operation::AddLink {
+            a: a.clone(),
+            b: b.clone(),
+        });
     }
     Ok(ops)
 }
@@ -149,7 +170,9 @@ fn commit(dir: &Path, message: String) -> Result<String, CliError> {
         None => State::empty(),
     };
     if diff(&parent_state.network, &index.network).is_empty() {
-        return Err(CliError::Runtime("nothing to commit (working state equals HEAD)".into()));
+        return Err(CliError::Runtime(
+            "nothing to commit (working state equals HEAD)".into(),
+        ));
     }
     let operations = operations_between(&parent_state.network, &index.network)?;
 
@@ -158,7 +181,9 @@ fn commit(dir: &Path, message: String) -> Result<String, CliError> {
     let constitution = constitution_of(&store)?;
     let report = verify(&index, &constitution);
     if !report.passed() {
-        return Err(CliError::Runtime(format!("commit rejected by verification:\n{report}")));
+        return Err(CliError::Runtime(format!(
+            "commit rejected by verification:\n{report}"
+        )));
     }
 
     let state_id = store.put_state(&index)?;
@@ -196,10 +221,15 @@ fn state(dir: &Path) -> Result<String, CliError> {
         "on branch {branch}\n\
          HEAD: {}\n\
          working state: {} node(s), {} link(s) [{}]\n",
-        head.map(|c| c.as_hex().to_owned()).unwrap_or_else(|| "(no commits)".into()),
+        head.map(|c| c.as_hex().to_owned())
+            .unwrap_or_else(|| "(no commits)".into()),
         index.network.node_count(),
         index.network.link_count(),
-        if dirty { "uncommitted changes" } else { "clean" },
+        if dirty {
+            "uncommitted changes"
+        } else {
+            "clean"
+        },
     );
     for node in index.network.iter_nodes() {
         out.push_str(&format!("  node {}\n", node.id));
@@ -233,6 +263,44 @@ fn branch_create(dir: &Path, name: &str) -> Result<String, CliError> {
     Ok(format!("branch {name:?} created at {}", head.as_hex()))
 }
 
+/// Switch the current branch (ADR 0010).
+///
+/// Fail-closed rules:
+/// - the working index MUST be clean (identical to the current HEAD
+///   commit's state) — uncommitted changes would be silently destroyed
+///   otherwise, and v0.1 has no stash. `--force` is the explicit opt-out:
+///   it discards the working index and restores the target branch state.
+/// - the target branch MUST exist.
+fn checkout_cmd(dir: &Path, name: &str, force: bool) -> Result<String, CliError> {
+    let store = open_repo(dir)?;
+    let current_branch = store.head()?;
+    if current_branch == name {
+        return Err(CliError::Runtime(format!("already on branch {name:?}")));
+    }
+    let target_commit = store
+        .get_branch(name)?
+        .ok_or_else(|| CliError::Runtime(format!("branch {name:?} does not exist")))?;
+    let index = store.load_index()?;
+    let current_head_state = match head_commit(&store)? {
+        Some(id) => state_of_commit(&store, id)?,
+        None => State::empty(),
+    };
+    if !diff(&current_head_state.network, &index.network).is_empty() && !force {
+        return Err(CliError::Runtime(
+            "cannot checkout: working state has uncommitted changes \
+             (commit them first, or use --force to discard them)"
+                .into(),
+        ));
+    }
+    let target_state = state_of_commit(&store, target_commit)?;
+    store.set_head(name)?;
+    store.save_index(&target_state)?;
+    Ok(format!(
+        "switched to branch {name:?} (was {current_branch:?}) at commit {}",
+        &target_commit.as_hex()[..12]
+    ))
+}
+
 /// Resolve a ref (branch name or full commit id) to a commit.
 fn resolve_commit(store: &Store, name: &str) -> Result<CommitId, CliError> {
     if let Some(commit) = store.get_branch(name)? {
@@ -242,7 +310,9 @@ fn resolve_commit(store: &Store, name: &str) -> Result<CommitId, CliError> {
         if store.get_commit(commit)?.is_some() {
             return Ok(commit);
         }
-        return Err(CliError::Runtime(format!("commit {name} exists nowhere in this repository")));
+        return Err(CliError::Runtime(format!(
+            "commit {name} exists nowhere in this repository"
+        )));
     }
     Err(CliError::Runtime(format!(
         "unknown ref {name:?} (use a branch name or full 64-character commit id)"
@@ -285,7 +355,9 @@ fn merge_cmd(dir: &Path, branch: String) -> Result<String, CliError> {
         .ok_or_else(|| CliError::Runtime("cannot merge before the first commit".into()))?;
     let theirs_commit = resolve_commit(&store, &branch)?;
     if ours_commit == theirs_commit {
-        return Err(CliError::Runtime("already up to date (refs point to the same commit)".into()));
+        return Err(CliError::Runtime(
+            "already up to date (refs point to the same commit)".into(),
+        ));
     }
 
     let parents_of = |id: CommitId| -> Option<Vec<CommitId>> {
@@ -301,7 +373,9 @@ fn merge_cmd(dir: &Path, branch: String) -> Result<String, CliError> {
     // Fail-closed semantic merge (ADR 0007).
     let merged_network = rahn_verify::merge(&base.network, &ours.network, &theirs.network)
         .map_err(|e| CliError::Runtime(e.to_string()))?;
-    let merged = State { network: merged_network };
+    let merged = State {
+        network: merged_network,
+    };
 
     // The merge result must pass the constitution like any transition.
     let constitution = constitution_of(&store)?;
@@ -349,16 +423,24 @@ fn log_cmd(dir: &Path) -> Result<String, CliError> {
     let mut current = head_commit(&store)?;
     let mut first = true;
     while let Some(id) = current {
-        let rec = store
-            .get_commit(id)?
-            .ok_or_else(|| CliError::Runtime(format!("commit {} missing from store", id.as_hex())))?;
+        let rec = store.get_commit(id)?.ok_or_else(|| {
+            CliError::Runtime(format!("commit {} missing from store", id.as_hex()))
+        })?;
         let marker = if first { "-> " } else { "   " };
         out.push_str(&format!(
             "{marker}commit {}  state {}\n       {} [verification: {}]\n",
             id.as_hex(),
             rec.state_id.as_hex(),
-            if rec.parents.len() == 2 { "merge · " } else { "" },
-            if rec.verification.passed { "passed" } else { "FAILED" },
+            if rec.parents.len() == 2 {
+                "merge · "
+            } else {
+                ""
+            },
+            if rec.verification.passed {
+                "passed"
+            } else {
+                "FAILED"
+            },
         ));
         out.push_str(&format!("       {}\n", rec.message));
         first = false;
@@ -373,17 +455,29 @@ fn log_cmd(dir: &Path) -> Result<String, CliError> {
 fn inspect_cmd(dir: &Path, name: String) -> Result<String, CliError> {
     let store = open_repo(dir)?;
     let commit = resolve_commit(&store, &name)?;
-    let rec = store
-        .get_commit(commit)?
-        .ok_or_else(|| CliError::Runtime(format!("commit {} missing from store", commit.as_hex())))?;
+    let rec = store.get_commit(commit)?.ok_or_else(|| {
+        CliError::Runtime(format!("commit {} missing from store", commit.as_hex()))
+    })?;
     let state = state_of_commit(&store, commit)?;
     let mut out = format!(
         "commit {}\n  state: {}\n  parents: {}\n  message: {}\n  verification: {}\n  operations:\n",
         commit.as_hex(),
         rec.state_id.as_hex(),
-        if rec.parents.is_empty() { "(root)".to_owned() } else { rec.parents.iter().map(|p| p.as_hex()).collect::<Vec<_>>().join(", ") },
+        if rec.parents.is_empty() {
+            "(root)".to_owned()
+        } else {
+            rec.parents
+                .iter()
+                .map(|p| p.as_hex())
+                .collect::<Vec<_>>()
+                .join(", ")
+        },
         rec.message,
-        if rec.verification.passed { "passed" } else { "FAILED" },
+        if rec.verification.passed {
+            "passed"
+        } else {
+            "FAILED"
+        },
     );
     if rec.operations.is_empty() {
         out.push_str("    (none)\n");

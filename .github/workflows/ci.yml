@@ -1,0 +1,59 @@
+# RAHN CI: format, lint, and test on every push and PR.
+# Main branch must remain stable; this workflow is the gate.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --check
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --all-features
+
+  license-check:
+    name: License and documentation checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Canonical license files present
+        run: |
+          test -f LICENSE
+          test -f LICENSES/Apache-2.0.txt
+          test -f LICENSES/CC-BY-4.0.txt
+          grep -q "Version 2.0, January 2004" LICENSE
+      - name: Documentation SPDX headers (CC-BY-4.0)
+        run: |
+          missing=0
+          for f in $(git ls-files '*.md' | grep -v '^README.md$'); do
+            grep -q "SPDX-License-Identifier: CC-BY-4.0" "$f" || { echo "missing SPDX header: $f"; missing=1; }
+          done
+          exit $missing
+      - name: Source SPDX headers (Apache-2.0)
+        run: |
+          missing=0
+          for f in $(git ls-files '*.rs' 'crates/*/Cargo.toml' 'Cargo.toml'); do
+            grep -q "SPDX-License-Identifier: Apache-2.0\|license.workspace = true\|license = \"Apache-2.0\"" "$f" || { echo "missing SPDX/license: $f"; missing=1; }
+          done
+          exit $missing

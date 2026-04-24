@@ -74,7 +74,8 @@ impl Constitution {
                         line: line_no,
                         message: e.to_string(),
                     })?;
-                    c.connectivity_requirements.push((a.to_owned(), b.to_owned()));
+                    c.connectivity_requirements
+                        .push((a.to_owned(), b.to_owned()));
                 }
                 other => {
                     return Err(ConstitutionError {
@@ -107,7 +108,10 @@ mod tests {
         let text = "# comment\n\nrequire-connectivity api db\nrequire-connectivity api lb\n";
         let c = Constitution::parse(text).unwrap();
         assert_eq!(c.connectivity_requirements.len(), 2);
-        assert_eq!(c.to_text(), "# RAHN constitution\nrequire-connectivity api db\nrequire-connectivity api lb\n");
+        assert_eq!(
+            c.to_text(),
+            "# RAHN constitution\nrequire-connectivity api db\nrequire-connectivity api lb\n"
+        );
         assert_eq!(Constitution::parse(&c.to_text()).unwrap(), c);
     }
 

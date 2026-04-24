@@ -95,7 +95,14 @@ mod tests {
     #[test]
     fn add_and_remove_node() {
         let n = net();
-        let n2 = apply(&n, &Operation::AddNode { id: "c".into(), metadata: Metadata::new() }).unwrap();
+        let n2 = apply(
+            &n,
+            &Operation::AddNode {
+                id: "c".into(),
+                metadata: Metadata::new(),
+            },
+        )
+        .unwrap();
         assert_eq!(n2.node_count(), 3);
         // Original untouched (purity).
         assert_eq!(n.node_count(), 2);
@@ -107,7 +114,13 @@ mod tests {
     fn duplicate_add_is_rejected() {
         let n = net();
         assert!(matches!(
-            apply(&n, &Operation::AddNode { id: "a".into(), metadata: Metadata::new() }),
+            apply(
+                &n,
+                &Operation::AddNode {
+                    id: "a".into(),
+                    metadata: Metadata::new()
+                }
+            ),
             Err(TransitionError::Invalid(ModelError::NodeExists { .. }))
         ));
     }
@@ -124,27 +137,69 @@ mod tests {
     #[test]
     fn link_lifecycle() {
         let n = net();
-        let n2 = apply(&n, &Operation::AddLink { a: "a".into(), b: "b".into() }).unwrap();
+        let n2 = apply(
+            &n,
+            &Operation::AddLink {
+                a: "a".into(),
+                b: "b".into(),
+            },
+        )
+        .unwrap();
         assert_eq!(n2.link_count(), 1);
         // Duplicate (even reversed) rejected.
-        assert!(apply(&n2, &Operation::AddLink { a: "b".into(), b: "a".into() }).is_err());
-        let n3 = apply(&n2, &Operation::RemoveLink { a: "b".into(), b: "a".into() }).unwrap();
+        assert!(apply(
+            &n2,
+            &Operation::AddLink {
+                a: "b".into(),
+                b: "a".into()
+            }
+        )
+        .is_err());
+        let n3 = apply(
+            &n2,
+            &Operation::RemoveLink {
+                a: "b".into(),
+                b: "a".into(),
+            },
+        )
+        .unwrap();
         assert_eq!(n3.link_count(), 0);
     }
 
     #[test]
     fn link_to_missing_node_is_rejected() {
         let n = net();
-        assert!(apply(&n, &Operation::AddLink { a: "a".into(), b: "nope".into() }).is_err());
+        assert!(apply(
+            &n,
+            &Operation::AddLink {
+                a: "a".into(),
+                b: "nope".into()
+            }
+        )
+        .is_err());
     }
 
     #[test]
     fn remove_node_with_links_is_rejected() {
         let n = net();
-        let n2 = apply(&n, &Operation::AddLink { a: "a".into(), b: "b".into() }).unwrap();
+        let n2 = apply(
+            &n,
+            &Operation::AddLink {
+                a: "a".into(),
+                b: "b".into(),
+            },
+        )
+        .unwrap();
         assert!(apply(&n2, &Operation::RemoveNode { id: "a".into() }).is_err());
         // Order matters: removing the link first succeeds.
-        let n3 = apply(&n2, &Operation::RemoveLink { a: "a".into(), b: "b".into() }).unwrap();
+        let n3 = apply(
+            &n2,
+            &Operation::RemoveLink {
+                a: "a".into(),
+                b: "b".into(),
+            },
+        )
+        .unwrap();
         assert!(apply(&n3, &Operation::RemoveNode { id: "a".into() }).is_ok());
     }
 
@@ -152,9 +207,18 @@ mod tests {
     fn apply_all_stops_at_first_rejection() {
         let n = net();
         let ops = vec![
-            Operation::AddNode { id: "c".into(), metadata: Metadata::new() },
-            Operation::AddNode { id: "c".into(), metadata: Metadata::new() }, // duplicate
-            Operation::AddNode { id: "d".into(), metadata: Metadata::new() },
+            Operation::AddNode {
+                id: "c".into(),
+                metadata: Metadata::new(),
+            },
+            Operation::AddNode {
+                id: "c".into(),
+                metadata: Metadata::new(),
+            }, // duplicate
+            Operation::AddNode {
+                id: "d".into(),
+                metadata: Metadata::new(),
+            },
         ];
         assert!(apply_all(&n, &ops).is_err());
     }

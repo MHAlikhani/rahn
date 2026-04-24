@@ -60,6 +60,10 @@ The primary implementation language is **Rust**. Rust is an implementation choic
 
 Version 0.1 will be the smallest credible implementation of *versioned, verifiable network state*: a deterministic state model, state identity via canonical serialization and content hashing, local persistence, explicit transitions, semantic diff, branches, conservative merges, a small deterministic invariant engine, deterministic verification, and simulation-only execution — with no real-network side effects.
 
+## Project
+
+RAHN was created and is initially led by Mohammad Hossein Alikhani ([MHAlikhani](https://github.com/MHAlikhani)). Governance is designed for the project to grow beyond its founder — see [GOVERNANCE.md](GOVERNANCE.md).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Security-relevant reporting: [SECURITY.md](SECURITY.md). Governance: [GOVERNANCE.md](GOVERNANCE.md).

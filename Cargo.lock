@@ -64,7 +64,7 @@ checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 
 [[package]]
 name = "rahn-cli"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "rahn-core",
  "rahn-sim",
@@ -75,11 +75,11 @@ dependencies = [
 
 [[package]]
 name = "rahn-core"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 
 [[package]]
 name = "rahn-sim"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "rahn-core",
  "rahn-state",
@@ -87,15 +87,16 @@ dependencies = [
 
 [[package]]
 name = "rahn-state"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "rahn-core",
+ "rahn-verify",
  "sha2",
 ]
 
 [[package]]
 name = "rahn-store"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "rahn-core",
  "rahn-state",
@@ -104,7 +105,7 @@ dependencies = [
 
 [[package]]
 name = "rahn-verify"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 dependencies = [
  "rahn-core",
  "rahn-state",

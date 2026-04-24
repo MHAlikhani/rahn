@@ -2,7 +2,9 @@
 
 # RAHN Governance
 
-Status: provisional (Stage 0). Governance will mature as the contributor base grows; the design goal is long-term technical integrity, not founder control.
+Status: provisional. Governance will mature as the contributor base grows; the design goal is long-term technical integrity, not founder control.
+
+RAHN was created and is initially led by Mohammad Hossein Alikhani (creator, principal architect, lead developer, maintainer). The project is explicitly designed to outgrow its founder: contributors are legitimate project participants, and the decision records below are the authority, not any individual.
 
 ## Roles
 

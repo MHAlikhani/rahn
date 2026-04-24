@@ -68,7 +68,10 @@ pub fn plan(current: &Network, target: &Network) -> ExecutionPlan {
     let d = diff(current, target);
     let mut actions = Vec::new();
     for (a, b) in &d.removed_links {
-        actions.push(Action::RemoveLink { a: a.clone(), b: b.clone() });
+        actions.push(Action::RemoveLink {
+            a: a.clone(),
+            b: b.clone(),
+        });
     }
     for id in &d.removed_nodes {
         actions.push(Action::RemoveNode { id: id.clone() });
@@ -77,7 +80,10 @@ pub fn plan(current: &Network, target: &Network) -> ExecutionPlan {
         actions.push(Action::CreateNode { id: id.clone() });
     }
     for (a, b) in &d.added_links {
-        actions.push(Action::CreateLink { a: a.clone(), b: b.clone() });
+        actions.push(Action::CreateLink {
+            a: a.clone(),
+            b: b.clone(),
+        });
     }
     ExecutionPlan { actions }
 }
@@ -107,16 +113,28 @@ mod tests {
         assert_eq!(
             plan.actions,
             vec![
-                Action::RemoveLink { a: "a".into(), b: "b".into() },
+                Action::RemoveLink {
+                    a: "a".into(),
+                    b: "b".into()
+                },
                 Action::RemoveNode { id: "b".into() },
                 Action::CreateNode { id: "c".into() },
                 Action::CreateNode { id: "d".into() },
-                Action::CreateLink { a: "c".into(), b: "d".into() },
+                Action::CreateLink {
+                    a: "c".into(),
+                    b: "d".into()
+                },
             ]
         );
         // Removals precede creations.
-        let first_create = plan.actions.iter().position(|a| matches!(a, Action::CreateNode { .. })).unwrap();
-        assert!(plan.actions[..first_create].iter().all(|a| matches!(a, Action::RemoveLink { .. } | Action::RemoveNode { .. })));
+        let first_create = plan
+            .actions
+            .iter()
+            .position(|a| matches!(a, Action::CreateNode { .. }))
+            .unwrap();
+        assert!(plan.actions[..first_create]
+            .iter()
+            .all(|a| matches!(a, Action::RemoveLink { .. } | Action::RemoveNode { .. })));
     }
 
     #[test]

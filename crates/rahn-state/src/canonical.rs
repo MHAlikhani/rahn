@@ -29,7 +29,11 @@ pub struct CanonicalError {
 
 impl std::fmt::Display for CanonicalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "canonical parse error at byte {}: {}", self.offset, self.message)
+        write!(
+            f,
+            "canonical parse error at byte {}: {}",
+            self.offset, self.message
+        )
     }
 }
 
@@ -91,7 +95,10 @@ pub(crate) struct Reader<'a> {
 
 impl<'a> Reader<'a> {
     fn take(&mut self, n: usize) -> Result<&'a [u8], CanonicalError> {
-        let end = self.pos.checked_add(n).ok_or_else(|| self.err("length overflow"))?;
+        let end = self
+            .pos
+            .checked_add(n)
+            .ok_or_else(|| self.err("length overflow"))?;
         if end > self.buf.len() {
             return Err(self.err("unexpected end of input"));
         }
@@ -101,7 +108,10 @@ impl<'a> Reader<'a> {
     }
 
     pub(crate) fn err(&self, message: &str) -> CanonicalError {
-        CanonicalError { message: message.to_owned(), offset: self.pos }
+        CanonicalError {
+            message: message.to_owned(),
+            offset: self.pos,
+        }
     }
 
     pub(crate) fn u16(&mut self) -> Result<u16, CanonicalError> {
@@ -167,7 +177,8 @@ impl<'a> Reader<'a> {
             }
             last_id = Some(id.clone());
             let metadata = self.metadata()?;
-            net.add_node(&id, metadata).map_err(|e| self.err(&e.to_string()))?;
+            net.add_node(&id, metadata)
+                .map_err(|e| self.err(&e.to_string()))?;
         }
         let link_count = self.u64()? as usize;
         if link_count > self.buf.len() {
@@ -196,8 +207,13 @@ impl<'a> Reader<'a> {
             if net.node(&b).is_none() {
                 return Err(self.err(&format!("dangling link endpoint {b:?}")));
             }
-            let link = Link { a: a.clone(), b: b.clone(), metadata };
-            net.add_existing_link(link).map_err(|e| self.err(&e.to_string()))?;
+            let link = Link {
+                a: a.clone(),
+                b: b.clone(),
+                metadata,
+            };
+            net.add_existing_link(link)
+                .map_err(|e| self.err(&e.to_string()))?;
         }
         Ok(net)
     }
@@ -234,7 +250,9 @@ pub(crate) fn write_verification_summary(w: &mut Writer, v: &VerificationSummary
     }
 }
 
-pub(crate) fn read_verification_summary(r: &mut Reader) -> Result<VerificationSummary, CanonicalError> {
+pub(crate) fn read_verification_summary(
+    r: &mut Reader,
+) -> Result<VerificationSummary, CanonicalError> {
     let passed = r.u64()? == 1;
     let count = r.u64()? as usize;
     if count > r.buf.len() {
@@ -244,7 +262,10 @@ pub(crate) fn read_verification_summary(r: &mut Reader) -> Result<VerificationSu
     for _ in 0..count {
         failed.push(r.string()?);
     }
-    Ok(VerificationSummary { passed, failed_invariants: failed })
+    Ok(VerificationSummary {
+        passed,
+        failed_invariants: failed,
+    })
 }
 
 #[cfg(test)]
@@ -299,7 +320,10 @@ mod tests {
     fn truncated_input_is_rejected() {
         let bytes = canonical_bytes(&sample_state());
         for cut in [0, 1, 2, 5, 9, 17, bytes.len() - 1] {
-            assert!(parse_canonical(&bytes[..cut]).is_err(), "cut at {cut} must fail");
+            assert!(
+                parse_canonical(&bytes[..cut]).is_err(),
+                "cut at {cut} must fail"
+            );
         }
     }
 
@@ -340,7 +364,10 @@ mod tests {
         w.string("b");
         w.metadata(&Metadata::new());
         let err = parse_canonical(&w.buf).unwrap_err();
-        assert!(err.message.contains("dangling") || err.message.contains("exist"), "unexpected: {err}");
+        assert!(
+            err.message.contains("dangling") || err.message.contains("exist"),
+            "unexpected: {err}"
+        );
     }
 
     #[test]
@@ -364,6 +391,9 @@ mod tests {
     fn self_loop_is_unrepresentable() {
         let mut net = Network::empty();
         net.add_node("a", Metadata::new()).unwrap();
-        assert_eq!(net.add_link("a", "a"), Err(ModelError::SelfLoop { node: "a".into() }));
+        assert_eq!(
+            net.add_link("a", "a"),
+            Err(ModelError::SelfLoop { node: "a".into() })
+        );
     }
 }

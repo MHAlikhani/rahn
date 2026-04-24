@@ -48,7 +48,11 @@ fn to_hex(bytes: &[u8]) -> String {
 pub enum StoreError {
     Io(io::Error),
     /// An object file's contents do not hash to its name.
-    Corrupted { path: PathBuf, expected: String, found: String },
+    Corrupted {
+        path: PathBuf,
+        expected: String,
+        found: String,
+    },
     /// Canonical parse failure.
     Malformed(CanonicalError),
     /// A branch or ref name violates the identifier rules.
@@ -61,7 +65,11 @@ impl std::fmt::Display for StoreError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             StoreError::Io(e) => write!(f, "storage I/O error: {e}"),
-            StoreError::Corrupted { path, expected, found } => write!(
+            StoreError::Corrupted {
+                path,
+                expected,
+                found,
+            } => write!(
                 f,
                 "CORRUPTED object {path:?}: name says {expected}, content hashes to {found}. \
                  The store refuses to load corrupted objects; do not repair silently."
@@ -109,7 +117,9 @@ impl Store {
         fs::write(root.join("constitution"), "")?;
         // Empty working state.
         fs::write(root.join("index"), canonical_bytes(&State::empty()))?;
-        Ok(Store { root: root.to_path_buf() })
+        Ok(Store {
+            root: root.to_path_buf(),
+        })
     }
 
     /// Open an existing repository.
@@ -123,7 +133,9 @@ impl Store {
                 )));
             }
         }
-        Ok(Store { root: root.to_path_buf() })
+        Ok(Store {
+            root: root.to_path_buf(),
+        })
     }
 
     fn object_path(&self, hex: &str) -> PathBuf {
@@ -177,7 +189,8 @@ impl Store {
     pub fn put_state(&self, state: &State) -> Result<StateId, StoreError> {
         let hex = self.put_object(STATE_TAG, &canonical_bytes(state))?;
         Ok(StateId::from_hex(&hex).expect("store hash is valid hex"))
-    }    pub fn get_state(&self, id: StateId) -> Result<Option<State>, StoreError> {
+    }
+    pub fn get_state(&self, id: StateId) -> Result<Option<State>, StoreError> {
         match self.get_object(&id.as_hex(), STATE_TAG)? {
             None => Ok(None),
             Some(payload) => Ok(Some(parse_canonical(&payload)?)),
@@ -213,13 +226,15 @@ impl Store {
     pub fn get_branch(&self, name: &str) -> Result<Option<CommitId>, StoreError> {
         let path = self.root.join("refs/heads").join(name);
         match fs::read_to_string(path) {
-            Ok(text) => CommitId::from_hex(text.trim())
-                .map(Some)
-                .ok_or_else(|| StoreError::Corrupted {
-                    path: self.root.join("refs/heads").join(name),
-                    expected: "64 hex chars".to_owned(),
-                    found: text.trim().to_owned(),
-                }),
+            Ok(text) => {
+                CommitId::from_hex(text.trim())
+                    .map(Some)
+                    .ok_or_else(|| StoreError::Corrupted {
+                        path: self.root.join("refs/heads").join(name),
+                        expected: "64 hex chars".to_owned(),
+                        found: text.trim().to_owned(),
+                    })
+            }
             Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
             Err(e) => Err(e.into()),
         }
@@ -234,8 +249,7 @@ impl Store {
     }
 
     pub fn set_head(&self, branch: &str) -> Result<(), StoreError> {
-        validate_ref_name(branch)
-            .map_err(|_| StoreError::InvalidRef(branch.to_owned()))?;
+        validate_ref_name(branch).map_err(|_| StoreError::InvalidRef(branch.to_owned()))?;
         fs::write(self.root.join("HEAD"), format!("{branch}\n"))?;
         Ok(())
     }
@@ -314,7 +328,10 @@ mod tests {
         let dir = std::env::temp_dir().join(format!(
             "rahn-store-test-{tag}-{}-{}",
             std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         dir
     }
@@ -337,7 +354,9 @@ mod tests {
         assert_eq!(id1, id2, "identical states deduplicate");
         let loaded = store.get_state(id1).unwrap().unwrap();
         assert_eq!(loaded, s);
-        let missing = store.get_state(StateId::from_hex(&"0".repeat(64)).unwrap()).unwrap();
+        let missing = store
+            .get_state(StateId::from_hex(&"0".repeat(64)).unwrap())
+            .unwrap();
         assert!(missing.is_none());
         std::fs::remove_dir_all(&root).ok();
     }
@@ -351,7 +370,10 @@ mod tests {
         let rec = CommitRecord {
             state_id,
             parents: vec![],
-            operations: vec![Operation::AddNode { id: "a".into(), metadata: Metadata::new() }],
+            operations: vec![Operation::AddNode {
+                id: "a".into(),
+                metadata: Metadata::new(),
+            }],
             message: "root".into(),
             verification: rahn_core::VerificationSummary::passed(),
         };
@@ -413,7 +435,11 @@ mod tests {
     fn index_round_trips() {
         let root = temp_root("index");
         let store = Store::init(&root).unwrap();
-        assert_eq!(store.load_index().unwrap(), State::empty(), "init writes an empty index");
+        assert_eq!(
+            store.load_index().unwrap(),
+            State::empty(),
+            "init writes an empty index"
+        );
         let s = state_with(&["a"]);
         store.save_index(&s).unwrap();
         assert_eq!(store.load_index().unwrap(), s);

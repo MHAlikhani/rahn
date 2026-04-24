@@ -30,7 +30,11 @@ pub struct MergeConflict {
 
 impl fmt::Display for MergeConflict {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "merge rejected: {} semantic conflict(s):", self.conflicts.len())?;
+        writeln!(
+            f,
+            "merge rejected: {} semantic conflict(s):",
+            self.conflicts.len()
+        )?;
         for c in &self.conflicts {
             writeln!(f, "  - {c}")?;
         }
@@ -82,16 +86,25 @@ impl SideChanges {
     fn operations(&self) -> Vec<Operation> {
         let mut ops = Vec::new();
         for (a, b) in &self.removed_links {
-            ops.push(Operation::RemoveLink { a: a.clone(), b: b.clone() });
+            ops.push(Operation::RemoveLink {
+                a: a.clone(),
+                b: b.clone(),
+            });
         }
         for id in &self.removed_nodes {
             ops.push(Operation::RemoveNode { id: id.clone() });
         }
         for (id, md) in &self.added_nodes {
-            ops.push(Operation::AddNode { id: id.clone(), metadata: md.clone() });
+            ops.push(Operation::AddNode {
+                id: id.clone(),
+                metadata: md.clone(),
+            });
         }
         for key in self.added_links.keys() {
-            ops.push(Operation::AddLink { a: key.0.clone(), b: key.1.clone() });
+            ops.push(Operation::AddLink {
+                a: key.0.clone(),
+                b: key.1.clone(),
+            });
         }
         ops
     }
@@ -122,7 +135,8 @@ fn side_changes(base: &Network, side: &Network) -> SideChanges {
     }
     for link in side.iter_links() {
         if base.link(&link.a, &link.b).is_none() {
-            c.added_links.insert((link.a.clone(), link.b.clone()), link.metadata.clone());
+            c.added_links
+                .insert((link.a.clone(), link.b.clone()), link.metadata.clone());
         }
     }
     for link in base.iter_links() {
@@ -163,7 +177,10 @@ pub fn merge(base: &Network, ours: &Network, theirs: &Network) -> Result<Network
     touched_links.extend(theirs_changes.added_links.keys().cloned());
     touched_links.extend(theirs_changes.removed_links.iter().cloned());
     for key in touched_links {
-        if let (Some(o), Some(t)) = (ours_changes.link_effect(&key), theirs_changes.link_effect(&key)) {
+        if let (Some(o), Some(t)) = (
+            ours_changes.link_effect(&key),
+            theirs_changes.link_effect(&key),
+        ) {
             if o != t {
                 conflicts.push(format!(
                     "link {:?} <-> {:?} changed on both branches differently (ours: {o:?}, theirs: {t:?})",
@@ -182,10 +199,12 @@ pub fn merge(base: &Network, ours: &Network, theirs: &Network) -> Result<Network
     // object, remove of an absent one) and is tolerated only when the
     // effect is provably the same one the conflict check already approved.
     let mut merged = base.clone();
-    merged = apply_ops(&merged, ours_changes.operations())
-        .map_err(|e| MergeConflict { conflicts: vec![format!("internal merge error (ours): {e}")] })?;
-    merged = apply_ops(&merged, theirs_changes.operations())
-        .map_err(|e| MergeConflict { conflicts: vec![format!("internal merge error (theirs): {e}")] })?;
+    merged = apply_ops(&merged, ours_changes.operations()).map_err(|e| MergeConflict {
+        conflicts: vec![format!("internal merge error (ours): {e}")],
+    })?;
+    merged = apply_ops(&merged, theirs_changes.operations()).map_err(|e| MergeConflict {
+        conflicts: vec![format!("internal merge error (theirs): {e}")],
+    })?;
     Ok(merged)
 }
 
@@ -196,37 +215,49 @@ fn apply_ops(net: &Network, ops: Vec<Operation>) -> Result<Network, TransitionEr
             Ok(next) => next,
             Err(_) => match op {
                 Operation::AddNode { id, metadata } => {
-                    if current.node(&id).map(|n| n.metadata == metadata).unwrap_or(false) {
+                    if current
+                        .node(&id)
+                        .map(|n| n.metadata == metadata)
+                        .unwrap_or(false)
+                    {
                         current
                     } else {
-                        return Err(TransitionError::Invalid(rahn_core::ModelError::NodeExists { id }));
+                        return Err(TransitionError::Invalid(
+                            rahn_core::ModelError::NodeExists { id },
+                        ));
                     }
                 }
                 Operation::RemoveNode { id } => {
                     if current.node(&id).is_none() {
                         current
                     } else {
-                        return Err(TransitionError::Invalid(rahn_core::ModelError::NodeMissing { id }));
+                        return Err(TransitionError::Invalid(
+                            rahn_core::ModelError::NodeMissing { id },
+                        ));
                     }
                 }
                 Operation::AddLink { a, b } => {
                     if current.link(&a, &b).is_some() {
                         current
                     } else {
-                        return Err(TransitionError::Invalid(rahn_core::ModelError::LinkExists {
-                            a: a.clone(),
-                            b: b.clone(),
-                        }));
+                        return Err(TransitionError::Invalid(
+                            rahn_core::ModelError::LinkExists {
+                                a: a.clone(),
+                                b: b.clone(),
+                            },
+                        ));
                     }
                 }
                 Operation::RemoveLink { a, b } => {
                     if current.link(&a, &b).is_none() {
                         current
                     } else {
-                        return Err(TransitionError::Invalid(rahn_core::ModelError::LinkMissing {
-                            a: a.clone(),
-                            b: b.clone(),
-                        }));
+                        return Err(TransitionError::Invalid(
+                            rahn_core::ModelError::LinkMissing {
+                                a: a.clone(),
+                                b: b.clone(),
+                            },
+                        ));
                     }
                 }
             },
@@ -333,7 +364,9 @@ mod tests {
         let theirs = net(&["z", "w"], &[("w", "z")]);
         let err = merge(&base, &ours, &theirs).unwrap_err();
         assert!(
-            err.conflicts.iter().any(|c| c.contains("internal merge error")),
+            err.conflicts
+                .iter()
+                .any(|c| c.contains("internal merge error")),
             "{err}"
         );
     }
@@ -351,6 +384,10 @@ mod tests {
         let theirs = base_net.clone();
 
         let merged = merge(&base_net, &ours, &theirs).unwrap();
-        assert_eq!(merged.node("x").unwrap().metadata, md, "merge must preserve added metadata");
+        assert_eq!(
+            merged.node("x").unwrap().metadata,
+            md,
+            "merge must preserve added metadata"
+        );
     }
 }

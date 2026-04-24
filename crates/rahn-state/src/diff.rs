@@ -104,7 +104,10 @@ mod tests {
         let base = build(&[("a", &[("role", "x")])], &[]);
         let next = build(&[("a", &[("role", "y")])], &[]);
         let d = diff(&base, &next);
-        assert_eq!(d.changed_node_metadata, vec![("a".to_string(), "role".to_string())]);
+        assert_eq!(
+            d.changed_node_metadata,
+            vec![("a".to_string(), "role".to_string())]
+        );
     }
 
     #[test]

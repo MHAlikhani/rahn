@@ -47,6 +47,13 @@ RAHN is intended for long-term adoption by individual developers, researchers, i
 - [ ] Package metadata uses valid SPDX expressions (when Cargo workspace lands)
 - [ ] License scan / audit tooling (when repository size justifies)
 
+## Implementation amendment (2026-04-24)
+
+Initial copyright ownership confirmed: Mohammad Hossein Alikhani. The
+[LEGAL REVIEW] placeholder in docs/licensing.md is resolved accordingly;
+the crate `authors` field remains the neutral "The RAHN Project
+Contributors" (attribution listing, not an ownership claim).
+
 ## References
 
 - docs/licensing.md (authoritative policy); docs/third-party.md; README License section; CONTRIBUTING "Licensing of Contributions"

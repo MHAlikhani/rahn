@@ -22,7 +22,10 @@ fn fail(dir: &Path, args_list: &[&str]) -> String {
     match run(dir, cmd) {
         Ok(out) => panic!("expected failure for {:?}, got: {out}", args_list),
         Err(CliError::Runtime(m)) => m,
-        Err(CliError::Usage(m)) => panic!("expected runtime failure for {:?}, got usage error: {m}", args_list),
+        Err(CliError::Usage(m)) => panic!(
+            "expected runtime failure for {:?}, got usage error: {m}",
+            args_list
+        ),
     }
 }
 
@@ -125,7 +128,10 @@ fn merge_disjoint_branches() {
     // v0.1 merge semantics are covered in rahn-verify tests; here we verify
     // the CLI merge path with an up-to-date branch.
     let out = ok(&dir, &["merge", "feat-c"]);
-    assert!(out.contains("already up to date") || out.contains("merged"), "{out}");
+    assert!(
+        out.contains("already up to date") || out.contains("merged"),
+        "{out}"
+    );
 
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -233,4 +239,107 @@ fn determinism_same_commands_same_commit_ids() {
     // Commit output embeds the short commit id; identical inputs must
     // produce identical ids (timestamps/hosts must not leak in).
     assert_eq!(a, b, "identical histories must produce identical commits");
+}
+
+#[test]
+fn checkout_and_merge_of_diverged_branches() {
+    let dir = temp_repo("diverged");
+    ok(&dir, &["init"]);
+    ok(&dir, &["node", "add", "a"]);
+    ok(&dir, &["node", "add", "b"]);
+    ok(&dir, &["link", "add", "a", "b"]);
+    ok(&dir, &["commit", "-m", "base"]);
+
+    // Branch at base, then diverge both branches.
+    ok(&dir, &["branch", "feat-c"]);
+    ok(&dir, &["checkout", "feat-c"]);
+    let out = ok(&dir, &["state"]);
+    assert!(out.contains("on branch feat-c"), "{out}");
+
+    // On feat-c: add node c.
+    ok(&dir, &["node", "add", "c"]);
+    ok(&dir, &["commit", "-m", "add c on feat-c"]);
+
+    // Back to main; add node d.
+    ok(&dir, &["checkout", "main"]);
+    ok(&dir, &["node", "add", "d"]);
+    ok(&dir, &["commit", "-m", "add d on main"]);
+
+    // The branches have diverged: feat-c has c, main has d.
+    let out = ok(&dir, &["diff", "feat-c", "main"]);
+    assert!(out.contains("- node: c"), "{out}");
+    assert!(out.contains("+ node: d"), "{out}");
+
+    // Merge feat-c into main: disjoint additions.
+    let out = ok(&dir, &["merge", "feat-c"]);
+    assert!(out.contains("merged feat-c into main"), "{out}");
+    let out = ok(&dir, &["state"]);
+    assert!(out.contains("4 node(s)"), "{out}");
+    assert!(out.contains("node c"), "{out}");
+    assert!(out.contains("node d"), "{out}");
+
+    // Merge commit has two parents: inspect shows it.
+    let out = ok(&dir, &["inspect", "main"]);
+    assert!(out.contains("merge"), "{out}");
+    assert!(out.contains("merge feat-c"), "{out}");
+
+    // Log shows three commits.
+    let out = ok(&dir, &["log"]);
+    assert_eq!(out.matches("commit ").count(), 3, "{out}");
+
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn checkout_refuses_dirty_working_state() {
+    let dir = temp_repo("dirty");
+    ok(&dir, &["init"]);
+    ok(&dir, &["node", "add", "a"]);
+    ok(&dir, &["commit", "-m", "first"]);
+    ok(&dir, &["branch", "other"]);
+    // Dirty the index.
+    ok(&dir, &["node", "add", "b"]);
+    let err = fail(&dir, &["checkout", "other"]);
+    assert!(err.contains("uncommitted changes"), "{err}");
+    // Clean up by committing, then checkout succeeds.
+    ok(&dir, &["commit", "-m", "second"]);
+    ok(&dir, &["checkout", "other"]);
+    let out = ok(&dir, &["state"]);
+    // "other" was created at the first commit: one node, no "b".
+    assert!(out.contains("1 node(s)"), "{out}");
+    assert!(out.contains("clean"), "{out}");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn constitution_survives_checkout_and_gates_merge() {
+    let dir = temp_repo("merge-gate");
+    ok(&dir, &["init"]);
+    ok(&dir, &["node", "add", "a"]);
+    ok(&dir, &["node", "add", "b"]);
+    ok(&dir, &["link", "add", "a", "b"]);
+    ok(&dir, &["commit", "-m", "base"]);
+    std::fs::write(dir.join(".rahn/constitution"), "require-connectivity a b\n").unwrap();
+
+    ok(&dir, &["branch", "remove-link"]);
+    ok(&dir, &["checkout", "remove-link"]);
+    ok(&dir, &["link", "remove", "a", "b"]);
+
+    // The constitution applies to every candidate state, including branch
+    // states: removing the a-b link cannot even be committed. This is
+    // verify-before-execute semantics (ADR 0006), not a merge property;
+    // the merge gate re-checks merged candidates as defense-in-depth.
+    let err = fail(&dir, &["commit", "-m", "remove link"]);
+    assert!(err.contains("named-connectivity:a:b"), "{err}");
+
+    // Branch states are independent: main still passes and can evolve.
+    // The rejected working change must be explicitly discarded (--force):
+    // it can never be committed, so this is the documented recovery path.
+    ok(&dir, &["checkout", "--force", "main"]);
+    ok(&dir, &["node", "add", "c"]);
+    ok(&dir, &["commit", "-m", "add c"]);
+    let out = ok(&dir, &["verify"]);
+    assert!(out.contains("verification PASSED"), "{out}");
+
+    std::fs::remove_dir_all(&dir).ok();
 }

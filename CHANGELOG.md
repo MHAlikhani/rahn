@@ -4,6 +4,44 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.1.0-alpha.2] — Stage 1 Hardening (post-v0.1 review)
+
+### Added
+- `rahn checkout [--force] <branch>` (ADR 0010): switch branches; fails
+  closed on uncommitted working changes; `--force` is the explicit,
+  documented recovery path for changes that can never be committed
+  (e.g., constitution-rejected edits).
+- Seeded property tests over random networks (docs/testing.md): canonical
+  round-trip + identity stability (200 seeds), diff-derived operations
+  reconstruct the target (200 seeds), merge commutativity for disjoint
+  effects (100 seeds). Deterministic xorshift PRNG; no new dependencies.
+- End-to-end tests: diverged-branch checkout+merge, dirty-checkout
+  refusal, constitution gating of branch-state commits, --force recovery.
+- `docs/testing.md` (test strategy) and `docs/reproducibility.md`.
+- GitHub Actions CI: rustfmt, clippy (-D warnings), tests on Linux and
+  Windows, plus license/SPDX documentation checks.
+- Issue templates (bug, feature proposal, design proposal/RFC) and
+  CODE_OF_CONDUCT.md (Contributor Covenant 2.1).
+
+### Changed
+- White paper upgraded from outline to initial technical draft (v0.2):
+  claim-status markers throughout, explicit no-measurements statement,
+  scoped novelty statement.
+- docs/research/prior-art.md expanded into a structured per-system
+  survey (Git, Terraform, Batfish, SDN, IBN/RFC 9315, NetBox-class,
+  emulators, P4/eBPF/XDP, QUIC/SCION, observability, event sourcing,
+  consensus, formal verification).
+- docs/research/research-questions.md restructured to RQ1-RQ10, each
+  with motivation, hypothesis, method, measurable result, limitations.
+- Founder attribution resolved: RAHN was created and is initially led by
+  Mohammad Hossein Alikhani (docs/licensing.md [LEGAL REVIEW] marker
+  resolved; ADR 0009 amendment; README and GOVERNANCE updated).
+- Code formatted with rustfmt; clippy clean at -D warnings.
+
+### Fixed
+- Merge no longer drops metadata of nodes added on a branch (property
+  test coverage added).
+
 ## [0.1.0-alpha.1] — Stage 1: State Engine
 
 ### Added

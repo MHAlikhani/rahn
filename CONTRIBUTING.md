@@ -54,4 +54,4 @@ Do not open public issues for security problems — see [SECURITY.md](SECURITY.m
 
 ## Conduct
 
-Be respectful and precise. (A CODE_OF_CONDUCT.md will be added before the first public release.)
+Be respectful and precise. The community standard is [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

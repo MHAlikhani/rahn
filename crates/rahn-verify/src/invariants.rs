@@ -86,7 +86,12 @@ impl fmt::Display for VerificationReport {
         if self.passed() {
             writeln!(f, "verification PASSED ({} invariants)", self.reports.len())
         } else {
-            writeln!(f, "verification FAILED ({} of {} invariants)", self.failed_ids().len(), self.reports.len())
+            writeln!(
+                f,
+                "verification FAILED ({} of {} invariants)",
+                self.failed_ids().len(),
+                self.reports.len()
+            )
         }
     }
 }
@@ -109,15 +114,26 @@ pub fn verify(state: &State, constitution: &Constitution) -> VerificationReport 
             .iter()
             .map(|(a, b)| check_connectivity(net, a, b)),
     );
-    VerificationReport { state_id: StateId::of(state), reports }
+    VerificationReport {
+        state_id: StateId::of(state),
+        reports,
+    }
 }
 
 fn pass(id: &str) -> InvariantReport {
-    InvariantReport { id: id.to_owned(), passed: true, evidence: String::new() }
+    InvariantReport {
+        id: id.to_owned(),
+        passed: true,
+        evidence: String::new(),
+    }
 }
 
 fn fail(id: &str, evidence: String) -> InvariantReport {
-    InvariantReport { id: id.to_owned(), passed: false, evidence }
+    InvariantReport {
+        id: id.to_owned(),
+        passed: false,
+        evidence,
+    }
 }
 
 /// Every link's endpoints must exist as nodes (with metadata and links in
@@ -126,10 +142,16 @@ fn fail(id: &str, evidence: String) -> InvariantReport {
 fn check_referential_integrity(net: &Network) -> InvariantReport {
     for link in net.iter_links() {
         if net.node(&link.a).is_none() {
-            return fail(INV_REFERENTIAL_INTEGRITY, format!("link endpoint {:?} missing", link.a));
+            return fail(
+                INV_REFERENTIAL_INTEGRITY,
+                format!("link endpoint {:?} missing", link.a),
+            );
         }
         if net.node(&link.b).is_none() {
-            return fail(INV_REFERENTIAL_INTEGRITY, format!("link endpoint {:?} missing", link.b));
+            return fail(
+                INV_REFERENTIAL_INTEGRITY,
+                format!("link endpoint {:?} missing", link.b),
+            );
         }
     }
     pass(INV_REFERENTIAL_INTEGRITY)
@@ -173,15 +195,24 @@ fn check_no_self_loops(net: &Network) -> InvariantReport {
 fn check_connectivity(net: &Network, from: &str, to: &str) -> InvariantReport {
     let id = format!("{INV_CONNECTIVITY}:{from}:{to}");
     if net.node(from).is_none() || net.node(to).is_none() {
-        return fail(&id, format!("endpoint missing: {from:?} or {to:?} not in network"));
+        return fail(
+            &id,
+            format!("endpoint missing: {from:?} or {to:?} not in network"),
+        );
     }
     if from == to {
         return pass(&id);
     }
     let mut adjacency: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     for link in net.iter_links() {
-        adjacency.entry(link.a.as_str()).or_default().push(link.b.as_str());
-        adjacency.entry(link.b.as_str()).or_default().push(link.a.as_str());
+        adjacency
+            .entry(link.a.as_str())
+            .or_default()
+            .push(link.b.as_str());
+        adjacency
+            .entry(link.b.as_str())
+            .or_default()
+            .push(link.a.as_str());
     }
     let mut visited = std::collections::BTreeSet::new();
     let mut queue = std::collections::VecDeque::new();
@@ -238,8 +269,14 @@ mod tests {
         c.connectivity_requirements.push(("a".into(), "c".into()));
         let report = verify(&s, &c);
         assert!(!report.passed());
-        assert_eq!(report.failed_ids(), vec!["named-connectivity:a:c".to_string()]);
-        assert!(report.reports.iter().any(|r| r.evidence.contains("no path")));
+        assert_eq!(
+            report.failed_ids(),
+            vec!["named-connectivity:a:c".to_string()]
+        );
+        assert!(report
+            .reports
+            .iter()
+            .any(|r| r.evidence.contains("no path")));
     }
 
     #[test]
@@ -262,10 +299,14 @@ mod tests {
             n.add_node("a", Metadata::new()).unwrap();
         });
         let mut c = empty_constitution();
-        c.connectivity_requirements.push(("a".into(), "ghost".into()));
+        c.connectivity_requirements
+            .push(("a".into(), "ghost".into()));
         let report = verify(&s, &c);
         assert!(!report.passed());
-        assert!(report.reports.iter().any(|r| r.evidence.contains("missing")));
+        assert!(report
+            .reports
+            .iter()
+            .any(|r| r.evidence.contains("missing")));
     }
 
     #[test]

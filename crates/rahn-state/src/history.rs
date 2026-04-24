@@ -69,7 +69,9 @@ mod tests {
         g
     }
 
-    fn parents_of(g: &BTreeMap<CommitId, Vec<CommitId>>) -> impl Fn(CommitId) -> Option<Vec<CommitId>> + '_ {
+    fn parents_of(
+        g: &BTreeMap<CommitId, Vec<CommitId>>,
+    ) -> impl Fn(CommitId) -> Option<Vec<CommitId>> + '_ {
         move |id: CommitId| Some(g.get(&id).cloned().unwrap_or_default())
     }
 
