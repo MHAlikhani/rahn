@@ -19,8 +19,10 @@ use std::fmt;
 /// A parsed constitution.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Constitution {
-    /// Ordered pairs `(from, to)` that must be connected via links.
+    /// Ordered pairs `(from, to)` that must be connected (node level).
     pub connectivity_requirements: Vec<(String, String)>,
+    /// Ordered pairs `(from, to)` that must NOT be connected (isolation).
+    pub prohibited_connectivity: Vec<(String, String)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -76,6 +78,31 @@ impl Constitution {
                     })?;
                     c.connectivity_requirements
                         .push((a.to_owned(), b.to_owned()));
+                }
+                "prohibit-connectivity" => {
+                    let a = parts.next().ok_or_else(|| ConstitutionError {
+                        line: line_no,
+                        message: "prohibit-connectivity needs two node identifiers".into(),
+                    })?;
+                    let b = parts.next().ok_or_else(|| ConstitutionError {
+                        line: line_no,
+                        message: "prohibit-connectivity needs two node identifiers".into(),
+                    })?;
+                    if parts.next().is_some() {
+                        return Err(ConstitutionError {
+                            line: line_no,
+                            message: "too many arguments".into(),
+                        });
+                    }
+                    rahn_core::model::validate_id(a).map_err(|e| ConstitutionError {
+                        line: line_no,
+                        message: e.to_string(),
+                    })?;
+                    rahn_core::model::validate_id(b).map_err(|e| ConstitutionError {
+                        line: line_no,
+                        message: e.to_string(),
+                    })?;
+                    c.prohibited_connectivity.push((a.to_owned(), b.to_owned()));
                 }
                 other => {
                     return Err(ConstitutionError {

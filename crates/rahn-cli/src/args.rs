@@ -2,7 +2,7 @@
 
 //! Argument parsing for the `rahn` CLI. Hand-rolled and strict: unknown
 //! flags, missing arguments, and malformed metadata are usage errors.
-//! No external parser dependency — the v0.1 surface is deliberately small.
+//! No external parser dependency — the v0.2 surface is deliberately small.
 
 /// A parsed CLI command.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +14,14 @@ pub enum Command {
     },
     NodeRemove {
         id: String,
+    },
+    InterfaceAdd {
+        node: String,
+        name: String,
+    },
+    InterfaceRemove {
+        node: String,
+        name: String,
     },
     LinkAdd {
         a: String,
@@ -42,6 +50,10 @@ pub enum Command {
     Merge {
         branch: String,
     },
+    Path {
+        from: String,
+        to: String,
+    },
     Verify,
     Log,
     Inspect {
@@ -52,28 +64,32 @@ pub enum Command {
     },
 }
 
-pub const USAGE: &str = r#"rahn — a stateful execution architecture for evolving networks (v0.1, simulation-only)
+pub const USAGE: &str = r#"rahn — a stateful execution architecture for evolving networks (v0.2, simulation-only)
 
 USAGE:
     rahn init
     rahn node add <id> [key=value ...]
     rahn node remove <id>
-    rahn link add <a> <b>
-    rahn link remove <a> <b>
+    rahn interface add <node> <name>
+    rahn interface remove <node> <name>
+    rahn link add <node/iface> <node/iface>
+    rahn link remove <node/iface> <node/iface>
     rahn commit -m <message>
     rahn state
     rahn branch [<name>]
     rahn checkout [--force] <branch>
     rahn diff <from-ref> <to-ref>
     rahn merge <branch>
+    rahn path <from-node> <to-node>
     rahn verify
     rahn log
     rahn inspect <branch-or-commit-id>
     rahn apply <branch-or-commit-id>
 
 REFS: a branch name or a full 64-character commit id.
+ENDPOINTS: node/interface pairs (e.g. web/eth0).
 
-v0.1 performs NO real execution: `apply` prints an execution plan only."#;
+v0.2 performs NO real execution: `apply` prints an execution plan only."#;
 
 /// Parse raw arguments (without the program name).
 pub fn parse(args: &[String]) -> Result<Command, String> {
@@ -105,18 +121,36 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
                 other => Err(format!("unknown node action {other:?}\n\n{USAGE}")),
             }
         }
+        "interface" | "iface" => {
+            let action = next(&mut it, "interface <add|remove>")?;
+            match action.as_str() {
+                "add" => {
+                    let node = next(&mut it, "interface add <node> <name>")?;
+                    let name = next(&mut it, "interface add <node> <name>")?;
+                    expect_end(&mut it, "interface add")?;
+                    Ok(Command::InterfaceAdd { node, name })
+                }
+                "remove" => {
+                    let node = next(&mut it, "interface remove <node> <name>")?;
+                    let name = next(&mut it, "interface remove <node> <name>")?;
+                    expect_end(&mut it, "interface remove")?;
+                    Ok(Command::InterfaceRemove { node, name })
+                }
+                other => Err(format!("unknown interface action {other:?}\n\n{USAGE}")),
+            }
+        }
         "link" => {
             let action = next(&mut it, "link <add|remove>")?;
             match action.as_str() {
                 "add" => {
-                    let a = next(&mut it, "link add <a> <b>")?;
-                    let b = next(&mut it, "link add <a> <b>")?;
+                    let a = next(&mut it, "link add <node/iface> <node/iface>")?;
+                    let b = next(&mut it, "link add <node/iface> <node/iface>")?;
                     expect_end(&mut it, "link add")?;
                     Ok(Command::LinkAdd { a, b })
                 }
                 "remove" => {
-                    let a = next(&mut it, "link remove <a> <b>")?;
-                    let b = next(&mut it, "link remove <a> <b>")?;
+                    let a = next(&mut it, "link remove <node/iface> <node/iface>")?;
+                    let b = next(&mut it, "link remove <node/iface> <node/iface>")?;
                     expect_end(&mut it, "link remove")?;
                     Ok(Command::LinkRemove { a, b })
                 }
@@ -184,6 +218,12 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
             let branch = next(&mut it, "merge <branch>")?;
             expect_end(&mut it, "merge")?;
             Ok(Command::Merge { branch })
+        }
+        "path" => {
+            let from = next(&mut it, "path <from-node> <to-node>")?;
+            let to = next(&mut it, "path <from-node> <to-node>")?;
+            expect_end(&mut it, "path")?;
+            Ok(Command::Path { from, to })
         }
         "verify" => {
             expect_end(&mut it, "verify")?;
@@ -253,10 +293,17 @@ mod tests {
             }
         );
         assert_eq!(
-            parse(&args(&["link", "add", "a", "b"])).unwrap(),
+            parse(&args(&["interface", "add", "web", "eth0"])).unwrap(),
+            Command::InterfaceAdd {
+                node: "web".into(),
+                name: "eth0".into()
+            }
+        );
+        assert_eq!(
+            parse(&args(&["link", "add", "a/eth0", "b/eth0"])).unwrap(),
             Command::LinkAdd {
-                a: "a".into(),
-                b: "b".into()
+                a: "a/eth0".into(),
+                b: "b/eth0".into()
             }
         );
         assert_eq!(
@@ -270,6 +317,27 @@ mod tests {
             parse(&args(&["branch", "exp"])).unwrap(),
             Command::BranchCreate { name: "exp".into() }
         );
+        assert_eq!(
+            parse(&args(&["checkout", "exp"])).unwrap(),
+            Command::Checkout {
+                name: "exp".into(),
+                force: false
+            }
+        );
+        assert_eq!(
+            parse(&args(&["checkout", "-f", "exp"])).unwrap(),
+            Command::Checkout {
+                name: "exp".into(),
+                force: true
+            }
+        );
+        assert_eq!(
+            parse(&args(&["path", "a", "b"])).unwrap(),
+            Command::Path {
+                from: "a".into(),
+                to: "b".into()
+            }
+        );
     }
 
     #[test]
@@ -282,5 +350,6 @@ mod tests {
         assert!(parse(&args(&["link", "add", "a"])).is_err());
         assert!(parse(&args(&["init", "extra"])).is_err());
         assert!(parse(&args(&["commit", "-m", "a", "-m", "b"])).is_err());
+        assert!(parse(&args(&["checkout", "--force"])).is_err());
     }
 }

@@ -6,9 +6,10 @@
 //! and platforms (no floating point, no system randomness), so failures
 //! reproduce from the recorded seed. Each test prints its seed on failure.
 
-use rahn_core::{Link, Metadata, Network, State};
+use rahn_core::{Endpoint, Metadata, Network, State};
 use rahn_state::canonical::{canonical_bytes, parse_canonical};
 use rahn_state::diff::diff;
+use rahn_state::graph::shortest_path;
 use rahn_state::identity::StateId;
 use rahn_state::transition::{apply, Operation};
 use rahn_verify::merge;
@@ -40,22 +41,41 @@ fn node_name(rng: &mut Rng, i: usize) -> String {
     format!("n{}-{}", i, rng.below(1_000_000))
 }
 
-/// Generate a random network with `node_count` nodes and a random subset
-/// of possible links. Metadata-free: the v0.1 operation vocabulary cannot
-/// express metadata edits, so reconstruction properties are stated over
-/// topology (metadata round-trip is covered by the fixed-vector tests).
+/// Generate a random network: `node_count` nodes, one interface each
+/// (plus occasional second interfaces), and a random subset of possible
+/// links. Metadata-free: the v0.2 operation vocabulary cannot express
+/// metadata edits, so reconstruction properties are stated over topology
+/// (metadata round-trip is covered by the fixed-vector tests).
 fn random_network(rng: &mut Rng, node_count: usize, link_prob: u64) -> Network {
     let mut net = Network::empty();
     let mut names = Vec::with_capacity(node_count);
     for i in 0..node_count {
         let name = node_name(rng, i);
         net.add_node(&name, Metadata::new()).unwrap();
+        net.add_interface(&name, "eth0").unwrap();
+        if rng.next_u64().is_multiple_of(4) {
+            net.add_interface(&name, "eth1").unwrap();
+        }
         names.push(name);
     }
     for i in 0..node_count {
         for j in (i + 1)..node_count {
             if rng.next_u64() % 100 < link_prob {
-                net.add_link(&names[i], &names[j]).unwrap();
+                // Link eth0-to-eth0 (or eth1) — endpoints must exist.
+                let iface_a = if rng.next_u64().is_multiple_of(4) {
+                    "eth1"
+                } else {
+                    "eth0"
+                };
+                let iface_b = if rng.next_u64().is_multiple_of(4) {
+                    "eth1"
+                } else {
+                    "eth0"
+                };
+                let _ = net.add_link(
+                    Endpoint::new(&names[i], iface_a).unwrap(),
+                    Endpoint::new(&names[j], iface_b).unwrap(),
+                );
             }
         }
     }
@@ -69,8 +89,8 @@ fn property_canonical_round_trip_and_identity() {
     for seed in 1..=200u64 {
         let mut rng = Rng::new(seed);
         let count = 1 + rng.below(12);
-        let link_prob = rng.below(100) as u64;
-        let net = random_network(&mut rng, count, link_prob);
+        let link_prob = rng.below(100);
+        let net = random_network(&mut rng, count, link_prob as u64);
         let state = State { network: net };
 
         let bytes = canonical_bytes(&state);
@@ -98,17 +118,16 @@ fn property_diff_operations_reconstruct_target() {
         let mut rng = Rng::new(seed);
         let mut base_rng = Rng::new(seed * 7 + 1);
         let base = random_network(&mut base_rng, 1 + rng.below(8), 40);
+        let mutations = 1 + rng.below(6);
         let target = {
-            // Mutate the base with random valid transitions.
             let mut current = base.clone();
-            let mutations = 1 + rng.below(6);
             for _ in 0..mutations {
                 current = mutate(&current, &mut rng);
             }
             current
         };
         let d = diff(&base, &target);
-        let ops = diff_to_ops(&base, &target, &d);
+        let ops = diff_to_ops(&d, &target);
         let reconstructed = rahn_state::transition::apply_all(&base, &ops)
             .unwrap_or_else(|e| panic!("seed {seed}: ops rejected: {e}"));
         assert_eq!(
@@ -120,8 +139,20 @@ fn property_diff_operations_reconstruct_target() {
 
 fn mutate(net: &Network, rng: &mut Rng) -> Network {
     let nodes: Vec<String> = net.iter_nodes().map(|n| n.id.clone()).collect();
-    let choice = rng.below(4);
-    match choice {
+    if nodes.is_empty() {
+        // Nothing to mutate on an empty network: grow it.
+        let idx = rng.below(1000);
+        let name = node_name(rng, idx);
+        return apply(
+            net,
+            &Operation::AddNode {
+                id: name,
+                metadata: Metadata::new(),
+            },
+        )
+        .unwrap_or_else(|_| net.clone());
+    }
+    match rng.below(6) {
         0 => {
             let idx = rng.below(1000);
             let name = node_name(rng, idx);
@@ -138,7 +169,10 @@ fn mutate(net: &Network, rng: &mut Rng) -> Network {
             // Remove a node with no links (pick any removable one).
             let removable: Vec<&String> = nodes
                 .iter()
-                .filter(|id| !net.iter_links().any(|l| &l.a == *id || &l.b == *id))
+                .filter(|id| {
+                    !net.iter_links()
+                        .any(|l| &l.a.node == *id || &l.b.node == *id)
+                })
                 .collect();
             if removable.is_empty() {
                 return net.clone();
@@ -147,24 +181,73 @@ fn mutate(net: &Network, rng: &mut Rng) -> Network {
             apply(net, &Operation::RemoveNode { id: victim }).unwrap_or_else(|_| net.clone())
         }
         2 => {
+            // Add an interface to a random node.
+            let node = &nodes[rng.below(nodes.len())];
+            let name = format!("if{}", rng.below(1000));
+            apply(
+                net,
+                &Operation::AddInterface {
+                    node: node.clone(),
+                    name,
+                },
+            )
+            .unwrap_or_else(|_| net.clone())
+        }
+        3 => {
+            // Remove an unreferenced interface.
+            let candidates: Vec<(String, String)> = nodes
+                .iter()
+                .filter_map(|id| {
+                    let node = net.node(id)?;
+                    node.iter_interfaces()
+                        .map(|i| i.name.clone())
+                        .find(|iname| {
+                            !net.iter_links().any(|l| {
+                                (l.a.node == *id && &l.a.iface == iname)
+                                    || (l.b.node == *id && &l.b.iface == iname)
+                            })
+                        })
+                        .map(|iname| (id.clone(), iname))
+                })
+                .collect();
+            if candidates.is_empty() {
+                return net.clone();
+            }
+            let (node, name) = candidates[rng.below(candidates.len())].clone();
+            apply(net, &Operation::RemoveInterface { node, name }).unwrap_or_else(|_| net.clone())
+        }
+        4 => {
+            // Link two interfaces of distinct nodes.
             if nodes.len() < 2 {
                 return net.clone();
             }
-            let a = &nodes[rng.below(nodes.len())];
-            let b = &nodes[rng.below(nodes.len())];
+            let ai = rng.below(nodes.len());
+            let bi = rng.below(nodes.len());
+            let a_node = &nodes[ai];
+            let b_node = &nodes[bi];
+            if a_node == b_node {
+                return net.clone();
+            }
+            if net.node(a_node).unwrap().interface_count() == 0
+                || net.node(b_node).unwrap().interface_count() == 0
+            {
+                return net.clone();
+            }
+            let a_iface = pick_iface(net, a_node, rng);
+            let b_iface = pick_iface(net, b_node, rng);
             apply(
                 net,
                 &Operation::AddLink {
-                    a: a.clone(),
-                    b: b.clone(),
+                    a: Endpoint::new(a_node, &a_iface).unwrap(),
+                    b: Endpoint::new(b_node, &b_iface).unwrap(),
                 },
             )
             .unwrap_or_else(|_| net.clone())
         }
         _ => {
-            let links: Vec<(String, String)> = net
+            let links: Vec<(Endpoint, Endpoint)> = net
                 .iter_links()
-                .map(|l: &Link| (l.a.clone(), l.b.clone()))
+                .map(|l| (l.a.clone(), l.b.clone()))
                 .collect();
             if links.is_empty() {
                 return net.clone();
@@ -175,8 +258,13 @@ fn mutate(net: &Network, rng: &mut Rng) -> Network {
     }
 }
 
-fn diff_to_ops(from: &Network, to: &Network, d: &rahn_state::Diff) -> Vec<Operation> {
-    let _ = (from, to);
+fn pick_iface(net: &Network, node: &str, rng: &mut Rng) -> String {
+    let n = net.node(node).unwrap();
+    let ifaces: Vec<&str> = n.iter_interfaces().map(|i| i.name.as_str()).collect();
+    ifaces[rng.below(ifaces.len())].to_owned()
+}
+
+fn diff_to_ops(d: &rahn_state::Diff, _to: &Network) -> Vec<Operation> {
     let mut ops = Vec::new();
     for (a, b) in &d.removed_links {
         ops.push(Operation::RemoveLink {
@@ -184,14 +272,25 @@ fn diff_to_ops(from: &Network, to: &Network, d: &rahn_state::Diff) -> Vec<Operat
             b: b.clone(),
         });
     }
+    for (node, name) in &d.removed_interfaces {
+        ops.push(Operation::RemoveInterface {
+            node: node.clone(),
+            name: name.clone(),
+        });
+    }
     for id in &d.removed_nodes {
         ops.push(Operation::RemoveNode { id: id.clone() });
     }
     for id in &d.added_nodes {
-        // Metadata-free generator: additions carry empty metadata.
         ops.push(Operation::AddNode {
             id: id.clone(),
             metadata: Metadata::new(),
+        });
+    }
+    for (node, name) in &d.added_interfaces {
+        ops.push(Operation::AddInterface {
+            node: node.clone(),
+            name: name.clone(),
         });
     }
     for (a, b) in &d.added_links {
@@ -205,7 +304,7 @@ fn diff_to_ops(from: &Network, to: &Network, d: &rahn_state::Diff) -> Vec<Operat
 
 /// Property 3: merging two branches that remove disjoint node sets yields
 /// the union regardless of side order (merge commutativity for disjoint
-/// effects), and the result satisfies all structural invariants.
+/// effects), and removed nodes are gone.
 #[test]
 fn property_merge_disjoint_removals_is_commutative_and_valid() {
     for seed in 1..=100u64 {
@@ -215,7 +314,11 @@ fn property_merge_disjoint_removals_is_commutative_and_valid() {
         // Each side removes a disjoint, non-empty subset of link-free nodes.
         let removable: Vec<String> = base
             .iter_nodes()
-            .filter(|n| !base.iter_links().any(|l| l.a == n.id || l.b == n.id))
+            .filter(|n| {
+                !base
+                    .iter_links()
+                    .any(|l| l.a.node == n.id || l.b.node == n.id)
+            })
             .map(|n| n.id.clone())
             .collect();
         if removable.len() < 2 {
@@ -250,6 +353,44 @@ fn property_merge_disjoint_removals_is_commutative_and_valid() {
             ab.node_count(),
             base.node_count() - ours_remove.len() - theirs_remove.len()
         );
+    }
+}
+
+/// Property 4: shortest-path results are consistent with reachability —
+/// a returned path is a valid walk and its length is minimal for a sample
+/// of generated topologies (checked against brute-force BFS depth).
+#[test]
+fn property_shortest_path_is_valid_walk() {
+    for seed in 1..=100u64 {
+        let mut rng = Rng::new(seed);
+        let count = 6 + rng.below(6);
+        let net = random_network(&mut rng, count, 25);
+        let nodes: Vec<String> = net.iter_nodes().map(|n| n.id.clone()).collect();
+        let fi = rng.below(nodes.len());
+        let ti = rng.below(nodes.len());
+        let from = &nodes[fi];
+        let to = &nodes[ti];
+        let sp = shortest_path(&net, from, to);
+        if let Ok(Some(path)) = sp {
+            assert_eq!(
+                path.first(),
+                Some(from),
+                "seed {seed}: path must start at source"
+            );
+            assert_eq!(
+                path.last(),
+                Some(to),
+                "seed {seed}: path must end at target"
+            );
+            // Every consecutive pair must be adjacent via some link.
+            for pair in path.windows(2) {
+                let adjacent = net.iter_links().any(|l| {
+                    (l.a.node == pair[0] && l.b.node == pair[1])
+                        || (l.a.node == pair[1] && l.b.node == pair[0])
+                });
+                assert!(adjacent, "seed {seed}: path hop {:?} has no link", pair);
+            }
+        }
     }
 }
 

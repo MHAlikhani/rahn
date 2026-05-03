@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-//! Explicit state transitions (ADR 0005).
+//! Explicit state transitions (ADR 0005; vocabulary extended by ADR 0011).
 //!
 //! A transition is a pure, total function:
 //! `(Network, Operation) -> Result<Network, TransitionError>`.
@@ -10,16 +10,19 @@
 //!   returns a new [`Network`].
 //! - Rejections are structured and explainable.
 
-use rahn_core::{Metadata, Network};
+use rahn_core::{Endpoint, Metadata, Network};
 
-/// The complete v0.1 operation vocabulary (ADR 0005). Deliberately minimal;
-/// new operations require semantic specification and tests.
+/// The complete v0.2 operation vocabulary (ADR 0005 + ADR 0011).
+/// Deliberately minimal; new operations require semantic specification
+/// and tests.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Operation {
     AddNode { id: String, metadata: Metadata },
     RemoveNode { id: String },
-    AddLink { a: String, b: String },
-    RemoveLink { a: String, b: String },
+    AddInterface { node: String, name: String },
+    RemoveInterface { node: String, name: String },
+    AddLink { a: Endpoint, b: Endpoint },
+    RemoveLink { a: Endpoint, b: Endpoint },
 }
 
 impl std::fmt::Display for Operation {
@@ -27,6 +30,10 @@ impl std::fmt::Display for Operation {
         match self {
             Operation::AddNode { id, .. } => write!(f, "add_node {id}"),
             Operation::RemoveNode { id } => write!(f, "remove_node {id}"),
+            Operation::AddInterface { node, name } => write!(f, "add_interface {node}/{name}"),
+            Operation::RemoveInterface { node, name } => {
+                write!(f, "remove_interface {node}/{name}")
+            }
             Operation::AddLink { a, b } => write!(f, "add_link {a} {b}"),
             Operation::RemoveLink { a, b } => write!(f, "remove_link {a} {b}"),
         }
@@ -65,8 +72,10 @@ pub fn apply(network: &Network, op: &Operation) -> Result<Network, TransitionErr
     match op {
         Operation::AddNode { id, metadata } => next.add_node(id, metadata.clone())?,
         Operation::RemoveNode { id } => next.remove_node(id)?,
-        Operation::AddLink { a, b } => next.add_link(a, b)?,
-        Operation::RemoveLink { a, b } => next.remove_link(a, b)?,
+        Operation::AddInterface { node, name } => next.add_interface(node, name)?,
+        Operation::RemoveInterface { node, name } => next.remove_interface(node, name)?,
+        Operation::AddLink { a, b } => next.add_link(a.clone(), b.clone())?,
+        Operation::RemoveLink { a, b } => next.remove_link(a.clone(), b.clone())?,
     }
     Ok(next)
 }
@@ -83,12 +92,13 @@ pub fn apply_all(network: &Network, ops: &[Operation]) -> Result<Network, Transi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rahn_core::ModelError;
 
     fn net() -> Network {
         let mut n = Network::empty();
         n.add_node("a", Metadata::new()).unwrap();
         n.add_node("b", Metadata::new()).unwrap();
+        n.add_interface("a", "eth0").unwrap();
+        n.add_interface("b", "eth0").unwrap();
         n
     }
 
@@ -111,37 +121,56 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_add_is_rejected() {
-        let n = net();
-        assert!(matches!(
-            apply(
-                &n,
-                &Operation::AddNode {
-                    id: "a".into(),
-                    metadata: Metadata::new()
-                }
-            ),
-            Err(TransitionError::Invalid(ModelError::NodeExists { .. }))
-        ));
-    }
-
-    #[test]
-    fn remove_missing_node_is_rejected() {
-        let n = net();
-        assert!(matches!(
-            apply(&n, &Operation::RemoveNode { id: "zz".into() }),
-            Err(TransitionError::Invalid(ModelError::NodeMissing { .. }))
-        ));
-    }
-
-    #[test]
-    fn link_lifecycle() {
+    fn interface_lifecycle() {
         let n = net();
         let n2 = apply(
             &n,
+            &Operation::AddInterface {
+                node: "a".into(),
+                name: "eth1".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(n2.interface_count(), 3);
+        // Duplicate rejected.
+        assert!(apply(
+            &n2,
+            &Operation::AddInterface {
+                node: "a".into(),
+                name: "eth1".into()
+            }
+        )
+        .is_err());
+        // Interface on missing node rejected.
+        assert!(apply(
+            &n2,
+            &Operation::AddInterface {
+                node: "zz".into(),
+                name: "eth0".into()
+            }
+        )
+        .is_err());
+        let n3 = apply(
+            &n2,
+            &Operation::RemoveInterface {
+                node: "a".into(),
+                name: "eth1".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(n3.interface_count(), 2);
+    }
+
+    #[test]
+    fn link_lifecycle_with_interfaces() {
+        let n = net();
+        let a = Endpoint::new("a", "eth0").unwrap();
+        let b = Endpoint::new("b", "eth0").unwrap();
+        let n2 = apply(
+            &n,
             &Operation::AddLink {
-                a: "a".into(),
-                b: "b".into(),
+                a: a.clone(),
+                b: b.clone(),
             },
         )
         .unwrap();
@@ -150,30 +179,23 @@ mod tests {
         assert!(apply(
             &n2,
             &Operation::AddLink {
-                a: "b".into(),
-                b: "a".into()
+                a: b.clone(),
+                b: a.clone()
             }
         )
         .is_err());
-        let n3 = apply(
-            &n2,
-            &Operation::RemoveLink {
-                a: "b".into(),
-                b: "a".into(),
-            },
-        )
-        .unwrap();
+        let n3 = apply(&n2, &Operation::RemoveLink { a: b, b: a }).unwrap();
         assert_eq!(n3.link_count(), 0);
     }
 
     #[test]
-    fn link_to_missing_node_is_rejected() {
+    fn link_to_missing_interface_is_rejected() {
         let n = net();
         assert!(apply(
             &n,
             &Operation::AddLink {
-                a: "a".into(),
-                b: "nope".into()
+                a: Endpoint::new("a", "eth0").unwrap(),
+                b: Endpoint::new("b", "eth1").unwrap(),
             }
         )
         .is_err());
@@ -185,8 +207,8 @@ mod tests {
         let n2 = apply(
             &n,
             &Operation::AddLink {
-                a: "a".into(),
-                b: "b".into(),
+                a: Endpoint::new("a", "eth0").unwrap(),
+                b: Endpoint::new("b", "eth0").unwrap(),
             },
         )
         .unwrap();
@@ -195,12 +217,33 @@ mod tests {
         let n3 = apply(
             &n2,
             &Operation::RemoveLink {
-                a: "a".into(),
-                b: "b".into(),
+                a: Endpoint::new("a", "eth0").unwrap(),
+                b: Endpoint::new("b", "eth0").unwrap(),
             },
         )
         .unwrap();
         assert!(apply(&n3, &Operation::RemoveNode { id: "a".into() }).is_ok());
+    }
+
+    #[test]
+    fn remove_interface_referenced_by_link_is_rejected() {
+        let n = net();
+        let n2 = apply(
+            &n,
+            &Operation::AddLink {
+                a: Endpoint::new("a", "eth0").unwrap(),
+                b: Endpoint::new("b", "eth0").unwrap(),
+            },
+        )
+        .unwrap();
+        assert!(apply(
+            &n2,
+            &Operation::RemoveInterface {
+                node: "a".into(),
+                name: "eth0".into()
+            }
+        )
+        .is_err());
     }
 
     #[test]

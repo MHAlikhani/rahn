@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
-//! The core object model: [`Node`], [`Link`], [`Network`], and [`State`].
+//! The core object model: [`Node`], [`Interface`], [`Link`], [`Network`],
+//! and [`State`].
 //!
-//! Invariants enforced at construction (docs/spec/objects.md):
+//! Invariants enforced at construction (docs/spec/objects.md, ADR 0011):
 //! - identifiers are non-empty, at most 64 characters, ASCII alphanumeric
-//!   plus `-`, `_`, `.`;
-//! - links are undirected and stored with normalized (lexicographically
-//!   ordered) endpoints, so `A-B` and `B-A` are the same link;
-//! - self-loops are prohibited;
-//! - links MUST reference existing nodes;
-//! - duplicate links cannot be represented (map key by normalized endpoints).
+//!   plus `-`, `_`, `.` (identical rules for node and interface names);
+//! - interfaces are owned by nodes and uniquely named within them;
+//! - links are undirected, connect *interfaces*, and are stored with
+//!   normalized (lexicographically ordered) endpoints, so `a/eth0-b/eth0`
+//!   and `b/eth0-a/eth0` are the same link;
+//! - links between two interfaces of the same node are prohibited;
+//! - links MUST reference existing interfaces;
+//! - duplicate links cannot be represented (map key by endpoint pair).
 //!
 //! No floating point, no timestamps, no ambient state: the model contains
 //! only what canonical serialization can represent deterministically.
@@ -19,7 +22,7 @@ use std::fmt;
 
 use crate::error::ModelError;
 
-/// Maximum length of a node or link endpoint identifier.
+/// Maximum length of a node or interface identifier.
 pub const MAX_ID_LEN: usize = 64;
 
 /// Free-form key/value metadata attached to objects.
@@ -28,7 +31,7 @@ pub const MAX_ID_LEN: usize = 64;
 /// total order so canonical serialization needs no extra rules here.
 pub type Metadata = BTreeMap<String, String>;
 
-/// Validate an object identifier.
+/// Validate an object identifier (nodes and interface names).
 pub fn validate_id(id: &str) -> Result<(), ModelError> {
     if id.is_empty() {
         return Err(ModelError::InvalidId {
@@ -54,31 +57,81 @@ pub fn validate_id(id: &str) -> Result<(), ModelError> {
     Ok(())
 }
 
-/// A named network node with metadata.
+/// A named network interface owned by a node (ADR 0011).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Node {
-    pub id: String,
+pub struct Interface {
+    pub name: String,
     pub metadata: Metadata,
 }
 
-/// An undirected link between two nodes, endpoints normalized so `a <= b`.
+impl Interface {
+    pub fn new(name: impl Into<String>) -> Result<Self, ModelError> {
+        let name = name.into();
+        validate_id(&name)?;
+        Ok(Interface {
+            name,
+            metadata: Metadata::new(),
+        })
+    }
+}
+
+/// An attachment point: `(node, interface)`.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Endpoint {
+    pub node: String,
+    pub iface: String,
+}
+
+impl Endpoint {
+    pub fn new(node: &str, iface: &str) -> Result<Self, ModelError> {
+        validate_id(node)?;
+        validate_id(iface)?;
+        Ok(Endpoint {
+            node: node.to_owned(),
+            iface: iface.to_owned(),
+        })
+    }
+
+    pub fn parse(s: &str) -> Result<Self, ModelError> {
+        let (node, iface) = s.split_once('/').ok_or_else(|| ModelError::InvalidId {
+            id: s.to_owned(),
+            reason: "endpoints must be node/interface (e.g. web/eth0)",
+        })?;
+        Endpoint::new(node, iface)
+    }
+
+    pub fn as_key(&self) -> (String, String) {
+        (self.node.clone(), self.iface.clone())
+    }
+}
+
+impl fmt::Display for Endpoint {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}/{}", self.node, self.iface)
+    }
+}
+
+/// An undirected link between two interfaces, endpoints normalized so
+/// `a <= b` (lexicographic over `(node, iface)`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Link {
     /// Lexicographically smaller endpoint.
-    pub a: String,
+    pub a: Endpoint,
     /// Lexicographically larger endpoint.
-    pub b: String,
+    pub b: Endpoint,
     pub metadata: Metadata,
 }
 
 impl Link {
-    /// Construct a normalized link. Rejects self-loops.
-    pub fn new(a: impl Into<String>, b: impl Into<String>) -> Result<Self, ModelError> {
-        let (a, b) = (a.into(), b.into());
-        validate_id(&a)?;
-        validate_id(&b)?;
+    /// Construct a normalized link. Rejects self-loops and same-node loops.
+    pub fn new(a: Endpoint, b: Endpoint) -> Result<Self, ModelError> {
         if a == b {
-            return Err(ModelError::SelfLoop { node: a });
+            return Err(ModelError::SelfLoop {
+                endpoint: a.to_string(),
+            });
+        }
+        if a.node == b.node {
+            return Err(ModelError::SameNodeLoop { node: a.node });
         }
         if a <= b {
             Ok(Link {
@@ -96,7 +149,7 @@ impl Link {
     }
 
     /// Normalized endpoint key used for map ordering.
-    pub fn key(&self) -> (String, String) {
+    pub fn key(&self) -> (Endpoint, Endpoint) {
         (self.a.clone(), self.b.clone())
     }
 }
@@ -107,11 +160,42 @@ impl fmt::Display for Link {
     }
 }
 
-/// A deterministic network: nodes and links with total ordering everywhere.
+/// A named network node with metadata and owned interfaces.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Node {
+    pub id: String,
+    pub metadata: Metadata,
+    interfaces: BTreeMap<String, Interface>,
+}
+
+impl Node {
+    fn new(id: String, metadata: Metadata) -> Self {
+        Node {
+            id,
+            metadata,
+            interfaces: BTreeMap::new(),
+        }
+    }
+
+    pub fn iter_interfaces(&self) -> impl Iterator<Item = &Interface> {
+        self.interfaces.values()
+    }
+
+    pub fn interface(&self, name: &str) -> Option<&Interface> {
+        self.interfaces.get(name)
+    }
+
+    pub fn interface_count(&self) -> usize {
+        self.interfaces.len()
+    }
+}
+
+/// A deterministic network: nodes (with interfaces) and links, with total
+/// ordering everywhere.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Network {
     nodes: BTreeMap<String, Node>,
-    links: BTreeMap<(String, String), Link>,
+    links: BTreeMap<(Endpoint, Endpoint), Link>,
 }
 
 impl Network {
@@ -125,17 +209,12 @@ impl Network {
         if self.nodes.contains_key(id) {
             return Err(ModelError::NodeExists { id: id.to_owned() });
         }
-        self.nodes.insert(
-            id.to_owned(),
-            Node {
-                id: id.to_owned(),
-                metadata,
-            },
-        );
+        self.nodes
+            .insert(id.to_owned(), Node::new(id.to_owned(), metadata));
         Ok(())
     }
 
-    /// Remove a node. Fails while any link references it.
+    /// Remove a node. Fails while any link references its interfaces.
     pub fn remove_node(&mut self, id: &str) -> Result<(), ModelError> {
         if !self.nodes.contains_key(id) {
             return Err(ModelError::NodeMissing { id: id.to_owned() });
@@ -143,8 +222,8 @@ impl Network {
         let attached: Vec<(String, String)> = self
             .links
             .keys()
-            .filter(|(a, b)| a == id || b == id)
-            .cloned()
+            .filter(|(a, b)| a.node == id || b.node == id)
+            .map(|(a, b)| (a.to_string(), b.to_string()))
             .collect();
         if !attached.is_empty() {
             return Err(ModelError::NodeInUse {
@@ -156,39 +235,85 @@ impl Network {
         Ok(())
     }
 
-    /// Add a link between two existing nodes. Rejects self-loops and duplicates.
-    pub fn add_link(&mut self, a: &str, b: &str) -> Result<(), ModelError> {
-        if !self.nodes.contains_key(a) {
-            return Err(ModelError::NodeMissing { id: a.to_owned() });
+    /// Add an interface to a node.
+    pub fn add_interface(&mut self, node: &str, name: &str) -> Result<(), ModelError> {
+        let ifc = Interface::new(name)?;
+        let n = self
+            .nodes
+            .get_mut(node)
+            .ok_or_else(|| ModelError::NodeMissing {
+                id: node.to_owned(),
+            })?;
+        if n.interfaces.contains_key(&ifc.name) {
+            return Err(ModelError::InterfaceExists {
+                node: node.to_owned(),
+                name: ifc.name,
+            });
         }
-        if !self.nodes.contains_key(b) {
-            return Err(ModelError::NodeMissing { id: b.to_owned() });
+        n.interfaces.insert(ifc.name.clone(), ifc);
+        Ok(())
+    }
+
+    /// Remove an interface. Fails while any link references it.
+    pub fn remove_interface(&mut self, node: &str, name: &str) -> Result<(), ModelError> {
+        if !self.nodes.contains_key(node) {
+            return Err(ModelError::NodeMissing {
+                id: node.to_owned(),
+            });
         }
+        let attached: Vec<(String, String)> = self
+            .links
+            .keys()
+            .filter(|(a, b)| {
+                (a.node == node && a.iface == name) || (b.node == node && b.iface == name)
+            })
+            .map(|(a, b)| (a.to_string(), b.to_string()))
+            .collect();
+        if !attached.is_empty() {
+            return Err(ModelError::InterfaceInUse {
+                node: node.to_owned(),
+                name: name.to_owned(),
+                links: attached,
+            });
+        }
+        let n = self.nodes.get_mut(node).expect("checked above");
+        n.interfaces
+            .remove(name)
+            .ok_or_else(|| ModelError::InterfaceMissing {
+                node: node.to_owned(),
+                name: name.to_owned(),
+            })?;
+        Ok(())
+    }
+
+    /// Add a link between two existing interfaces. Rejects self-loops,
+    /// same-node loops, and duplicates.
+    pub fn add_link(&mut self, a: Endpoint, b: Endpoint) -> Result<(), ModelError> {
+        self.ensure_endpoint(&a)?;
+        self.ensure_endpoint(&b)?;
         let link = Link::new(a, b)?;
         let key = link.key();
         if self.links.contains_key(&key) {
-            return Err(ModelError::LinkExists { a: key.0, b: key.1 });
+            return Err(ModelError::LinkExists {
+                a: key.0.to_string(),
+                b: key.1.to_string(),
+            });
         }
         self.links.insert(key, link);
         Ok(())
     }
 
-    /// Remove a link. Fails if the link does not exist.
-    pub fn remove_link(&mut self, a: &str, b: &str) -> Result<(), ModelError> {
-        if !self.nodes.contains_key(a) {
-            return Err(ModelError::NodeMissing { id: a.to_owned() });
-        }
-        if !self.nodes.contains_key(b) {
-            return Err(ModelError::NodeMissing { id: b.to_owned() });
-        }
-        let (x, y) = if a <= b {
-            (a.to_owned(), b.to_owned())
-        } else {
-            (b.to_owned(), a.to_owned())
-        };
+    /// Remove a link. Accepts endpoints in either direction.
+    pub fn remove_link(&mut self, a: Endpoint, b: Endpoint) -> Result<(), ModelError> {
+        self.ensure_endpoint(&a)?;
+        self.ensure_endpoint(&b)?;
+        let key = if a <= b { (a, b) } else { (b, a) };
         self.links
-            .remove(&(x.clone(), y.clone()))
-            .ok_or(ModelError::LinkMissing { a: x, b: y })?;
+            .remove(&key)
+            .ok_or_else(|| ModelError::LinkMissing {
+                a: key.0.to_string(),
+                b: key.1.to_string(),
+            })?;
         Ok(())
     }
 
@@ -204,18 +329,32 @@ impl Network {
                 reason: "link endpoints must be normalized (a < b)",
             });
         }
-        if !self.nodes.contains_key(&link.a) {
-            return Err(ModelError::NodeMissing { id: link.a.clone() });
-        }
-        if !self.nodes.contains_key(&link.b) {
-            return Err(ModelError::NodeMissing { id: link.b.clone() });
-        }
+        self.ensure_endpoint(&link.a)?;
+        self.ensure_endpoint(&link.b)?;
         let key = link.key();
         if self.links.contains_key(&key) {
-            return Err(ModelError::LinkExists { a: key.0, b: key.1 });
+            return Err(ModelError::LinkExists {
+                a: key.0.to_string(),
+                b: key.1.to_string(),
+            });
         }
         self.links.insert(key, link);
         Ok(())
+    }
+
+    fn ensure_endpoint(&self, e: &Endpoint) -> Result<(), ModelError> {
+        let n = self
+            .nodes
+            .get(&e.node)
+            .ok_or_else(|| ModelError::NodeMissing { id: e.node.clone() })?;
+        if n.interfaces.contains_key(&e.iface) {
+            Ok(())
+        } else {
+            Err(ModelError::InterfaceMissing {
+                node: e.node.clone(),
+                name: e.iface.clone(),
+            })
+        }
     }
 
     pub fn node(&self, id: &str) -> Option<&Node> {
@@ -223,11 +362,11 @@ impl Network {
     }
 
     /// Look up a link regardless of endpoint argument order.
-    pub fn link(&self, a: &str, b: &str) -> Option<&Link> {
+    pub fn link(&self, a: &Endpoint, b: &Endpoint) -> Option<&Link> {
         let key = if a <= b {
-            (a.to_owned(), b.to_owned())
+            (a.clone(), b.clone())
         } else {
-            (b.to_owned(), a.to_owned())
+            (b.clone(), a.clone())
         };
         self.links.get(&key)
     }
@@ -247,13 +386,17 @@ impl Network {
     pub fn link_count(&self) -> usize {
         self.links.len()
     }
+
+    pub fn interface_count(&self) -> usize {
+        self.nodes.values().map(|n| n.interface_count()).sum()
+    }
 }
 
 /// A RAHN state: the versioned container around a network.
 ///
-/// v0.1 carries only the topology component of the full conceptual model
-/// (`State_t` in ARCHITECTURE.md); additional components (policy, intent,
-/// observations) are deferred and MUST be added through the ADR process.
+/// v0.2 carries the topology component (nodes, interfaces, links) plus
+/// metadata; policy, intent, and observations are deferred and MUST be
+/// added through the ADR process (docs/spec/state.md).
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct State {
     pub network: Network,
@@ -301,23 +444,30 @@ mod tests {
         let mut net = Network::empty();
         net.add_node("b", Metadata::new()).unwrap();
         net.add_node("a", Metadata::new()).unwrap();
-        net.add_link("b", "a").unwrap();
-        assert!(net.link("a", "b").is_some());
-        assert!(net.link("b", "a").is_some());
+        net.add_interface("a", "eth0").unwrap();
+        net.add_interface("b", "eth0").unwrap();
+        let b_e = Endpoint::new("b", "eth0").unwrap();
+        let a_e = Endpoint::new("a", "eth0").unwrap();
+        net.add_link(b_e.clone(), a_e.clone()).unwrap();
+        assert!(net.link(&a_e, &b_e).is_some());
+        assert!(net.link(&b_e, &a_e).is_some());
         assert_eq!(net.link_count(), 1);
         // Reversed re-add is a duplicate.
-        assert_eq!(
-            net.add_link("a", "b"),
-            Err(ModelError::LinkExists {
-                a: "a".into(),
-                b: "b".into()
-            })
-        );
+        assert!(net.add_link(a_e, b_e).is_err());
     }
 
     #[test]
-    fn self_loops_are_prohibited() {
-        assert!(Link::new("x", "x").is_err());
+    fn self_loops_and_same_node_loops_are_prohibited() {
+        let e = Endpoint::new("x", "eth0").unwrap();
+        assert!(matches!(
+            Link::new(e.clone(), e.clone()),
+            Err(ModelError::SelfLoop { .. })
+        ));
+        let e2 = Endpoint::new("x", "eth1").unwrap();
+        assert!(matches!(
+            Link::new(e, e2),
+            Err(ModelError::SameNodeLoop { node }) if node == "x"
+        ));
     }
 
     #[test]
@@ -330,15 +480,38 @@ mod tests {
     }
 
     #[test]
-    fn nodes_cannot_be_removed_while_linked() {
+    fn endpoint_parse_requires_slash() {
+        assert!(Endpoint::parse("web/eth0").is_ok());
+        assert!(Endpoint::parse("web").is_err());
+        assert!(Endpoint::parse("web/eth 0").is_err());
+    }
+
+    #[test]
+    fn interfaces_are_node_scoped() {
         let mut net = Network::empty();
-        for id in ["a", "b"] {
-            net.add_node(id, Metadata::new()).unwrap();
-        }
-        net.add_link("a", "b").unwrap();
-        let err = net.remove_node("a").unwrap_err();
-        assert!(matches!(err, ModelError::NodeInUse { .. }));
-        net.remove_link("b", "a").unwrap();
-        net.remove_node("a").unwrap();
+        net.add_node("a", Metadata::new()).unwrap();
+        net.add_node("b", Metadata::new()).unwrap();
+        net.add_interface("a", "eth0").unwrap();
+        // Same interface name on another node is fine.
+        net.add_interface("b", "eth0").unwrap();
+        // Duplicate on the same node is not.
+        assert!(net.add_interface("a", "eth0").is_err());
+        assert!(net.add_interface("ghost", "eth0").is_err());
+        // Interface cannot be removed while linked.
+        net.add_link(
+            Endpoint::new("a", "eth0").unwrap(),
+            Endpoint::new("b", "eth0").unwrap(),
+        )
+        .unwrap();
+        assert!(net.remove_interface("a", "eth0").is_err());
+        // Node cannot be removed while any of its interfaces is linked.
+        assert!(net.remove_node("a").is_err());
+        net.remove_link(
+            Endpoint::new("b", "eth0").unwrap(),
+            Endpoint::new("a", "eth0").unwrap(),
+        )
+        .unwrap();
+        net.remove_interface("a", "eth0").unwrap();
+        assert_eq!(net.interface_count(), 1);
     }
 }

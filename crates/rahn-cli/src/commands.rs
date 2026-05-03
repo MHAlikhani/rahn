@@ -8,10 +8,10 @@
 
 use std::path::Path;
 
-use rahn_core::{Metadata, Network, State, VerificationSummary};
-use rahn_state::commit::CommitId;
-use rahn_state::commit::CommitRecord;
+use rahn_core::{Endpoint, Metadata, State, VerificationSummary};
+use rahn_state::commit::{CommitId, CommitRecord};
 use rahn_state::diff::diff;
+use rahn_state::graph::shortest_path;
 use rahn_state::history::common_ancestor;
 use rahn_state::transition::Operation;
 use rahn_store::{Store, StoreError};
@@ -44,8 +44,24 @@ pub fn run(dir: &Path, command: Command) -> Result<String, CliError> {
             Ok(Operation::AddNode { id, metadata: md })
         }),
         Command::NodeRemove { id } => modify(dir, |_| Ok(Operation::RemoveNode { id })),
-        Command::LinkAdd { a, b } => modify(dir, |_| Ok(Operation::AddLink { a, b })),
-        Command::LinkRemove { a, b } => modify(dir, |_| Ok(Operation::RemoveLink { a, b })),
+        Command::InterfaceAdd { node, name } => {
+            modify(dir, |_| Ok(Operation::AddInterface { node, name }))
+        }
+        Command::InterfaceRemove { node, name } => {
+            modify(dir, |_| Ok(Operation::RemoveInterface { node, name }))
+        }
+        Command::LinkAdd { a, b } => modify(dir, |_| {
+            Ok(Operation::AddLink {
+                a: parse_endpoint(&a)?,
+                b: parse_endpoint(&b)?,
+            })
+        }),
+        Command::LinkRemove { a, b } => modify(dir, |_| {
+            Ok(Operation::RemoveLink {
+                a: parse_endpoint(&a)?,
+                b: parse_endpoint(&b)?,
+            })
+        }),
         Command::Commit { message } => commit(dir, message),
         Command::State => state(dir),
         Command::BranchList => branch_list(dir),
@@ -53,11 +69,16 @@ pub fn run(dir: &Path, command: Command) -> Result<String, CliError> {
         Command::Checkout { name, force } => checkout_cmd(dir, &name, force),
         Command::Diff { from, to } => diff_cmd(dir, from, to),
         Command::Merge { branch } => merge_cmd(dir, branch),
+        Command::Path { from, to } => path_cmd(dir, from, to),
         Command::Verify => verify_cmd(dir),
         Command::Log => log_cmd(dir),
         Command::Inspect { name } => inspect_cmd(dir, name),
         Command::Apply { name } => apply_cmd(dir, name),
     }
+}
+
+fn parse_endpoint(s: &str) -> Result<Endpoint, CliError> {
+    Endpoint::parse(s).map_err(|e| CliError::Runtime(e.to_string()))
 }
 
 fn open_repo(dir: &Path) -> Result<Store, CliError> {
@@ -124,22 +145,24 @@ fn state_of_commit(store: &Store, commit: CommitId) -> Result<State, CliError> {
 }
 
 /// Derive the operation list implied by diffing `from` to `to`.
-/// v0.1 has no metadata-edit operations, so only add/remove operations can
+/// v0.2 has no metadata-edit operations, so only add/remove operations can
 /// appear (documented in docs/spec/transitions.md).
-fn operations_between(from: &Network, to: &Network) -> Result<Vec<Operation>, CliError> {
+fn operations_between(
+    from: &rahn_core::Network,
+    to: &rahn_core::Network,
+) -> Result<Vec<Operation>, CliError> {
     let d = diff(from, to);
-    if !d.changed_node_metadata.is_empty() {
-        return Err(CliError::Runtime(
-            "node metadata changed outside the v0.1 operation vocabulary; \
-             commit rejected — recreate the node instead"
-                .to_owned(),
-        ));
-    }
     let mut ops = Vec::new();
     for (a, b) in &d.removed_links {
         ops.push(Operation::RemoveLink {
             a: a.clone(),
             b: b.clone(),
+        });
+    }
+    for (node, name) in &d.removed_interfaces {
+        ops.push(Operation::RemoveInterface {
+            node: node.clone(),
+            name: name.clone(),
         });
     }
     for id in &d.removed_nodes {
@@ -150,6 +173,12 @@ fn operations_between(from: &Network, to: &Network) -> Result<Vec<Operation>, Cl
         ops.push(Operation::AddNode {
             id: node.id.clone(),
             metadata: node.metadata.clone(),
+        });
+    }
+    for (node, name) in &d.added_interfaces {
+        ops.push(Operation::AddInterface {
+            node: node.clone(),
+            name: name.clone(),
         });
     }
     for (a, b) in &d.added_links {
@@ -198,11 +227,12 @@ fn commit(dir: &Path, message: String) -> Result<String, CliError> {
     let branch = store.head()?;
     store.set_branch(&branch, commit_id)?;
     Ok(format!(
-        "[{branch} {}] {}\n  state {} · {} node(s), {} link(s)",
+        "[{branch} {}] {}\n  state {} · {} node(s), {} interface(s), {} link(s)",
         &commit_id.as_hex()[..12],
         record.message,
         &state_id.as_hex()[..12],
         index.network.node_count(),
+        index.network.interface_count(),
         index.network.link_count(),
     ))
 }
@@ -220,10 +250,11 @@ fn state(dir: &Path) -> Result<String, CliError> {
     let mut out = format!(
         "on branch {branch}\n\
          HEAD: {}\n\
-         working state: {} node(s), {} link(s) [{}]\n",
+         working state: {} node(s), {} interface(s), {} link(s) [{}]\n",
         head.map(|c| c.as_hex().to_owned())
             .unwrap_or_else(|| "(no commits)".into()),
         index.network.node_count(),
+        index.network.interface_count(),
         index.network.link_count(),
         if dirty {
             "uncommitted changes"
@@ -233,6 +264,9 @@ fn state(dir: &Path) -> Result<String, CliError> {
     );
     for node in index.network.iter_nodes() {
         out.push_str(&format!("  node {}\n", node.id));
+        for ifc in node.iter_interfaces() {
+            out.push_str(&format!("    iface {}\n", ifc.name));
+        }
     }
     for link in index.network.iter_links() {
         out.push_str(&format!("  link {link}\n"));
@@ -268,7 +302,7 @@ fn branch_create(dir: &Path, name: &str) -> Result<String, CliError> {
 /// Fail-closed rules:
 /// - the working index MUST be clean (identical to the current HEAD
 ///   commit's state) — uncommitted changes would be silently destroyed
-///   otherwise, and v0.1 has no stash. `--force` is the explicit opt-out:
+///   otherwise, and v0.2 has no stash. `--force` is the explicit opt-out:
 ///   it discards the working index and restores the target branch state.
 /// - the target branch MUST exist.
 fn checkout_cmd(dir: &Path, name: &str, force: bool) -> Result<String, CliError> {
@@ -336,14 +370,17 @@ fn diff_cmd(dir: &Path, from: String, to: String) -> Result<String, CliError> {
     for id in &d.removed_nodes {
         out.push_str(&format!("- node: {id}\n"));
     }
+    for (node, name) in &d.added_interfaces {
+        out.push_str(&format!("+ interface: {node}/{name}\n"));
+    }
+    for (node, name) in &d.removed_interfaces {
+        out.push_str(&format!("- interface: {node}/{name}\n"));
+    }
     for (a, b) in &d.added_links {
         out.push_str(&format!("+ link: {a} <-> {b}\n"));
     }
     for (a, b) in &d.removed_links {
         out.push_str(&format!("- link: {a} <-> {b}\n"));
-    }
-    for (id, key) in &d.changed_node_metadata {
-        out.push_str(&format!("~ node {id}: metadata key {key:?} changed\n"));
     }
     Ok(out)
 }
@@ -398,11 +435,35 @@ fn merge_cmd(dir: &Path, branch: String) -> Result<String, CliError> {
     store.set_branch(&head_branch, commit_id)?;
     store.save_index(&merged)?;
     Ok(format!(
-        "merged {branch} into {head_branch}: commit {}\n  merged state: {} node(s), {} link(s)",
+        "merged {branch} into {head_branch}: commit {}\n  merged state: {} node(s), {} interface(s), {} link(s)",
         &commit_id.as_hex()[..12],
         merged.network.node_count(),
+        merged.network.interface_count(),
         merged.network.link_count(),
     ))
+}
+
+fn path_cmd(dir: &Path, from: String, to: String) -> Result<String, CliError> {
+    let store = open_repo(dir)?;
+    let index = store.load_index()?;
+    match shortest_path(&index.network, &from, &to) {
+        Err(rahn_state::graph::PathError::EndpointMissing) => Err(CliError::Runtime(format!(
+            "endpoint missing: {from:?} or {to:?} not in the working state"
+        ))),
+        Ok(None) => Ok(format!("no path between {from} and {to}")),
+        Ok(Some(path)) => {
+            let mut out = format!("path ({} hop(s)):\n", path.len() - 1);
+            for (i, node) in path.iter().enumerate() {
+                if i == 0 {
+                    out.push_str(node);
+                } else {
+                    out.push_str(&format!(" -> {node}"));
+                }
+            }
+            out.push('\n');
+            Ok(out)
+        }
+    }
 }
 
 fn verify_cmd(dir: &Path) -> Result<String, CliError> {
@@ -428,7 +489,7 @@ fn log_cmd(dir: &Path) -> Result<String, CliError> {
         })?;
         let marker = if first { "-> " } else { "   " };
         out.push_str(&format!(
-            "{marker}commit {}  state {}\n       {} [verification: {}]\n",
+            "{marker}commit {}  state {}\n       {}[verification: {}]\n",
             id.as_hex(),
             rec.state_id.as_hex(),
             if rec.parents.len() == 2 {
@@ -486,12 +547,16 @@ fn inspect_cmd(dir: &Path, name: String) -> Result<String, CliError> {
         out.push_str(&format!("    {op}\n"));
     }
     out.push_str(&format!(
-        "network: {} node(s), {} link(s)\n",
+        "network: {} node(s), {} interface(s), {} link(s)\n",
         state.network.node_count(),
+        state.network.interface_count(),
         state.network.link_count()
     ));
     for node in state.network.iter_nodes() {
         out.push_str(&format!("  node {}\n", node.id));
+        for ifc in node.iter_interfaces() {
+            out.push_str(&format!("    iface {}\n", ifc.name));
+        }
     }
     for link in state.network.iter_links() {
         out.push_str(&format!("  link {link}\n"));

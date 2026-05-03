@@ -81,15 +81,29 @@ pub(crate) fn write_operation(w: &mut Writer, op: &Operation) {
             w.u64(2);
             w.string(id);
         }
-        Operation::AddLink { a, b } => {
+        Operation::AddInterface { node, name } => {
             w.u64(3);
-            w.string(a);
-            w.string(b);
+            w.string(node);
+            w.string(name);
+        }
+        Operation::RemoveInterface { node, name } => {
+            w.u64(4);
+            w.string(node);
+            w.string(name);
+        }
+        Operation::AddLink { a, b } => {
+            w.u64(5);
+            w.string(&a.node);
+            w.string(&a.iface);
+            w.string(&b.node);
+            w.string(&b.iface);
         }
         Operation::RemoveLink { a, b } => {
-            w.u64(4);
-            w.string(a);
-            w.string(b);
+            w.u64(6);
+            w.string(&a.node);
+            w.string(&a.iface);
+            w.string(&b.node);
+            w.string(&b.iface);
         }
     }
 }
@@ -156,16 +170,34 @@ fn read_operation(r: &mut crate::canonical::Reader) -> Result<Operation, Canonic
             Ok(Operation::AddNode { id, metadata })
         }
         2 => Ok(Operation::RemoveNode { id: r.string()? }),
-        3 => Ok(Operation::AddLink {
-            a: r.string()?,
-            b: r.string()?,
-        }),
-        4 => Ok(Operation::RemoveLink {
-            a: r.string()?,
-            b: r.string()?,
-        }),
+        3 => {
+            let node = r.string()?;
+            let name = r.string()?;
+            Ok(Operation::AddInterface { node, name })
+        }
+        4 => {
+            let node = r.string()?;
+            let name = r.string()?;
+            Ok(Operation::RemoveInterface { node, name })
+        }
+        5 => {
+            let a = read_endpoint(r)?;
+            let b = read_endpoint(r)?;
+            Ok(Operation::AddLink { a, b })
+        }
+        6 => {
+            let a = read_endpoint(r)?;
+            let b = read_endpoint(r)?;
+            Ok(Operation::RemoveLink { a, b })
+        }
         _ => Err(r.err(&format!("unknown operation tag {tag}"))),
     }
+}
+
+fn read_endpoint(r: &mut crate::canonical::Reader) -> Result<rahn_core::Endpoint, CanonicalError> {
+    let node = r.string()?;
+    let iface = r.string()?;
+    rahn_core::Endpoint::new(&node, &iface).map_err(|e| r.err(&e.to_string()))
 }
 
 #[cfg(test)]
@@ -196,6 +228,23 @@ mod tests {
         let parsed = CommitRecord::parse(&bytes).unwrap();
         assert_eq!(parsed, rec);
         assert_eq!(parsed.id(), rec.id());
+    }
+
+    #[test]
+    fn interface_ops_round_trip() {
+        let mut rec = sample();
+        rec.operations = vec![
+            Operation::AddInterface {
+                node: "a".into(),
+                name: "eth0".into(),
+            },
+            Operation::AddLink {
+                a: rahn_core::Endpoint::new("a", "eth0").unwrap(),
+                b: rahn_core::Endpoint::new("b", "eth0").unwrap(),
+            },
+        ];
+        let parsed = CommitRecord::parse(&canonical_commit_bytes(&rec)).unwrap();
+        assert_eq!(parsed.operations, rec.operations);
     }
 
     #[test]

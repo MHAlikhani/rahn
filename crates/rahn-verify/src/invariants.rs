@@ -11,10 +11,9 @@
 //! - "verified" means "all encoded invariants hold" and nothing more
 //!   (docs/research/limitations.md).
 
-use std::collections::BTreeMap;
 use std::fmt;
 
-use rahn_core::{Network, State};
+use rahn_core::Network;
 use rahn_state::StateId;
 
 use crate::constitution::Constitution;
@@ -25,6 +24,7 @@ pub const INV_LINK_ENDPOINTS: &str = "link-endpoints-exist";
 pub const INV_NO_DUPLICATE_LINKS: &str = "no-duplicate-links";
 pub const INV_NO_SELF_LOOPS: &str = "no-self-loops";
 pub const INV_CONNECTIVITY: &str = "named-connectivity";
+pub const INV_NO_CONNECTIVITY: &str = "prohibited-connectivity";
 
 /// Result of checking one invariant.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,7 +49,7 @@ impl fmt::Display for InvariantReport {
 /// Full verification report over one state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VerificationReport {
-    pub state_id: rahn_state::StateId,
+    pub state_id: StateId,
     pub reports: Vec<InvariantReport>,
 }
 
@@ -100,7 +100,7 @@ impl fmt::Display for VerificationReport {
 ///
 /// Structural invariants are checked even if the constitution is empty:
 /// they are the floor of validity, not configurable policy.
-pub fn verify(state: &State, constitution: &Constitution) -> VerificationReport {
+pub fn verify(state: &rahn_core::State, constitution: &Constitution) -> VerificationReport {
     let net = &state.network;
     let mut reports = vec![
         check_referential_integrity(net),
@@ -113,6 +113,12 @@ pub fn verify(state: &State, constitution: &Constitution) -> VerificationReport 
             .connectivity_requirements
             .iter()
             .map(|(a, b)| check_connectivity(net, a, b)),
+    );
+    reports.extend(
+        constitution
+            .prohibited_connectivity
+            .iter()
+            .map(|(a, b)| check_prohibited_connectivity(net, a, b)),
     );
     VerificationReport {
         state_id: StateId::of(state),
@@ -136,21 +142,29 @@ fn fail(id: &str, evidence: String) -> InvariantReport {
     }
 }
 
-/// Every link's endpoints must exist as nodes (with metadata and links in
-/// the same structure, this is enforced by construction; the check exists
+/// Every link's endpoints must exist as interfaces (with the model's
+/// construction rules, this is enforced by construction; the check exists
 /// to verify the guarantee, not to establish it).
 fn check_referential_integrity(net: &Network) -> InvariantReport {
     for link in net.iter_links() {
-        if net.node(&link.a).is_none() {
+        let a_ok = net
+            .node(&link.a.node)
+            .map(|n| n.interface(&link.a.iface).is_some())
+            .unwrap_or(false);
+        if !a_ok {
             return fail(
                 INV_REFERENTIAL_INTEGRITY,
-                format!("link endpoint {:?} missing", link.a),
+                format!("link endpoint {} missing", link.a),
             );
         }
-        if net.node(&link.b).is_none() {
+        let b_ok = net
+            .node(&link.b.node)
+            .map(|n| n.interface(&link.b.iface).is_some())
+            .unwrap_or(false);
+        if !b_ok {
             return fail(
                 INV_REFERENTIAL_INTEGRITY,
-                format!("link endpoint {:?} missing", link.b),
+                format!("link endpoint {} missing", link.b),
             );
         }
     }
@@ -185,61 +199,75 @@ fn check_no_duplicate_links(net: &Network) -> InvariantReport {
 fn check_no_self_loops(net: &Network) -> InvariantReport {
     for link in net.iter_links() {
         if link.a == link.b {
-            return fail(INV_NO_SELF_LOOPS, format!("self-loop on {:?}", link.a));
+            return fail(INV_NO_SELF_LOOPS, format!("self-loop on {}", link.a));
+        }
+        if link.a.node == link.b.node {
+            return fail(
+                INV_NO_SELF_LOOPS,
+                format!("same-node loop on {:?}", link.a.node),
+            );
         }
     }
     pass(INV_NO_SELF_LOOPS)
 }
 
-/// Breadth-first connectivity check over undirected links.
+/// `require-connectivity <a> <b>`: a path must exist between the two nodes
+/// (via the node graph induced by interface links).
 fn check_connectivity(net: &Network, from: &str, to: &str) -> InvariantReport {
     let id = format!("{INV_CONNECTIVITY}:{from}:{to}");
-    if net.node(from).is_none() || net.node(to).is_none() {
-        return fail(
+    match rahn_state::graph::shortest_path(net, from, to) {
+        Err(rahn_state::graph::PathError::EndpointMissing) => fail(
             &id,
             format!("endpoint missing: {from:?} or {to:?} not in network"),
-        );
+        ),
+        Ok(None) => fail(&id, format!("no path between {from:?} and {to:?}")),
+        Ok(Some(_)) => pass(&id),
     }
-    if from == to {
-        return pass(&id);
+}
+
+/// `prohibit-connectivity <a> <b>`: no path may exist between the two
+/// nodes (isolation requirements, e.g. "database must not be reachable
+/// from the public segment").
+fn check_prohibited_connectivity(net: &Network, from: &str, to: &str) -> InvariantReport {
+    let id = format!("{INV_NO_CONNECTIVITY}:{from}:{to}");
+    match rahn_state::graph::shortest_path(net, from, to) {
+        Err(rahn_state::graph::PathError::EndpointMissing) => fail(
+            &id,
+            format!("endpoint missing: {from:?} or {to:?} not in network"),
+        ),
+        Ok(None) => pass(&id),
+        Ok(Some(path)) => fail(
+            &id,
+            format!("prohibited path exists: {}", path.join(" -> ")),
+        ),
     }
-    let mut adjacency: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
-    for link in net.iter_links() {
-        adjacency
-            .entry(link.a.as_str())
-            .or_default()
-            .push(link.b.as_str());
-        adjacency
-            .entry(link.b.as_str())
-            .or_default()
-            .push(link.a.as_str());
-    }
-    let mut visited = std::collections::BTreeSet::new();
-    let mut queue = std::collections::VecDeque::new();
-    visited.insert(from);
-    queue.push_back(from);
-    while let Some(current) = queue.pop_front() {
-        if current == to {
-            return pass(&id);
-        }
-        for next in adjacency.get(current).into_iter().flatten() {
-            if visited.insert(next) {
-                queue.push_back(next);
-            }
-        }
-    }
-    fail(&id, format!("no path between {from:?} and {to:?}"))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rahn_core::{Metadata, Network};
+    use rahn_core::{Endpoint, Metadata};
 
-    fn net(build: impl FnOnce(&mut Network)) -> State {
+    fn net(
+        nodes: &[&str],
+        ifaces: &[(&str, &str)],
+        links: &[(&str, &str, &str, &str)],
+    ) -> rahn_core::State {
         let mut n = Network::empty();
-        build(&mut n);
-        State { network: n }
+        for id in nodes {
+            n.add_node(id, Metadata::new()).unwrap();
+        }
+        for (node, iface) in ifaces {
+            n.add_interface(node, iface).unwrap();
+        }
+        for (an, ai, bn, bi) in links {
+            n.add_link(
+                Endpoint::new(an, ai).unwrap(),
+                Endpoint::new(bn, bi).unwrap(),
+            )
+            .unwrap();
+        }
+        rahn_core::State { network: n }
     }
 
     fn empty_constitution() -> Constitution {
@@ -248,23 +276,22 @@ mod tests {
 
     #[test]
     fn valid_state_passes_all() {
-        let s = net(|n| {
-            n.add_node("a", Metadata::new()).unwrap();
-            n.add_node("b", Metadata::new()).unwrap();
-            n.add_link("a", "b").unwrap();
-        });
+        let s = net(
+            &["a", "b"],
+            &[("a", "eth0"), ("b", "eth0")],
+            &[("a", "eth0", "b", "eth0")],
+        );
         let report = verify(&s, &empty_constitution());
         assert!(report.passed(), "{report}");
     }
 
     #[test]
     fn connectivity_requirement_enforced() {
-        let s = net(|n| {
-            n.add_node("a", Metadata::new()).unwrap();
-            n.add_node("b", Metadata::new()).unwrap();
-            n.add_node("c", Metadata::new()).unwrap();
-            n.add_link("a", "b").unwrap();
-        });
+        let s = net(
+            &["a", "b", "c"],
+            &[("a", "eth0"), ("b", "eth0"), ("c", "eth0")],
+            &[("a", "eth0", "b", "eth0")],
+        );
         let mut c = empty_constitution();
         c.connectivity_requirements.push(("a".into(), "c".into()));
         let report = verify(&s, &c);
@@ -281,13 +308,11 @@ mod tests {
 
     #[test]
     fn connectivity_passes_through_intermediate_nodes() {
-        let s = net(|n| {
-            for id in ["a", "b", "c"] {
-                n.add_node(id, Metadata::new()).unwrap();
-            }
-            n.add_link("a", "b").unwrap();
-            n.add_link("b", "c").unwrap();
-        });
+        let s = net(
+            &["a", "b", "c"],
+            &[("a", "eth0"), ("b", "eth0"), ("b", "eth1"), ("c", "eth0")],
+            &[("a", "eth0", "b", "eth0"), ("b", "eth1", "c", "eth0")],
+        );
         let mut c = empty_constitution();
         c.connectivity_requirements.push(("a".into(), "c".into()));
         assert!(verify(&s, &c).passed());
@@ -295,9 +320,7 @@ mod tests {
 
     #[test]
     fn connectivity_requirement_with_missing_node_fails() {
-        let s = net(|n| {
-            n.add_node("a", Metadata::new()).unwrap();
-        });
+        let s = net(&["a"], &[("a", "eth0")], &[]);
         let mut c = empty_constitution();
         c.connectivity_requirements
             .push(("a".into(), "ghost".into()));
@@ -310,11 +333,43 @@ mod tests {
     }
 
     #[test]
+    fn prohibited_connectivity_enforced() {
+        let s = net(
+            &["public", "db"],
+            &[("public", "eth0"), ("db", "eth0")],
+            &[("public", "eth0", "db", "eth0")],
+        );
+        let mut c = empty_constitution();
+        c.prohibited_connectivity
+            .push(("public".into(), "db".into()));
+        let report = verify(&s, &c);
+        assert!(!report.passed());
+        assert_eq!(
+            report.failed_ids(),
+            vec!["prohibited-connectivity:public:db".to_string()]
+        );
+        assert!(report
+            .reports
+            .iter()
+            .any(|r| r.evidence.contains("prohibited path exists")));
+    }
+
+    #[test]
+    fn prohibited_connectivity_passes_when_isolated() {
+        let s = net(
+            &["public", "db"],
+            &[("public", "eth0"), ("db", "eth0")],
+            &[],
+        );
+        let mut c = empty_constitution();
+        c.prohibited_connectivity
+            .push(("public".into(), "db".into()));
+        assert!(verify(&s, &c).passed());
+    }
+
+    #[test]
     fn determinism_same_input_same_report() {
-        let s = net(|n| {
-            n.add_node("a", Metadata::new()).unwrap();
-            n.add_node("b", Metadata::new()).unwrap();
-        });
+        let s = net(&["a", "b"], &[("a", "eth0"), ("b", "eth0")], &[]);
         let mut c = empty_constitution();
         c.connectivity_requirements.push(("a".into(), "b".into()));
         let r1 = verify(&s, &c);
@@ -325,7 +380,7 @@ mod tests {
     #[test]
     fn structural_floor_always_checked() {
         // Empty constitution still checks structural invariants.
-        let s = State::empty();
+        let s = rahn_core::State::empty();
         let report = verify(&s, &empty_constitution());
         assert_eq!(report.reports.len(), 4);
         assert!(report.passed());

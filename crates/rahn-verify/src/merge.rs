@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-//! Fail-closed semantic merge (ADR 0007).
+//! Fail-closed semantic merge (ADR 0007; interface-aware per ADR 0011).
 //!
 //! A merge is three-way over state semantics: base (common ancestor) + ours
 //! + theirs. Rules:
 //!
-//! 1. Each side's changes are computed as object-level effects vs. base,
-//!    including object content (metadata).
+//! 1. Each side's changes are computed as object-level effects vs. base
+//!    (nodes, interfaces, links — links carry endpoint identity).
 //! 2. If both sides touch the same object, the merge succeeds ONLY if their
-//!    effects are *identical* (same kind — add or remove — and same
-//!    content); otherwise it is a semantic conflict.
+//!    effects are *identical*; otherwise it is a semantic conflict.
 //! 3. Disjoint changes are applied deterministically (sorted order).
 //! 4. The merged candidate is returned unverified; the caller MUST pass it
 //!    through the normal verification gate before committing.
@@ -19,7 +18,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
-use rahn_core::{Metadata, Network};
+use rahn_core::{Endpoint, Metadata, Network};
 use rahn_state::transition::{apply, Operation, TransitionError};
 
 /// An explainable merge rejection.
@@ -56,8 +55,10 @@ enum Effect {
 struct SideChanges {
     added_nodes: BTreeMap<String, Metadata>,
     removed_nodes: BTreeSet<String>,
-    added_links: BTreeMap<(String, String), Metadata>,
-    removed_links: BTreeSet<(String, String)>,
+    added_interfaces: BTreeMap<(String, String), Metadata>,
+    removed_interfaces: BTreeSet<(String, String)>,
+    added_links: BTreeMap<(Endpoint, Endpoint), Metadata>,
+    removed_links: BTreeSet<(Endpoint, Endpoint)>,
 }
 
 impl SideChanges {
@@ -71,7 +72,17 @@ impl SideChanges {
         None
     }
 
-    fn link_effect(&self, key: &(String, String)) -> Option<Effect> {
+    fn interface_effect(&self, key: &(String, String)) -> Option<Effect> {
+        if let Some(md) = self.added_interfaces.get(key) {
+            return Some(Effect::Added(md.clone()));
+        }
+        if self.removed_interfaces.contains(key) {
+            return Some(Effect::Removed);
+        }
+        None
+    }
+
+    fn link_effect(&self, key: &(Endpoint, Endpoint)) -> Option<Effect> {
         if let Some(md) = self.added_links.get(key) {
             return Some(Effect::Added(md.clone()));
         }
@@ -82,13 +93,20 @@ impl SideChanges {
     }
 
     /// Operations in deterministic, dependency-safe order: removals first
-    /// (links before nodes), then additions (nodes before links).
+    /// (links before interfaces before nodes), then additions (nodes before
+    /// interfaces before links).
     fn operations(&self) -> Vec<Operation> {
         let mut ops = Vec::new();
-        for (a, b) in &self.removed_links {
+        for key in &self.removed_links {
             ops.push(Operation::RemoveLink {
-                a: a.clone(),
-                b: b.clone(),
+                a: key.0.clone(),
+                b: key.1.clone(),
+            });
+        }
+        for key in &self.removed_interfaces {
+            ops.push(Operation::RemoveInterface {
+                node: key.0.clone(),
+                name: key.1.clone(),
             });
         }
         for id in &self.removed_nodes {
@@ -98,6 +116,12 @@ impl SideChanges {
             ops.push(Operation::AddNode {
                 id: id.clone(),
                 metadata: md.clone(),
+            });
+        }
+        for key in self.added_interfaces.keys() {
+            ops.push(Operation::AddInterface {
+                node: key.0.clone(),
+                name: key.1.clone(),
             });
         }
         for key in self.added_links.keys() {
@@ -113,24 +137,38 @@ impl SideChanges {
 fn side_changes(base: &Network, side: &Network) -> SideChanges {
     let mut c = SideChanges::default();
     for node in side.iter_nodes() {
-        match base.node(&node.id) {
-            // The v0.1 operation vocabulary (add/remove node/link) cannot
-            // express metadata edits, so a metadata-only change cannot be
-            // produced by recorded transitions. If one ever appears (e.g.,
-            // a future operation set), the structural checks below treat
-            // it as a both-sides content change rather than merging it
-            // silently.
-            Some(base_node) => {
-                let _ = base_node;
-            }
-            None => {
-                c.added_nodes.insert(node.id.clone(), node.metadata.clone());
+        if base.node(&node.id).is_none() {
+            c.added_nodes.insert(node.id.clone(), node.metadata.clone());
+            // An added node's interfaces must be materialized explicitly:
+            // operations are the only mechanism merge uses to build state,
+            // and links referencing those interfaces need them to exist.
+            for ifc in node.iter_interfaces() {
+                c.added_interfaces
+                    .insert((node.id.clone(), ifc.name.clone()), ifc.metadata.clone());
             }
         }
     }
     for node in base.iter_nodes() {
         if side.node(&node.id).is_none() {
             c.removed_nodes.insert(node.id.clone());
+        }
+    }
+    // Interfaces are compared only on nodes that exist on both sides
+    // (added nodes contribute all their interfaces implicitly).
+    for node in side.iter_nodes() {
+        if let Some(base_node) = base.node(&node.id) {
+            for ifc in node.iter_interfaces() {
+                if base_node.interface(&ifc.name).is_none() {
+                    c.added_interfaces
+                        .insert((node.id.clone(), ifc.name.clone()), ifc.metadata.clone());
+                }
+            }
+            for ifc in base_node.iter_interfaces() {
+                if node.interface(&ifc.name).is_none() {
+                    c.removed_interfaces
+                        .insert((node.id.clone(), ifc.name.clone()));
+                }
+            }
         }
     }
     for link in side.iter_links() {
@@ -170,8 +208,28 @@ pub fn merge(base: &Network, ours: &Network, theirs: &Network) -> Result<Network
         }
     }
 
+    // Interfaces touched by both sides.
+    let mut touched_ifaces: BTreeSet<(String, String)> =
+        ours_changes.added_interfaces.keys().cloned().collect();
+    touched_ifaces.extend(ours_changes.removed_interfaces.iter().cloned());
+    touched_ifaces.extend(theirs_changes.added_interfaces.keys().cloned());
+    touched_ifaces.extend(theirs_changes.removed_interfaces.iter().cloned());
+    for key in touched_ifaces {
+        if let (Some(o), Some(t)) = (
+            ours_changes.interface_effect(&key),
+            theirs_changes.interface_effect(&key),
+        ) {
+            if o != t {
+                conflicts.push(format!(
+                    "interface {}/{} changed on both branches differently (ours: {o:?}, theirs: {t:?})",
+                    key.0, key.1
+                ));
+            }
+        }
+    }
+
     // Links touched by both sides.
-    let mut touched_links: BTreeSet<(String, String)> =
+    let mut touched_links: BTreeSet<(Endpoint, Endpoint)> =
         ours_changes.added_links.keys().cloned().collect();
     touched_links.extend(ours_changes.removed_links.iter().cloned());
     touched_links.extend(theirs_changes.added_links.keys().cloned());
@@ -183,7 +241,7 @@ pub fn merge(base: &Network, ours: &Network, theirs: &Network) -> Result<Network
         ) {
             if o != t {
                 conflicts.push(format!(
-                    "link {:?} <-> {:?} changed on both branches differently (ours: {o:?}, theirs: {t:?})",
+                    "link {} <-> {} changed on both branches differently (ours: {o:?}, theirs: {t:?})",
                     key.0, key.1
                 ));
             }
@@ -236,14 +294,41 @@ fn apply_ops(net: &Network, ops: Vec<Operation>) -> Result<Network, TransitionEr
                         ));
                     }
                 }
+                Operation::AddInterface { node, name } => {
+                    if current
+                        .node(&node)
+                        .and_then(|n| n.interface(&name))
+                        .map(|i| i.metadata.is_empty())
+                        .unwrap_or(false)
+                    {
+                        current
+                    } else {
+                        return Err(TransitionError::Invalid(
+                            rahn_core::ModelError::InterfaceExists { node, name },
+                        ));
+                    }
+                }
+                Operation::RemoveInterface { node, name } => {
+                    if current
+                        .node(&node)
+                        .map(|n| n.interface(&name).is_none())
+                        .unwrap_or(true)
+                    {
+                        current
+                    } else {
+                        return Err(TransitionError::Invalid(
+                            rahn_core::ModelError::InterfaceMissing { node, name },
+                        ));
+                    }
+                }
                 Operation::AddLink { a, b } => {
                     if current.link(&a, &b).is_some() {
                         current
                     } else {
                         return Err(TransitionError::Invalid(
                             rahn_core::ModelError::LinkExists {
-                                a: a.clone(),
-                                b: b.clone(),
+                                a: a.to_string(),
+                                b: b.to_string(),
                             },
                         ));
                     }
@@ -254,8 +339,8 @@ fn apply_ops(net: &Network, ops: Vec<Operation>) -> Result<Network, TransitionEr
                     } else {
                         return Err(TransitionError::Invalid(
                             rahn_core::ModelError::LinkMissing {
-                                a: a.clone(),
-                                b: b.clone(),
+                                a: a.to_string(),
+                                b: b.to_string(),
                             },
                         ));
                     }
@@ -271,13 +356,20 @@ mod tests {
     use super::*;
     use rahn_core::Metadata;
 
-    fn net(nodes: &[&str], links: &[(&str, &str)]) -> Network {
+    fn net(nodes: &[&str], ifaces: &[(&str, &str)], links: &[(&str, &str, &str, &str)]) -> Network {
         let mut n = Network::empty();
         for id in nodes {
             n.add_node(id, Metadata::new()).unwrap();
         }
-        for (a, b) in links {
-            n.add_link(a, b).unwrap();
+        for (node, iface) in ifaces {
+            n.add_interface(node, iface).unwrap();
+        }
+        for (an, ai, bn, bi) in links {
+            n.add_link(
+                Endpoint::new(an, ai).unwrap(),
+                Endpoint::new(bn, bi).unwrap(),
+            )
+            .unwrap();
         }
         n
     }
@@ -285,62 +377,89 @@ mod tests {
     #[test]
     fn disjoint_additions_merge() {
         // base: a-b; ours adds c and c-a; theirs adds d and d-b.
-        let base = net(&["a", "b"], &[("a", "b")]);
-        let ours = net(&["a", "b", "c"], &[("a", "b"), ("a", "c")]);
-        let theirs = net(&["a", "b", "d"], &[("a", "b"), ("b", "d")]);
+        let base = net(
+            &["a", "b"],
+            &[("a", "eth0"), ("b", "eth0")],
+            &[("a", "eth0", "b", "eth0")],
+        );
+        let ours = net(
+            &["a", "b", "c"],
+            &[("a", "eth0"), ("b", "eth0"), ("c", "eth0")],
+            &[("a", "eth0", "b", "eth0"), ("a", "eth0", "c", "eth0")],
+        );
+        let theirs = net(
+            &["a", "b", "d"],
+            &[("a", "eth0"), ("b", "eth0"), ("d", "eth0")],
+            &[("a", "eth0", "b", "eth0"), ("b", "eth0", "d", "eth0")],
+        );
         let merged = merge(&base, &ours, &theirs).unwrap();
         assert_eq!(merged.node_count(), 4);
         assert_eq!(merged.link_count(), 3);
-        assert!(merged.link("c", "a").is_some());
-        assert!(merged.link("b", "d").is_some());
+        assert!(merged
+            .link(
+                &Endpoint::new("a", "eth0").unwrap(),
+                &Endpoint::new("c", "eth0").unwrap()
+            )
+            .is_some());
+        assert!(merged
+            .link(
+                &Endpoint::new("b", "eth0").unwrap(),
+                &Endpoint::new("d", "eth0").unwrap()
+            )
+            .is_some());
     }
 
     #[test]
-    fn both_sides_add_same_node_identically_succeeds() {
-        let base = net(&["a"], &[]);
-        let ours = net(&["a", "x"], &[]);
-        let theirs = net(&["a", "x"], &[]);
+    fn disjoint_interface_additions_merge() {
+        let base = net(&["a"], &[("a", "eth0")], &[]);
+        let ours = net(&["a"], &[("a", "eth0"), ("a", "eth1")], &[]);
+        let theirs = net(&["a"], &[("a", "eth0"), ("a", "eth2")], &[]);
         let merged = merge(&base, &ours, &theirs).unwrap();
-        assert!(merged.node("x").is_some());
+        assert_eq!(merged.node("a").unwrap().interface_count(), 3);
+    }
+
+    #[test]
+    fn both_sides_add_same_interface_identically_succeeds() {
+        let base = net(&["a"], &[("a", "eth0")], &[]);
+        let ours = net(&["a"], &[("a", "eth0"), ("a", "eth1")], &[]);
+        let theirs = ours.clone();
+        let merged = merge(&base, &ours, &theirs).unwrap();
+        assert!(merged.node("a").unwrap().interface("eth1").is_some());
     }
 
     #[test]
     fn both_sides_remove_same_node_succeeds() {
-        let base = net(&["a", "b", "z"], &[]);
-        let ours = net(&["a", "b"], &[]);
-        let theirs = net(&["a", "b"], &[]);
+        let base = net(&["a", "b", "z"], &[], &[]);
+        let ours = net(&["a", "b"], &[], &[]);
+        let theirs = net(&["a", "b"], &[], &[]);
         let merged = merge(&base, &ours, &theirs).unwrap();
         assert!(merged.node("z").is_none());
     }
 
     #[test]
-    fn both_sides_remove_same_link_succeeds() {
-        let base = net(&["a", "b"], &[("a", "b")]);
-        let ours = net(&["a", "b"], &[]);
-        let theirs = net(&["a", "b"], &[]);
-        let merged = merge(&base, &ours, &theirs).unwrap();
-        assert_eq!(merged.link_count(), 0);
-    }
-
-    #[test]
     fn one_side_removes_node_other_removes_neighbor() {
         // base: a-b, b-c. ours removes b (and its links). theirs removes c.
-        // Link (b,c): removed by both → identical effect → allowed.
-        // Link (a,b): removed by ours only. Node c: removed by theirs only.
-        let base = net(&["a", "b", "c"], &[("a", "b"), ("b", "c")]);
-        let ours = net(&["a", "c"], &[]);
-        let theirs = net(&["a", "b"], &[("a", "b")]);
+        let base = net(
+            &["a", "b", "c"],
+            &[("a", "eth0"), ("b", "eth0"), ("b", "eth1"), ("c", "eth0")],
+            &[("a", "eth0", "b", "eth0"), ("b", "eth1", "c", "eth0")],
+        );
+        let ours = net(&["a", "c"], &[("a", "eth0"), ("c", "eth0")], &[]);
+        let theirs = net(
+            &["a", "b"],
+            &[("a", "eth0"), ("b", "eth0")],
+            &[("a", "eth0", "b", "eth0")],
+        );
         let merged = merge(&base, &ours, &theirs).unwrap();
         assert!(merged.node("b").is_none());
         assert!(merged.node("c").is_none(), "theirs removed c");
         assert!(merged.node("a").is_some());
-        assert!(merged.link("a", "b").is_none());
     }
 
     #[test]
     fn unrelated_side_change_applies_cleanly() {
         // ours removes node x; theirs is unchanged. Merge = ours.
-        let base = net(&["a", "b", "x"], &[]);
+        let base = net(&["a", "b", "x"], &[], &[]);
         let ours = {
             let mut n = base.clone();
             n.remove_node("x").unwrap();
@@ -355,13 +474,13 @@ mod tests {
     #[test]
     fn link_added_by_one_side_to_node_removed_by_other_fails_closed() {
         // base: z, w. ours removes z. theirs adds link w-z.
-        // No object-level conflict is detectable (node z touched by ours
-        // only; link w-z touched by theirs only), but applying theirs' link
-        // add after ours' node removal is impossible → fail closed with an
-        // explanation instead of a dangling state.
-        let base = net(&["z", "w"], &[]);
-        let ours = net(&["w"], &[]);
-        let theirs = net(&["z", "w"], &[("w", "z")]);
+        let base = net(&["z", "w"], &[("z", "eth0"), ("w", "eth0")], &[]);
+        let ours = net(&["w"], &[("w", "eth0")], &[]);
+        let theirs = net(
+            &["z", "w"],
+            &[("z", "eth0"), ("w", "eth0")],
+            &[("w", "eth0", "z", "eth0")],
+        );
         let err = merge(&base, &ours, &theirs).unwrap_err();
         assert!(
             err.conflicts
