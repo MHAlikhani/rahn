@@ -8,4 +8,4 @@ Normative keywords: MUST / MUST NOT / SHOULD / SHOULD NOT / MAY (RFC 2119 sense)
 
 ## Normative seeds
 
-The constitution is the named collection of invariants governing all valid states. A candidate state that violates any constitution invariant MUST be rejected before execution. v0.1 constitution checks MUST include at least the invariant set of invariants.md. The constitution MUST be stored as data and versioned with the state history.
+The constitution is the named collection of invariants governing all valid states. A candidate state that violates any constitution invariant MUST be rejected before execution. v0.2 constitution checks MUST include the structural invariants plus `require-connectivity a b` (a node-level path MUST exist) and `prohibit-connectivity a b` (no node-level path MAY exist; isolation). Connectivity is evaluated over the node graph induced by interface links. The constitution MUST be stored as data and versioned with the state history.

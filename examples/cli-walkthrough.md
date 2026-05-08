@@ -11,7 +11,9 @@ initialized empty rahn repository in ./.rahn
 
 $ rahn node add web role=api
 $ rahn node add db role=database
-$ rahn link add web db
+$ rahn interface add web eth0
+$ rahn interface add db eth0
+$ rahn link add web/eth0 db/eth0
 
 $ rahn verify
 state e65660d7193be9e9e38631ed19a18914c4b2f6efe2f852a012a40aad073990d3
@@ -33,13 +35,14 @@ $ rahn commit -m "add cache"
 
 $ rahn diff experiment main
 + node: cache
-+ link: cache <-> web
++ link: cache/eth0 <-> web/eth0
 
 $ rahn apply experiment
 target: experiment
 Execution plan:
-  1. remove link cache <-> web
-  2. remove node cache
+  1. remove link cache/eth0 <-> web/eth0
+  2. remove interface cache/eth0
+  3. remove node cache
 (simulation only - no action is taken against any system)
 
 $ rahn log

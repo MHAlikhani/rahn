@@ -34,9 +34,9 @@ It is **not** "Git for networks". Git inspires certain concepts (immutable histo
 
 ## Status
 
-**v0.1.0-alpha.1 — Stage 1: the state engine is implemented.**
+**v0.2.0-alpha — Stage 2: the network graph model.**
 
-An experimental, deterministic state engine for evolving network topologies: canonical serialization, content-addressed state identity, local persistence, explicit transitions, semantic diff, branches, fail-closed semantic merge, a deterministic invariant engine, verification-gated commits, and simulation-only execution. **No real execution exists** — `rahn apply` prints an execution plan and touches nothing.
+An experimental, deterministic state engine for evolving network topologies: interfaces and interface-addressed links, canonical serialization (format v2), content-addressed state identity, local persistence, explicit transitions, semantic diff, branches, fail-closed semantic merge, deterministic path discovery, isolation constraints, a deterministic invariant engine, verification-gated commits, and simulation-only execution. **No real execution exists** — `rahn apply` prints an execution plan and touches nothing.
 
 ```
 cargo build --release

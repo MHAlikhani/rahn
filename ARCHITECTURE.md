@@ -94,9 +94,9 @@ A causal graph connecting observations to state transitions, enabling "which tra
 
 Network evolution is a graph of states (S0 → S1 → S2 …), branchable. Branches are lightweight references to states. Merging is **network-aware**: semantic conflicts (contradictory constraints, infeasible combinations) are detected and explained; v0.1 fails on conflict rather than auto-resolving.
 
-### Implementation shape (v0.1)
+### Implementation shape (v0.2)
 
-Rust workspace with small crates: `rahn-core`, `rahn-state`, `rahn-store`, `rahn-verify`, `rahn-cli`, `rahn-sim`. Persistence: filesystem + canonical serialized objects. Execution: simulation-only; an execution *plan* is produced and inspected, the OS is untouched. (See [docs/adr/0004-storage-model.md](docs/adr/0004-storage-model.md), [docs/adr/0008-execution-boundary.md](docs/adr/0008-execution-boundary.md).)
+Rust workspace with small crates: `rahn-core`, `rahn-state`, `rahn-store`, `rahn-verify`, `rahn-cli`, `rahn-sim`. Persistence: filesystem + canonical serialized objects (format v2). The topology model is interface-based (ADR 0011): links connect `(node, interface)` endpoints. Deterministic graph queries (shortest path with lexicographic tie-break, reachability, components) and isolation constraints (`prohibit-connectivity`) are implemented. Execution: simulation-only; an execution *plan* is produced and inspected, the OS is untouched. (See [docs/adr/0004-storage-model.md](docs/adr/0004-storage-model.md), [docs/adr/0008-execution-boundary.md](docs/adr/0008-execution-boundary.md).)
 
 ## 7. Trade-offs
 

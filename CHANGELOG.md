@@ -4,6 +4,35 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.2.0-alpha] — Stage 2: Network Graph Foundation
+
+### Added
+- **Interface-endpoint model (ADR 0011):** interfaces are first-class
+  objects owned by nodes; links connect `node/interface` endpoints;
+  same-node links prohibited. Canonical format versioned to 2 (v1 bytes
+  rejected explicitly — no silent migration; see ADR 0011 for rationale).
+- **Graph queries:** deterministic shortest path (lexicographic
+  tie-break), neighbors, reachability, connected components.
+- **Isolation constraints:** `prohibit-connectivity a b` in the
+  constitution, evaluated over the interface-induced node graph.
+- CLI: `rahn interface add/remove`; link endpoints as `node/iface`;
+  `rahn path <from> <to>`; interface-aware diff/state/inspect/apply.
+- Scaling benchmarks (`cargo test -p rahn-state --release --test
+  scaling -- --ignored`): 10 to 100 000 nodes; results and methodology in
+  `docs/research/stages/v0.2.md`.
+- Stage report: `docs/research/stages/v0.2.md`.
+
+### Fixed
+- Merge: added nodes now materialize their interfaces (previously links
+  referencing them failed or nodes were interface-less).
+- Diff: added/removed nodes report their interfaces (diff-derived
+  operations now reconstruct the state exactly).
+
+### Compatibility
+- Canonical format v2 is NOT readable by v0.1.x binaries, and v0.1.x
+  stores are NOT readable by v0.2 (explicit error referencing ADR 0011).
+  Alpha-era repositories; no migration tool is provided by design.
+
 ## [0.1.0-alpha.2] — Stage 1 Hardening (post-v0.1 review)
 
 ### Added

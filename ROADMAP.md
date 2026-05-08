@@ -16,9 +16,11 @@ Deterministic network state; state identity; local persistence; explicit transit
 
 Success: a developer can create a network, modify it, commit state, branch it, compare it, validate it, simulate a transition, and inspect history — without touching a production network.
 
-## Stage 2 — RAHN 0.2: richer model
+## Stage 2 — RAHN 0.2: richer model *(implemented in v0.2.0-alpha; see docs/research/stages/v0.2.md)*
 
-Richer topology, addressing, interfaces, paths, service objects; stronger constraint engine; semantic merge conflicts; better state queries; first network graph algorithms.
+Interfaces as first-class objects (links connect `node/interface` endpoints); deterministic path discovery and graph queries; isolation constraints (`prohibit-connectivity`); fail-closed semantic merge extended to the interface model; scaling benchmarks to 100k objects.
+
+Remaining for this stage: typed addressing on interfaces; service objects; stronger constraint engine (constraint-level merge-conflict analysis, E3).
 
 ## Stage 3 — RAHN 0.3: Linux execution prototype
 

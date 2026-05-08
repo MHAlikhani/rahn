@@ -25,5 +25,8 @@ Canonical terminology. Terms are defined here first; implementation and docs mus
 - **Execution backend** — an adapter that executes a plan against a substrate (simulation in v0.1; Linux namespaces later). Separated from state representation.
 - **Simulation** — execution of a plan against a model, with no effect on the host or real network.
 - **Provenance** — the recorded linkage from any network behavior or state to the transition that produced it.
-- **Node / Link / Path / Flow / Service / Identity / Capability** — candidate core primitives (see [concepts.md](concepts.md)); which are fundamental vs. derived is an open research question.
+- **Interface** — a named attachment point owned by a node (ADR 0011). Links connect interfaces; interfaces carry metadata and participate in identity, diff, merge, and verification.
+- **Endpoint** — a `(node, interface)` pair addressed as `node/interface`; link endpoints are normalized (lexicographic) so links are undirected.
+- **Node / Link / Path / Flow / Service / Identity / Capability** — core or candidate primitives (see [concepts.md](concepts.md)); Node, Interface, and Link are implemented; Path is a derived query (deterministic shortest path); Flow, Service, Identity, Capability remain candidates.
+- **Path determinism** — among equal-length shortest paths, RAHN returns the lexicographically smallest node sequence (BFS over sorted adjacency); path queries are pure functions of the state.
 - **ADR** — Architecture Decision Record; the immutable record of an architectural decision and its rationale ([docs/adr/](adr/)).

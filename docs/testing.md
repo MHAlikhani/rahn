@@ -30,15 +30,20 @@ Testing is part of the architecture (DESIGN.md principle 19; charter §27). This
 | `crates/rahn-verify/src/merge.rs` | Fail-closed merge semantics: disjoint merges, identical-effect coalescing, conflict rejection, fail-closed application errors, metadata preservation |
 | `crates/rahn-sim/src/lib.rs` | Plan ordering (removals before additions), empty plans, inspectable output |
 | `crates/rahn-cli/src/args.rs` | Strict argument parsing: every subcommand, every rejection class |
-| `crates/rahn-cli/tests/end_to_end.rs` | Full lifecycle, checkout, diverged branch merge, constitution-gated commits (including on branch states), `--force` recovery, invalid-transition explanations, corrupted-object detection via the CLI, cross-run determinism of commit ids |
+| `crates/rahn-cli/tests/end_to_end.rs` | Full lifecycle (interfaces, endpoint syntax, path discovery), checkout, diverged branch merge, constitution gating including isolation requirements, `--force` recovery, invalid-transition explanations, corrupted-object detection via the CLI, cross-run determinism of commit ids |
+| `crates/rahn-state/src/graph.rs` | Deterministic path queries: sorted neighbors, lexicographic shortest-path tie-break, component separation, walk validity |
 
 Run everything:
 
 ```console
-cargo test          # 81 tests
+cargo test          # ~90 tests across 16 binaries
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 ```
+
+The suite also includes `crates/rahn-state/tests/scaling.rs` — an ignored
+benchmark harness (run with `--release -- --ignored --nocapture`), documented
+in `docs/research/stages/v0.2.md`.
 
 ## What the tests deliberately do NOT cover yet
 

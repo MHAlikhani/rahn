@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-04-24. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-05-08. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -120,7 +120,7 @@ State_t = { topology, policy, identity, intent,
             observations, constraints, history_reference }
 ```
 
-v0.1 implements the **topology + metadata** component (nodes, normalized undirected links, bounded metadata) inside a versioned container. **[Implemented for topology]**; the remaining components are **[Proposed]** with staged admission through the ADR process. The model is deliberately not frozen; it is an evolving research artifact whose evolution rules are specified (docs/spec/state.md).
+v0.2 implements the **topology + metadata** component with an interface-based model (nodes own named interfaces; links connect `node/interface` endpoints; ADR 0011) inside a versioned container. **[Implemented for topology]**; the remaining components are **[Proposed]** with staged admission through the ADR process. The model is deliberately not frozen; it is an evolving research artifact whose evolution rules are specified (docs/spec/state.md).
 
 ## 11. State Identity **[Implemented]**
 
@@ -128,13 +128,13 @@ Identity = SHA-256 over the state's **canonical serialization** (format-version 
 
 ## 12. State Transitions **[Implemented]**
 
-A transition is a pure, total function `(State A, Operation) → candidate B | structured rejection` (ADR 0005). The v0.1 vocabulary: `add_node`, `remove_node`, `add_link`, `remove_link`. No I/O, clock, or randomness inside transitions; committed states are never mutated; rejections are structured and explainable. Commit records (content-addressed) capture state id, parents, the operations applied, the message, and the verification summary — making history a first-class artifact and future replay structurally feasible.
+A transition is a pure, total function `(State A, Operation) → candidate B | structured rejection` (ADR 0005). The v0.2 vocabulary: `add_node`, `remove_node`, `add_interface`, `remove_interface`, `add_link`, `remove_link` (endpoints are interfaces; ADR 0011). No I/O, clock, or randomness inside transitions; committed states are never mutated; rejections are structured and explainable. Commit records (content-addressed) capture state id, parents, the operations applied, the message, and the verification summary — making history a first-class artifact and future replay structurally feasible.
 
 ## 13. Network Constitution
 
 The constitution is a named, versioned collection of invariants that must hold across all valid states (e.g., "databases must never be publicly reachable", "control-plane connectivity must be preserved"). A candidate state violating any invariant is rejected **before** any durable write or execution. **[Implemented as data + engine for the v0.1 vocabulary; expressiveness research open — RQ4]**
 
-v0.1 requirement vocabulary: structural invariants (referential integrity, link endpoints, duplicate links, self-loops) always checked; declared `require-connectivity a b` requirements checked per candidate. Important observed semantics: the constitution gates **branch states too** — a change that breaks a requirement cannot be committed on any branch (test-enforced).
+v0.2 requirement vocabulary: structural invariants (referential integrity, link endpoints, duplicate links, self-loops incl. same-node loops) always checked; declared `require-connectivity a b` and `prohibit-connectivity a b` (isolation) requirements checked per candidate over the interface-induced node graph. Important observed semantics: the constitution gates **branch states too** — a change that breaks a requirement cannot be committed on any branch (test-enforced).
 
 ## 14. Verification **[Implemented for v0.1 scope]**
 
@@ -190,7 +190,9 @@ No experiments have been run yet; the methodology is pre-registered in docs/rese
 
 ## 27. Results
 
-**None.** No benchmark or controlled experiment has been conducted. What exists is test evidence (docs/testing.md): deterministic identity across runs and platforms, canonical round-trip exactness, corrupted-state refusal, fail-closed merge behavior, verification gating. Test evidence demonstrates *behavior under the tested conditions*; it is not a performance or effectiveness result. This section will report experiment outcomes with full methodology or state that none exist — it will never be padded.
+The first measurement-kind evidence exists as of Stage 2 (v0.2.0-alpha): scaling timings for state construction, canonical serialization, identity hashing, diff, verification, and shortest-path on ring topologies of 10 to 100 000 nodes, recorded with environment and methodology in [docs/research/stages/v0.2.md](../research/stages/v0.2.md). Headline scoped observations: serialization and identity hashing remain in the low milliseconds at 10⁵ objects; verification of the structural invariant floor over 10⁵ links costs ~100 ms (single machine, release build). These are baseline measurements of one workload on one machine — not performance claims, and not yet reproducible cross-machine.
+
+Previously this section read: **None — no benchmark or controlled experiment had been conducted.** What existed was test evidence (docs/testing.md): deterministic identity across runs and platforms, canonical round-trip exactness, corrupted-state refusal, fail-closed merge behavior, verification gating. Test evidence demonstrates *behavior under the tested conditions*; it is not a performance or effectiveness result. This section will report experiment outcomes with full methodology or state that none exist — it will never be padded.
 
 ## 28. Limitations
 
@@ -235,3 +237,4 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 |---|---|---|---|
 | v0.1 | 2026-04-15 | Structured outline; no claims | Project bootstrap (Stage 0) |
 | v0.2 | 2026-04-24 | Full initial draft; claim-status markers throughout; §27 states explicitly that no measurements exist; scoped novelty statement | Post-v0.1 hardening milestone (Stage 1); first implementation exists, test-grade evidence available |
+| v0.3 | 2026-05-08 | Interface-based state model (ADR 0011) reflected in §10/§12/§13; graph queries and isolation constraints in §13; first scaling measurements in §27 (single-machine, methodology recorded) | Stage 2 (v0.2.0-alpha) |
