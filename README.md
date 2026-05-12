@@ -54,11 +54,14 @@ Per the project charter, documentation is part of the architecture, not a second
 - [docs/whitepaper/RAHN-Whitepaper.md](docs/whitepaper/RAHN-Whitepaper.md) — white paper (outline; evolves with the architecture)
 - [ROADMAP.md](ROADMAP.md) — research roadmap toward v1.0
 
-## Planned implementation
+## Implementation status
 
 The primary implementation language is **Rust**. Rust is an implementation choice, not the identity of the architecture.
 
-Version 0.1 will be the smallest credible implementation of *versioned, verifiable network state*: a deterministic state model, state identity via canonical serialization and content hashing, local persistence, explicit transitions, semantic diff, branches, conservative merges, a small deterministic invariant engine, deterministic verification, and simulation-only execution — with no real-network side effects.
+- **Implemented (v0.2.0-alpha):** deterministic interface-based network graph (nodes, interfaces, interface-endpoint links), canonical serialization (format v2), content-addressed state identity, local content-addressed persistence, explicit transitions, semantic diff, branches with checkout, fail-closed semantic merge, deterministic graph queries (shortest path with lexicographic tie-break, reachability, neighbors, components), connectivity and isolation constraints, deterministic invariant engine, verification-gated commits, and simulation-only execution planning. Scaling evidence: [docs/research/stages/v0.2.md](docs/research/stages/v0.2.md).
+- **Not implemented (do not assume otherwise):** real execution of any kind — no Linux namespaces, no eBPF/XDP, no P4; no observability; no causal memory; no distributed state; no AI; no DSL. `rahn apply` prints an execution plan and touches nothing.
+- **Next (Stage 3 / v0.3):** isolated Linux execution — network namespaces, with explicit opt-in and host-mutation safety tests (see [ROADMAP.md](ROADMAP.md)).
+- **Deferred within Stage 2's scope:** typed addressing on interfaces, service objects, constraint-level merge-conflict analysis.
 
 ## Project
 

@@ -64,4 +64,4 @@ Success: RAHN provides a coherent, documented abstraction for representing and s
 
 ## Release honesty
 
-The first release is `v0.1.0-alpha.1`, positioned as *"an experimental state engine for evolving network topologies."* It must not be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. The white paper begins as a structured research document and matures with the evidence.
+The current release is **`v0.2.0-alpha`** (network graph foundation; interfaces, deterministic path discovery, isolation constraints, simulation-only execution). Releases so far: `v0.1.0-alpha.1` (*"an experimental state engine for evolving network topologies"*), `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 3 — isolated Linux execution (v0.3).** The white paper matures with the evidence.

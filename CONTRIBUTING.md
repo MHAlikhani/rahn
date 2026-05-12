@@ -29,7 +29,16 @@ Core runtime · state model · verification · networking adapters · eBPF · si
 
 ## Developer setup
 
-(Once the Rust workspace lands: install a stable Rust toolchain via [rustup](https://rustup.rs), then `cargo build && cargo test`.) No other toolchain is required for documentation-only contributions.
+Install a stable Rust toolchain via [rustup](https://rustup.rs), then:
+
+```console
+cargo build
+cargo test
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+```
+
+The benchmark harness runs with `cargo test -p rahn-state --release --test scaling -- --ignored --nocapture`. No other toolchain is required for documentation-only contributions.
 
 ## Process
 
