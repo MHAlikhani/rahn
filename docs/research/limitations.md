@@ -2,13 +2,14 @@
 
 # RAHN Limitations
 
-Status: living research document (Stage 0). Honest limitations of the architecture and of the current (documentation-only) state of the project. This document must never shrink by hiding a limitation — only by resolving it (with evidence) or narrowing a claim.
+Status: living research document (updated at v0.2.0-alpha / Stage 2). Honest limitations of the architecture and of the current implementation state. This document must never shrink by hiding a limitation — only by resolving it (with evidence) or narrowing a claim.
 
 ## Limitations of the current project state
 
-- **No implementation exists yet.** Everything in this repository is design and research documentation. No behavior is proven, implemented, or measured. All claims herein are *proposed*, not demonstrated.
-- **No evidence yet.** Hypotheses ([hypotheses.md](hypotheses.md)) are untested; no experiment has run; no benchmark exists.
-- **No novelty claims are warranted yet.** Prior-art analysis ([prior-art.md](prior-art.md)) is preliminary and must be deepened before the white paper asserts any novelty.
+- **Implementation is alpha-grade.** The v0.2 state engine (interfaces, interface-endpoint links, canonical format v2, graph queries, isolation constraints, simulation-only execution) is implemented and test-enforced ([testing.md](../testing.md)), but no production use, external review, or real-network interaction exists.
+- **Evidence is partial.** Determinism claims are test-enforced; the only measurements are the Stage 2 single-machine scaling baselines ([stages/v0.2.md](stages/v0.2.md)). Hypotheses ([hypotheses.md](hypotheses.md)) are largely untested; the full experiment program (E2 completion, E3–E7) has not run.
+- **No novelty claims are warranted yet.** Prior-art analysis ([prior-art.md](prior-art.md)) is a working survey and must be deepened before the white paper asserts any novelty.
+- **Known performance debt (recorded, not yet addressed):** repeated operation application currently clones the whole network, producing roughly O(m·n) cost for m batched operations on an n-object network. Acceptable at measured scales (see [stages/v0.2.md](stages/v0.2.md)); a copy-on-write or batched-apply design would require its own ADR. Do not benchmark future changes against this as-is without noting the debt.
 
 ## Architectural limitations (inherent or accepted trade-offs)
 

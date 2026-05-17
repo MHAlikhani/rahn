@@ -44,8 +44,8 @@ RAHN is intended for long-term adoption by individual developers, researchers, i
 - [x] CONTRIBUTING.md states contribution licensing
 - [x] docs/licensing.md exists (this policy's parent document)
 - [x] Third-party inventory exists (currently empty)
-- [ ] Package metadata uses valid SPDX expressions (when Cargo workspace lands)
-- [ ] License scan / audit tooling (when repository size justifies)
+- [x] Package metadata uses valid SPDX expressions (`license.workspace = true` → `Apache-2.0`)
+- [x] License scan / audit tooling (CI `license-check` job: canonical license files + SPDX headers)
 
 ## Implementation amendment (2026-04-24)
 

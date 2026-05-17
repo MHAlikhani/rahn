@@ -2,7 +2,7 @@
 
 # RAHN Future Work
 
-Status: living research document (Stage 0). Ordered by the staged roadmap; see [../ROADMAP.md](../ROADMAP.md) for the authoritative sequence.
+Status: living research document (Stage 0). Ordered by the staged roadmap; see [../ROADMAP.md](../../ROADMAP.md) for the authoritative sequence.
 
 ## Near term (Stages 0–2)
 

@@ -38,7 +38,7 @@ Every future experiment must record — before its results are quotable — purp
 |---|---|---|
 | Release binaries | Not yet built reproducibly (Rust builds embed some paths by default) | Evaluate `cargo` reproducible-build options at the first tagged release with artifacts |
 | Real-network experiments | None exist (no real execution before Stage 3) | Namespace-based experiments will be scripted end-to-end in-repo (E6) |
-| Benchmarks | None exist | Will follow benchmark-methodology.md with recorded environments |
+| Benchmarks | The Stage 2 scaling harness (`crates/rahn-state/tests/scaling.rs`) is deterministic and rerunnable from the repo; recorded results are in [research/stages/v0.2.md](research/stages/v0.2.md). Timing numbers are environment-specific by nature | Cross-machine timing comparison when a second environment is available |
 | Distributed replay | Out of scope (Stage 6+) | Requires the consistency model to be derived first (RQ7) |
 
 ## Canonical-format evolution rule

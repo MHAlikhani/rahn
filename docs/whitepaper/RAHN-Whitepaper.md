@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-05-08. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-05-17. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -15,7 +15,7 @@ Versioned independently of the codebase; revisions correspond to meaningful arch
 - **[Proposed]** — designed, not yet built.
 - **[Future]** — research direction, no design yet.
 
-**No experimental results are reported in this version: no benchmark or controlled experiment has been run.** The determinism evidence cited is of test-kind (fixed and property-based tests), not measurement-kind. Section 27 (Results) states this explicitly and will remain honest as evidence accumulates.
+First measurement-kind evidence exists as of the v0.3 revision of this paper (Stage 2 scaling benchmarks, §27); it is scoped single-machine baseline measurement, not a performance guarantee. Determinism claims remain test-kind evidence (fixed and property-based tests). Sections state their evidence class explicitly and will remain honest as evidence accumulates.
 
 ---
 
@@ -178,7 +178,7 @@ AI may propose (diagnosis, ranking, candidate transitions); the deterministic ve
 
 ## 24. Prototype Architecture **[Implemented]**
 
-Rust workspace (v0.1.0-alpha.2): `rahn-core` (object model), `rahn-state` (canonicalization, identity, transitions, diff, commits, history), `rahn-store` (content-addressed store, refs, index), `rahn-verify` (constitution, invariants, merge), `rahn-sim` (plans), `rahn-cli` (the `rahn` binary). Single third-party dependency (`sha2`, Apache-2.0 OR MIT), recorded in docs/third-party.md. Repository layout: `.rahn/{objects,refs,HEAD,index,constitution}`.
+Rust workspace (v0.2.0-alpha): `rahn-core` (object model: nodes, interfaces, interface-endpoint links), `rahn-state` (canonicalization v2, identity, transitions, semantic diff, graph queries, commits, history), `rahn-store` (content-addressed store, refs, index), `rahn-verify` (constitution incl. isolation requirements, invariants, fail-closed merge), `rahn-sim` (plans), `rahn-cli` (the `rahn` binary). Single third-party dependency (`sha2`, Apache-2.0 OR MIT), recorded in docs/third-party.md. Repository layout: `.rahn/{objects,refs,HEAD,index,constitution}`.
 
 ## 25. v0.1 Implementation **[Implemented]**
 
@@ -203,7 +203,8 @@ Previously this section read: **None — no benchmark or controlled experiment h
 5. **Causal explainability is bounded by instrumentation** — and does not exist yet at all.
 6. **Single-writer, local-only** through Stage 5.
 7. **Ergonomics tax** for explicitness; if it proves too high in practice, the project fails regardless of architectural soundness.
-8. **Test-kind evidence only**; no measurements yet (§27).
+8. **Limited measurement evidence.** The only measurements are the Stage 2 single-machine scaling baselines (§27); no cross-machine, no real-network, and no comparative measurements exist.
+9. **Transition-application cost (known performance debt, recorded).** Repeated operation application currently clones the whole network — roughly O(m·n) for m batched operations on an n-object network. Acceptable at measured scales (§27); a copy-on-write or batched-apply design would require its own ADR and has deliberately not been attempted.
 
 Full list with reasoning: docs/research/limitations.md.
 
