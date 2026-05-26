@@ -61,10 +61,16 @@ pub enum Command {
     },
     Apply {
         name: String,
+        execute: bool,
+        yes_i_know: bool,
+    },
+    Destroy {
+        name: String,
+        yes_i_know: bool,
     },
 }
 
-pub const USAGE: &str = r#"rahn — a stateful execution architecture for evolving networks (v0.2, simulation-only)
+pub const USAGE: &str = r#"rahn — a stateful execution architecture for evolving networks (v0.3; simulation-only by default, isolated Linux namespaces with explicit opt-in)
 
 USAGE:
     rahn init
@@ -84,12 +90,13 @@ USAGE:
     rahn verify
     rahn log
     rahn inspect <branch-or-commit-id>
-    rahn apply <branch-or-commit-id>
+    rahn apply [--execute --yes-i-know] <branch-or-commit-id>
+    rahn destroy --yes-i-know <branch-or-commit-id>
 
 REFS: a branch name or a full 64-character commit id.
 ENDPOINTS: node/interface pairs (e.g. web/eth0).
 
-v0.2 performs NO real execution: `apply` prints an execution plan only."#;
+Default mode is SIMULATION: `apply` prints the exact command sequence. Real execution (`--execute --yes-i-know`) runs isolated Linux network namespaces only (Linux + root required) and never touches the host network (ADR 0012)."#;
 
 /// Parse raw arguments (without the program name).
 pub fn parse(args: &[String]) -> Result<Command, String> {
@@ -239,9 +246,101 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
             Ok(Command::Inspect { name })
         }
         "apply" => {
-            let name = next(&mut it, "apply <branch-or-commit-id>")?;
-            expect_end(&mut it, "apply")?;
-            Ok(Command::Apply { name })
+            let mut execute = false;
+            let mut yes_i_know = false;
+            let mut name = None;
+            for arg in &mut it {
+                match arg.as_str() {
+                    "--execute" => {
+                        if execute {
+                            return Err(format!(
+                                "--execute given twice
+
+{USAGE}"
+                            ));
+                        }
+                        execute = true;
+                    }
+                    "--yes-i-know" => {
+                        if yes_i_know {
+                            return Err(format!(
+                                "--yes-i-know given twice
+
+{USAGE}"
+                            ));
+                        }
+                        yes_i_know = true;
+                    }
+                    other if name.is_none() => name = Some(other.to_owned()),
+                    _ => {
+                        return Err(format!(
+                            "unexpected argument {arg:?} for apply
+
+{USAGE}"
+                        ))
+                    }
+                }
+            }
+            let name = name.ok_or_else(|| {
+                format!(
+                    "missing argument for apply <ref>
+
+{USAGE}"
+                )
+            })?;
+            if execute && !yes_i_know {
+                return Err(format!(
+                    "--execute requires --yes-i-know in the same invocation
+
+{USAGE}"
+                ));
+            }
+            Ok(Command::Apply {
+                name,
+                execute,
+                yes_i_know,
+            })
+        }
+        "destroy" => {
+            let mut yes_i_know = false;
+            let mut name = None;
+            for arg in &mut it {
+                match arg.as_str() {
+                    "--yes-i-know" => {
+                        if yes_i_know {
+                            return Err(format!(
+                                "--yes-i-know given twice
+
+{USAGE}"
+                            ));
+                        }
+                        yes_i_know = true;
+                    }
+                    other if name.is_none() => name = Some(other.to_owned()),
+                    _ => {
+                        return Err(format!(
+                            "unexpected argument {arg:?} for destroy
+
+{USAGE}"
+                        ))
+                    }
+                }
+            }
+            let name = name.ok_or_else(|| {
+                format!(
+                    "missing argument for destroy <ref>
+
+{USAGE}"
+                )
+            })?;
+            if !yes_i_know {
+                return Err(format!(
+                    "destroy requires --yes-i-know (deletes rahn-* network namespaces)
+
+{USAGE}"
+                ));
+            }
+            Ok(Command::Destroy { name, yes_i_know })
         }
         other => Err(format!("unknown subcommand {other:?}\n\n{USAGE}")),
     }

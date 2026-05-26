@@ -22,11 +22,11 @@ Interfaces as first-class objects (links connect `node/interface` endpoints); de
 
 Remaining for this stage: typed addressing on interfaces; service objects; stronger constraint engine (constraint-level merge-conflict analysis, E3).
 
-## Stage 3 — RAHN 0.3: Linux execution prototype
+## Stage 3 — RAHN 0.3: Linux execution prototype *(implemented in v0.3.0-alpha; see docs/research/stages/v0.3.md)*
 
 First point where RAHN touches real networking: isolated topologies inside Linux network namespaces (veth, netlink, routing tables, nftables, traffic control).
 
-Success: RAHN can create and manipulate isolated Linux network topologies.
+Success: RAHN can create and manipulate isolated Linux network topologies. **Achieved for the link-level model** (namespaces, veth, host-safety tests, CI-validated); addressing and traffic control remain future work.
 
 ## Stage 4 — RAHN 0.4: observability
 

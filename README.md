@@ -34,7 +34,7 @@ It is **not** "Git for networks". Git inspires certain concepts (immutable histo
 
 ## Status
 
-**v0.2.0-alpha — Stage 2: the network graph model.**
+**v0.3.0-alpha — Stage 3: isolated Linux execution (opt-in).**
 
 An experimental, deterministic state engine for evolving network topologies: interfaces and interface-addressed links, canonical serialization (format v2), content-addressed state identity, local persistence, explicit transitions, semantic diff, branches, fail-closed semantic merge, deterministic path discovery, isolation constraints, a deterministic invariant engine, verification-gated commits, and simulation-only execution. **No real execution exists** — `rahn apply` prints an execution plan and touches nothing.
 
@@ -59,8 +59,9 @@ Per the project charter, documentation is part of the architecture, not a second
 The primary implementation language is **Rust**. Rust is an implementation choice, not the identity of the architecture.
 
 - **Implemented (v0.2.0-alpha):** deterministic interface-based network graph (nodes, interfaces, interface-endpoint links), canonical serialization (format v2), content-addressed state identity, local content-addressed persistence, explicit transitions, semantic diff, branches with checkout, fail-closed semantic merge, deterministic graph queries (shortest path with lexicographic tie-break, reachability, neighbors, components), connectivity and isolation constraints, deterministic invariant engine, verification-gated commits, and simulation-only execution planning. Scaling evidence: [docs/research/stages/v0.2.md](docs/research/stages/v0.2.md).
-- **Not implemented (do not assume otherwise):** real execution of any kind — no Linux namespaces, no eBPF/XDP, no P4; no observability; no causal memory; no distributed state; no AI; no DSL. `rahn apply` prints an execution plan and touches nothing.
-- **Next (Stage 3 / v0.3):** isolated Linux execution — network namespaces, with explicit opt-in and host-mutation safety tests (see [ROADMAP.md](ROADMAP.md)).
+- **Implemented, opt-in (v0.3):** isolated Linux execution — network namespaces and veth links via iproute2, with structural host-safety guarantees (host-side operations limited to `rahn-*` namespaces), `--execute --yes-i-know` gating, and CI validation. The default remains simulation: `rahn apply` prints the exact commands and touches nothing.
+- **Not implemented (do not assume otherwise):** eBPF/XDP, P4, addressing, observability, causal memory, distributed state, AI, DSL.
+- **Next (Stage 4 / v0.4):** observations and provenance linking (see [ROADMAP.md](ROADMAP.md)).
 - **Deferred within Stage 2's scope:** typed addressing on interfaces, service objects, constraint-level merge-conflict analysis.
 
 ## Project

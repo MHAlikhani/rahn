@@ -17,3 +17,4 @@ rahn-state = { workspace = true }
 rahn-store = { workspace = true }
 rahn-verify = { workspace = true }
 rahn-sim = { workspace = true }
+rahn-exec = { workspace = true }

@@ -4,6 +4,27 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.3.0-alpha] — Stage 3: Isolated Linux Execution
+
+### Added
+- **`rahn-exec` crate (ADR 0012):** pure, deterministic mapping from
+  execution plans to iproute2 (`ip`) commands; nodes become network
+  namespaces (`rahn-<node>`), interfaces become dummy interfaces, links
+  become veth pairs with deterministic IFNAMSIZ-safe names.
+- **Opt-in real execution:** `rahn apply <ref> --execute --yes-i-know`
+  (Linux + root only; refuses elsewhere); `rahn destroy --yes-i-know
+  <ref>` for teardown/recovery. Default remains simulation: `apply`
+  prints the exact command sequence.
+- **Structural host-safety invariant** (test-enforced): host-side
+  operations limited to `ip netns add/del rahn-*`; all link/interface
+  mutations namespace-scoped.
+- CI job running the real-execution integration test on ubuntu with
+  sudo. Stage report: `docs/research/stages/v0.3.md`.
+
+### Compatibility
+- No canonical-format change. The namespace backend requires Linux,
+  iproute2, and root (CAP_SYS_ADMIN).
+
 ## [0.2.0-alpha] — Stage 2: Network Graph Foundation
 
 ### Added

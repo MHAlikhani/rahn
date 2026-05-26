@@ -73,7 +73,12 @@ pub fn run(dir: &Path, command: Command) -> Result<String, CliError> {
         Command::Verify => verify_cmd(dir),
         Command::Log => log_cmd(dir),
         Command::Inspect { name } => inspect_cmd(dir, name),
-        Command::Apply { name } => apply_cmd(dir, name),
+        Command::Apply {
+            name,
+            execute,
+            yes_i_know,
+        } => apply_cmd(dir, name, execute, yes_i_know),
+        Command::Destroy { name, yes_i_know } => destroy_cmd(dir, name, yes_i_know),
     }
 }
 
@@ -564,7 +569,12 @@ fn inspect_cmd(dir: &Path, name: String) -> Result<String, CliError> {
     Ok(out)
 }
 
-fn apply_cmd(dir: &Path, name: String) -> Result<String, CliError> {
+fn apply_cmd(
+    dir: &Path,
+    name: String,
+    execute: bool,
+    _yes_i_know: bool,
+) -> Result<String, CliError> {
     let store = open_repo(dir)?;
     let target_commit = resolve_commit(&store, &name)?;
     let target = state_of_commit(&store, target_commit)?;
@@ -572,8 +582,72 @@ fn apply_cmd(dir: &Path, name: String) -> Result<String, CliError> {
         Some(id) => state_of_commit(&store, id)?,
         None => State::empty(),
     };
-    let plan = rahn_sim::plan(&current.network, &target.network);
-    Ok(format!("target: {}\n{plan}", name))
+    let cmds = rahn_exec::commands_for(&current.network, &target.network)
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+    if !execute {
+        let mut out = format!(
+            "target: {}
+",
+            name
+        );
+        if cmds.is_empty() {
+            out.push_str(
+                "Execution plan: (no changes)
+",
+            );
+        } else {
+            out.push_str(&format!(
+                "Execution plan ({} command(s)):
+",
+                cmds.len()
+            ));
+            for (i, c) in cmds.iter().enumerate() {
+                out.push_str(&format!(
+                    "  {}. {c}
+",
+                    i + 1
+                ));
+            }
+            out.push_str(
+                "(simulation only — pass --execute --yes-i-know to run against Linux namespaces)
+",
+            );
+        }
+        return Ok(out);
+    }
+    // Real execution: Linux only (ADR 0012).
+    if !cfg!(target_os = "linux") {
+        return Err(CliError::Runtime(
+            "execution requires Linux (this build/platform refuses; ADR 0012)".into(),
+        ));
+    }
+    match rahn_exec::execute(&cmds) {
+        Ok(n) => Ok(format!(
+            "executed {n} command(s) against network namespaces (destroy with: rahn destroy --yes-i-know {name})"
+        )),
+        Err((pos, e)) => Err(CliError::Runtime(format!(
+            "execution failed at command {pos}: {e}
+recover with: rahn destroy --yes-i-know {name}"
+        ))),
+    }
+}
+
+fn destroy_cmd(dir: &Path, name: String, _yes_i_know: bool) -> Result<String, CliError> {
+    let store = open_repo(dir)?;
+    let commit = resolve_commit(&store, &name)?;
+    let state = state_of_commit(&store, commit)?;
+    let cmds = rahn_exec::destroy_commands(&state.network);
+    if !cfg!(target_os = "linux") {
+        return Err(CliError::Runtime(
+            "destroy requires Linux (this build/platform refuses; ADR 0012)".into(),
+        ));
+    }
+    match rahn_exec::execute(&cmds) {
+        Ok(n) => Ok(format!("destroyed {n} namespace(s) for {name}")),
+        Err((pos, e)) => Err(CliError::Runtime(format!(
+            "destroy failed at command {pos}: {e}"
+        ))),
+    }
 }
 
 /// Exposed for integration tests: run and get the exit code semantic.

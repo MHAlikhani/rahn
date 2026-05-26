@@ -32,6 +32,26 @@ jobs:
       - name: Test
         run: cargo test --all-features
 
+  linux-execution:
+    name: Real namespace execution (ADR 0012)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Verify iproute2 present
+        run: ip netns list
+      - name: Execute isolated topology (requires root for netns)
+        # sudo switches HOME, so point rustup/cargo at the runner's
+        # installation explicitly instead of overriding HOME.
+        run: |
+          sudo env RUSTUP_HOME="$HOME/.rustup" CARGO_HOME="$HOME/.cargo"             PATH="$PATH" CARGO_TERM_COLOR=always CARGO_TARGET_DIR=target/root             $(which cargo) test -p rahn-exec --test linux_real -- --ignored --nocapture
+      - name: Return root-owned build artifacts (if any)
+        if: failure() || success()
+        run: sudo chown -R $(id -u):$(id -g) target || true
+      - name: Safety unit tests (host-safety invariant)
+        run: cargo test -p rahn-exec
+
   license-check:
     name: License and documentation checks
     runs-on: ubuntu-latest

@@ -104,13 +104,20 @@ fn full_lifecycle_init_commit_branch_diff_verify_apply_log() {
     assert!(out.contains("add_interface d/eth0"), "{out}");
     assert!(out.contains("add_link c/eth0 d/eth0"), "{out}");
 
-    // Simulated apply: prints a plan, touches nothing.
+    // Simulated apply: prints the exact namespace commands, touches nothing.
     let out = ok(&dir, &["apply", "experiment"]);
-    assert!(out.contains("Execution plan:"), "{out}");
-    assert!(out.contains("remove node d"), "{out}");
-    // Interface removals subsumed by node removal must NOT appear.
-    assert!(!out.contains("remove interface d/eth0"), "{out}");
+    assert!(out.contains("Execution plan (2 command(s))"), "{out}");
+    assert!(out.contains("ip -n rahn-c link del"), "{out}");
+    assert!(out.contains("ip netns del rahn-d"), "{out}");
     assert!(out.contains("simulation only"), "{out}");
+    // Interface removals subsumed by node removal must NOT appear.
+    assert!(!out.contains("interface"), "{out}");
+    // Opt-in gating: --execute without --yes-i-know is a usage error.
+    let argv: Vec<String> = ["apply", "experiment", "--execute"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    assert!(rahn_cli::parse(&argv).is_err());
 
     // Apply is purely observational: state unchanged.
     let out = ok(&dir, &["state"]);

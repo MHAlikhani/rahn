@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.2.0-alpha"
+version = "0.3.0-alpha"
 edition = "2021"
 license = "Apache-2.0"
 repository = "https://github.com/MHAlikhani/rahn"
@@ -15,4 +15,5 @@ rahn-state = { path = "crates/rahn-state" }
 rahn-store = { path = "crates/rahn-store" }
 rahn-verify = { path = "crates/rahn-verify" }
 rahn-sim = { path = "crates/rahn-sim" }
+rahn-exec = { path = "crates/rahn-exec" }
 sha2 = { version = "0.10", default-features = false }
