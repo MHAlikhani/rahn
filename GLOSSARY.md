@@ -22,7 +22,7 @@ Canonical terminology. Terms are defined here first; implementation and docs mus
 - **Causal relation** — a directed edge asserting that one event/transition contributed to another.
 - **Replay / time travel** — reconstruction of network state (and associated observations) as of an earlier point, from immutable history.
 - **Execution plan** — the explicit sequence of low-level actions that would realize a transition on a real network. Produced for every transition; inspected in simulation.
-- **Execution backend** — an adapter that executes a plan against a substrate (simulation in v0.1; Linux namespaces later). Separated from state representation.
+- **Execution backend** — an adapter that executes a plan against a substrate. Implemented: the Linux namespace backend (ADR 0012; `rahn-exec`); simulation (plan printing) remains the default. Separated from state representation.
 - **Simulation** — execution of a plan against a model, with no effect on the host or real network.
 - **Provenance** — the recorded linkage from any network behavior or state to the transition that produced it.
 - **Interface** — a named attachment point owned by a node (ADR 0011). Links connect interfaces; interfaces carry metadata and participate in identity, diff, merge, and verification.

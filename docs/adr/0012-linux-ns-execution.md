@@ -17,7 +17,7 @@ Stage 3 (charter) is the first real-network interaction: instantiate an abstract
 
 ## Decision
 
-1. New crate **`rahn-exec`**: pure mapping from an [`ExecutionPlan`](rahn-sim) to an ordered list of `ip`-command argv vectors. No I/O in the mapping — fully deterministic and testable on any OS.
+1. New crate **`rahn-exec`**: pure mapping from an `rahn-sim` execution plans to an ordered list of `ip`-command argv vectors. No I/O in the mapping — fully deterministic and testable on any OS.
 2. **Naming rules (deterministic):** namespace per node = `rahn-<node-id>`; veth interface per link endpoint = `"r" + 7 lowercase hex chars of SHA-256(endpoint string)`, satisfying IFNAMSIZ (≤15) and collision resistance; loopback raised in every created namespace.
 3. **Per-link topology:** one veth pair per link; first end created inside namespace A, peer moved into namespace B (`ip link set ... netns`); both ends raised. Nodes map to namespaces; interfaces map to `dummy` interfaces inside the node's namespace.
 4. **Opt-in gating (structural):** `rahn apply <ref> --execute` requires `--yes-i-know` in the same invocation; non-Linux platforms refuse at runtime; the dry run (default) prints the exact argv sequence. Execution stops at the first failing command with its position in the plan.

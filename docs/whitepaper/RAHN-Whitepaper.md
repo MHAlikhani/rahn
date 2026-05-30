@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-05-17. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-05-30. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -90,7 +90,7 @@ The survey distinguishes **existing work**, **related work**, **RAHN-specific id
 1. Determinism first: same inputs → same states, ids, verdicts. **[Implemented, test-enforced]**
 2. Explicit state transitions as the only way state changes. **[Implemented]**
 3. Immutable, content-addressed history. **[Implemented]**
-4. Verify before execute, structurally enforced. **[Implemented at the commit/merge boundary; execution is simulation-only]**
+4. Verify before execute, structurally enforced. **[Implemented at the commit/merge boundary and at the execution gate]**
 5. No network side effects by default; safest mode is read-only/simulated. **[Implemented]**
 6. No AI in the core; the system is complete without it. **[Held by design]**
 7. Explainability of failures, diffs, and verification results. **[Implemented for v0.1 scope]**
@@ -158,7 +158,7 @@ Committed states are immutable and content-addressed, so *state* reconstruction 
 
 ## 19. Execution Architecture **[Implemented for simulation; backends Proposed]**
 
-Execution is separated from representation through an explicit, inspectable **execution plan** (dependency-safe ordering: removals before additions). v0.1 is **simulation-only**: `rahn apply` prints the plan and touches nothing — enforced by architecture (no execution backend exists) and by tests. The first real backend target is isolated Linux network namespaces (Stage 3), with explicit opt-in execution, never silent host modification. **[Proposed]**
+Execution is separated from representation through an explicit, inspectable **execution plan** (dependency-safe ordering: removals before additions). The default remains **simulation**: `rahn apply` prints the exact command sequence and performs no I/O. The first real backend (v0.3, ADR 0012) maps plans deterministically to iproute2 commands: nodes become network namespaces (`rahn-<node>`), interfaces become dummy interfaces, links become veth pairs with deterministic IFNAMSIZ-safe names. Real execution requires `--execute --yes-i-know`, Linux, and root; host-side operations are structurally restricted to `rahn-*` namespaces (test-enforced); `rahn destroy --yes-i-know` is the recovery path. **[Implemented; validated on Linux CI for a 2-node scenario]** No addressing exists, so connectivity is link-existence only. **[Future]**
 
 ## 20. Security
 
@@ -178,7 +178,7 @@ AI may propose (diagnosis, ranking, candidate transitions); the deterministic ve
 
 ## 24. Prototype Architecture **[Implemented]**
 
-Rust workspace (v0.2.0-alpha): `rahn-core` (object model: nodes, interfaces, interface-endpoint links), `rahn-state` (canonicalization v2, identity, transitions, semantic diff, graph queries, commits, history), `rahn-store` (content-addressed store, refs, index), `rahn-verify` (constitution incl. isolation requirements, invariants, fail-closed merge), `rahn-sim` (plans), `rahn-cli` (the `rahn` binary). Single third-party dependency (`sha2`, Apache-2.0 OR MIT), recorded in docs/third-party.md. Repository layout: `.rahn/{objects,refs,HEAD,index,constitution}`.
+Rust workspace (v0.3.0-alpha): `rahn-core` (object model: nodes, interfaces, interface-endpoint links), `rahn-state` (canonicalization v2, identity, transitions, semantic diff, graph queries, commits, history), `rahn-store` (content-addressed store, refs, index), `rahn-verify` (constitution incl. isolation requirements, invariants, fail-closed merge), `rahn-sim` (plans), `rahn-exec` (Linux namespace backend, ADR 0012), `rahn-cli` (the `rahn` binary). Single third-party dependency (`sha2`, Apache-2.0 OR MIT), recorded in docs/third-party.md. Repository layout: `.rahn/{objects,refs,HEAD,index,constitution}`.
 
 ## 25. v0.1 Implementation **[Implemented]**
 
@@ -192,11 +192,13 @@ No experiments have been run yet; the methodology is pre-registered in docs/rese
 
 The first measurement-kind evidence exists as of Stage 2 (v0.2.0-alpha): scaling timings for state construction, canonical serialization, identity hashing, diff, verification, and shortest-path on ring topologies of 10 to 100 000 nodes, recorded with environment and methodology in [docs/research/stages/v0.2.md](../research/stages/v0.2.md). Headline scoped observations: serialization and identity hashing remain in the low milliseconds at 10⁵ objects; verification of the structural invariant floor over 10⁵ links costs ~100 ms (single machine, release build). These are baseline measurements of one workload on one machine — not performance claims, and not yet reproducible cross-machine.
 
+Stage 3 added the first **plan/observation differential evidence** (E6, partial): on Linux CI, the real-execution test instantiates a 2-node/1-link topology in network namespaces and asserts the observed namespace state (`ip netns list`, `ip -n rahn-a link show`) contains the planned objects, then asserts complete teardown. No plan/observation mismatches were observed in this scenario. Scoped strictly: one scenario, link-level connectivity, no addressing or traffic. [Experimental — CI-validated]
+
 Previously this section read: **None — no benchmark or controlled experiment had been conducted.** What existed was test evidence (docs/testing.md): deterministic identity across runs and platforms, canonical round-trip exactness, corrupted-state refusal, fail-closed merge behavior, verification gating. Test evidence demonstrates *behavior under the tested conditions*; it is not a performance or effectiveness result. This section will report experiment outcomes with full methodology or state that none exist — it will never be padded.
 
 ## 28. Limitations
 
-1. **Partial model of reality.** Real networks contain state RAHN does not model; divergence between modeled and real state is expected and is why execution stays simulation-only until the model can perceive what it would change.
+1. **Partial model of reality.** Real networks contain state RAHN does not model; divergence between modeled and real state is expected — which is why real execution is isolated to fresh namespaces, is opt-in, and stays limited to what the model perceives (link-level; no addressing yet).
 2. **Verification completeness.** "Verified" covers only encoded invariants; unencoded failure modes pass.
 3. **Merge incompleteness.** Semantic conflict detection cannot be complete; fail-closed trades false rejections for no false accepts; the false-rejection rate is unmeasured.
 4. **Determinism costs** CPU and storage; immutable history grows without pruning (deferred deliberately).
@@ -239,3 +241,4 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 | v0.1 | 2026-04-15 | Structured outline; no claims | Project bootstrap (Stage 0) |
 | v0.2 | 2026-04-24 | Full initial draft; claim-status markers throughout; §27 states explicitly that no measurements exist; scoped novelty statement | Post-v0.1 hardening milestone (Stage 1); first implementation exists, test-grade evidence available |
 | v0.3 | 2026-05-08 | Interface-based state model (ADR 0011) reflected in §10/§12/§13; graph queries and isolation constraints in §13; first scaling measurements in §27 (single-machine, methodology recorded) | Stage 2 (v0.2.0-alpha) |
+| v0.4 | 2026-05-30 | §19 updated: namespace execution backend implemented (ADR 0012), simulation remains default; §24 adds rahn-exec; §27 gains first E6 differential evidence (CI, 2-node scenario); §28 limitation 1 reworded | Stage 3 (v0.3.0-alpha) |

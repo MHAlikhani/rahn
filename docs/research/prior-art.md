@@ -65,7 +65,7 @@ For every major system: problem solved, abstraction, strengths, limitations, ove
 - **Strengths:** global view; programmatic control; mature southbound abstractions.
 - **Limitations:** the "global view" is operational, mutable, and history-poor; no content-addressed state; no semantic branching/merging; no constitution of invariants governing all states.
 - **Overlap:** network state as a first-class controller artifact.
-- **Differences:** SDN is execution-first; RAHN is state-semantics-first and simulation-only until Stage 3.
+- **Differences:** SDN is execution-first; RAHN is state-semantics-first — simulation by default, with isolated namespace execution as explicit opt-in since v0.3.
 - **Integration:** an SDN controller could be an execution backend consuming verified RAHN plans.
 - **Conflicts:** RAHN must not become a controller clone (charter §3).
 
