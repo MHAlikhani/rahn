@@ -68,6 +68,15 @@ pub enum Command {
         name: String,
         yes_i_know: bool,
     },
+    Observe {
+        subject: String,
+        metric: String,
+        value: String,
+        at_ns: u64,
+    },
+    Observations {
+        filter: Option<String>,
+    },
 }
 
 pub const USAGE: &str = r#"rahn — a stateful execution architecture for evolving networks (v0.3; simulation-only by default, isolated Linux namespaces with explicit opt-in)
@@ -92,6 +101,8 @@ USAGE:
     rahn inspect <branch-or-commit-id>
     rahn apply [--execute --yes-i-know] <branch-or-commit-id>
     rahn destroy --yes-i-know <branch-or-commit-id>
+    rahn observe <node|node/iface> <metric> counter:<u64>|gauge:<i64>|event:<text> --at <unix-ns>
+    rahn observations [<subject-filter>]
 
 REFS: a branch name or a full 64-character commit id.
 ENDPOINTS: node/interface pairs (e.g. web/eth0).
@@ -342,6 +353,47 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
             }
             Ok(Command::Destroy { name, yes_i_know })
         }
+        "observe" => {
+            let subject = next(&mut it, "observe <subject> <metric> <value> --at <ns>")?;
+            let metric = next(&mut it, "observe <subject> <metric> <value> --at <ns>")?;
+            let value = next(&mut it, "observe <subject> <metric> <value> --at <ns>")?;
+            let mut at_ns = None;
+            while let Some(arg) = it.next() {
+                if arg == "--at" {
+                    if at_ns.is_some() {
+                        return Err(format!("--at given twice\n\n{USAGE}"));
+                    }
+                    let v = next(&mut it, "--at <unix-ns>")?;
+                    at_ns = Some(v.parse::<u64>().map_err(|_| {
+                        format!(
+                            "--at must be an unsigned integer (nanoseconds), got {v:?}\n\n{USAGE}"
+                        )
+                    })?);
+                } else {
+                    return Err(format!("unknown observe argument {arg:?}\n\n{USAGE}"));
+                }
+            }
+            let at_ns = at_ns.ok_or_else(|| {
+                format!(
+                    "observe requires --at <unix-ns> (deterministic ingest; ADR 0013)\n\n{USAGE}"
+                )
+            })?;
+            Ok(Command::Observe {
+                subject,
+                metric,
+                value,
+                at_ns,
+            })
+        }
+        "observations" => match it.next() {
+            None => Ok(Command::Observations { filter: None }),
+            Some(f) => {
+                expect_end(&mut it, "observations")?;
+                Ok(Command::Observations {
+                    filter: Some(f.clone()),
+                })
+            }
+        },
         other => Err(format!("unknown subcommand {other:?}\n\n{USAGE}")),
     }
 }

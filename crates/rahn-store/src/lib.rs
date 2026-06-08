@@ -270,6 +270,17 @@ impl Store {
         Ok(fs::write(self.root.join("index"), canonical_bytes(state))?)
     }
 
+    // -- observations (append-only log; model belongs to rahn-state) -------
+
+    pub fn observations(&self) -> Result<rahn_state::obs::log::ObsLog, StoreError> {
+        rahn_state::obs::log::ObsLog::open(&self.root).map_err(|e| {
+            StoreError::Malformed(CanonicalError {
+                message: e.to_string(),
+                offset: 0,
+            })
+        })
+    }
+
     // -- constitution (raw text; parsing belongs to rahn-verify) ------------
 
     pub fn load_constitution_text(&self) -> Result<String, StoreError> {

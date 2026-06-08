@@ -357,3 +357,61 @@ fn determinism_same_commands_same_commit_ids() {
     // produce identical ids (timestamps/hosts must not leak in).
     assert_eq!(a, b, "identical histories must produce identical commits");
 }
+
+#[test]
+fn observation_ingest_listing_and_determinism() {
+    let run_once = |tag: &str| {
+        let dir = temp_repo(tag);
+        ok(&dir, &["init"]);
+        ok(&dir, &["node", "add", "a"]);
+        ok(&dir, &["interface", "add", "a", "eth0"]);
+        ok(&dir, &["commit", "-m", "base"]);
+        ok(
+            &dir,
+            &[
+                "observe",
+                "a",
+                "latency_ns",
+                "counter:1500",
+                "--at",
+                "1000000000",
+            ],
+        );
+        ok(
+            &dir,
+            &[
+                "observe",
+                "a/eth0",
+                "link_up",
+                "event:link up",
+                "--at",
+                "1000000001",
+            ],
+        );
+        // Provenance association: unknown subject rejected.
+        let err = fail(&dir, &["observe", "ghost", "x", "counter:1", "--at", "1"]);
+        assert!(err.contains("does not exist"), "{err}");
+        // Malformed value and missing timestamp rejected.
+        assert!(fail(&dir, &["observe", "a", "m", "counter:abc", "--at", "1"]).contains("u64"));
+        // Missing --at is a usage error (caught at parse level).
+        let argv: Vec<String> = ["observe", "a", "m", "counter:5"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        assert!(rahn_cli::parse(&argv).unwrap_err().contains("--at"));
+        let out = ok(&dir, &["observations"]);
+        assert!(out.contains("counter:1500"), "{out}");
+        assert!(out.contains("event:link up"), "{out}");
+        // Filtered by node.
+        let out = ok(&dir, &["observations", "a"]);
+        assert_eq!(out.lines().count(), 3, "{out}");
+        let log = std::fs::read(dir.join(".rahn/observations.log")).unwrap();
+        std::fs::remove_dir_all(&dir).ok();
+        log
+    };
+    let a = run_once("obs-a");
+    let b = run_once("obs-b");
+    // Deterministic ingest: identical command sequences produce
+    // byte-identical observation logs (caller-supplied time, positional seq).
+    assert_eq!(a, b, "observation logs must be deterministic");
+}

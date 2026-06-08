@@ -79,6 +79,13 @@ pub fn run(dir: &Path, command: Command) -> Result<String, CliError> {
             yes_i_know,
         } => apply_cmd(dir, name, execute, yes_i_know),
         Command::Destroy { name, yes_i_know } => destroy_cmd(dir, name, yes_i_know),
+        Command::Observe {
+            subject,
+            metric,
+            value,
+            at_ns,
+        } => observe_cmd(dir, subject, metric, value, at_ns),
+        Command::Observations { filter } => observations_cmd(dir, filter),
     }
 }
 
@@ -648,6 +655,115 @@ fn destroy_cmd(dir: &Path, name: String, _yes_i_know: bool) -> Result<String, Cl
             "destroy failed at command {pos}: {e}"
         ))),
     }
+}
+
+/// Ingest one observation (ADR 0013).
+///
+/// Deterministic ingest: the caller supplies the timestamp; `seq` is the
+/// existing record count; the subject is validated against the current
+/// HEAD state (provenance) and recorded with it.
+fn observe_cmd(
+    dir: &Path,
+    subject: String,
+    metric: String,
+    value: String,
+    at_ns: u64,
+) -> Result<String, CliError> {
+    let store = open_repo(dir)?;
+    let subj =
+        rahn_state::obs::Subject::parse(&subject).map_err(|e| CliError::Runtime(e.to_string()))?;
+    let parsed_value = parse_value(&value)?;
+    // Provenance: validate against HEAD state (or empty before first commit).
+    let head_state = match head_commit(&store)? {
+        Some(id) => state_of_commit(&store, id)?,
+        None => State::empty(),
+    };
+    if !subj.exists_in(&head_state.network) {
+        return Err(CliError::Runtime(
+            rahn_state::obs::ObsError::UnknownSubject {
+                subject: subj.to_string(),
+            }
+            .to_string(),
+        ));
+    }
+    let state_ref = head_commit(&store)?
+        .expect("subject exists implies HEAD")
+        .as_hex();
+    let seq = store
+        .observations()?
+        .len()
+        .map_err(|e| CliError::Runtime(e.to_string()))? as u64;
+    let o = rahn_state::obs::Observation::new(seq, at_ns, state_ref, subj, &metric, parsed_value)
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+    store
+        .observations()?
+        .append(&o)
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+    Ok(format!(
+        "observed seq={} at={}ns {} {} {} (state {})",
+        o.seq,
+        o.time_ns,
+        o.subject,
+        o.metric,
+        o.value,
+        &o.state_ref[..12]
+    ))
+}
+
+fn parse_value(s: &str) -> Result<rahn_state::obs::Value, CliError> {
+    use rahn_state::obs::Value;
+    let (kind, rest) = s.split_once(':').ok_or_else(|| {
+        CliError::Runtime("value must be counter:<u64>, gauge:<i64>, or event:<text>".into())
+    })?;
+    match kind {
+        "counter" => Ok(Value::Counter(rest.parse::<u64>().map_err(|_| {
+            CliError::Runtime(format!("counter value must be u64, got {rest:?}"))
+        })?)),
+        "gauge" => Ok(Value::Gauge(rest.parse::<i64>().map_err(|_| {
+            CliError::Runtime(format!("gauge value must be i64, got {rest:?}"))
+        })?)),
+        "event" => Ok(Value::Event(rest.to_owned())),
+        other => Err(CliError::Runtime(format!(
+            "unknown value kind {other:?} (expected counter|gauge|event)"
+        ))),
+    }
+}
+
+/// List observations, newest last; machine-readable TSV.
+fn observations_cmd(dir: &Path, filter: Option<String>) -> Result<String, CliError> {
+    let store = open_repo(dir)?;
+    let all = store
+        .observations()?
+        .read_all()
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+    let mut sorted = all;
+    sorted.sort_by_key(rahn_state::obs::order_key);
+    let mut out = String::from(
+        "seq	time_ns	subject	metric	value	state
+",
+    );
+    for o in sorted {
+        if let Some(f) = &filter {
+            let matches = match &o.subject {
+                rahn_state::obs::Subject::Node(id) => id == f,
+                rahn_state::obs::Subject::Interface { node, .. } => node == f,
+            };
+            if !matches {
+                continue;
+            }
+        }
+        out.push_str(&format!(
+            "{}	{}	{}	{}	{}	{}
+",
+            o.seq,
+            o.time_ns,
+            o.subject,
+            o.metric,
+            o.value,
+            &o.state_ref[..12]
+        ));
+    }
+    Ok(out)
 }
 
 /// Exposed for integration tests: run and get the exit code semantic.
