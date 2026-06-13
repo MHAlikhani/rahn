@@ -17,7 +17,7 @@ Canonical terminology. Terms are defined here first; implementation and docs mus
 - **Branch** — a lightweight reference to a state, from which alternative evolution proceeds. Not a copy of state data.
 - **Merge** — combination of two branches of state evolution. Network-aware and semantic: conflicting constraints/infeasible combinations are detected and explained; never a textual merge.
 - **Diff** — a semantic comparison of two states (objects added/removed/changed), not a text diff.
-- **Observation** — a measurement or event associated with a state or transition (health, latency, statistics).
+- **Observation** — an immutable, structured record `{seq, time_ns, subject, metric, value}` (ADR 0013) associated with a validated state; subjects are nodes/interfaces; values are exact integers or bounded event text; ordering is `(time_ns, seq)`; timestamps are caller-supplied.
 - **Causal memory / causal graph** — the graph linking observations, events, and state transitions so that "what changed and why" is answerable. Not a metrics graph.
 - **Causal relation** — a directed edge asserting that one event/transition contributed to another.
 - **Replay / time travel** — reconstruction of network state (and associated observations) as of an earlier point, from immutable history.

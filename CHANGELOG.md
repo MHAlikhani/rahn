@@ -4,6 +4,29 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.4.0-alpha] — Stage 4: Observability
+
+### Added
+- **Deterministic observation model (ADR 0013, `rahn-state::obs`):**
+  `Observation {seq, time_ns, subject, metric, value}`; exact
+  float-free values (counter/gauge/event); caller-supplied timestamps;
+  positional `seq`; `(time_ns, seq)` total ordering; strict canonical
+  parsing with loud malformed-input rejection.
+- **Append-only observation log** (`.rahn/observations.log`) with
+  versioned framing; corruption refused loudly, never repaired.
+- **Provenance:** every record validated against and tagged with the
+  HEAD state id; unknown subjects rejected at ingest.
+- CLI: `rahn observe ... --at <unix-ns>`, `rahn observations [filter]`
+  (deterministic TSV output).
+- Ingestion benchmark harness (`obs_scaling`); results and methodology
+  in `docs/research/stages/v0.4.md` (per-append open+flush dominates:
+  ~144 µs/append — recorded as known performance debt).
+- Stage report: `docs/research/stages/v0.4.md`.
+
+### Compatibility
+- No canonical-format change for states; the observation log is a new,
+  separate artifact with its own versioned framing.
+
 ## [0.3.0-alpha] — Stage 3: Isolated Linux Execution
 
 ### Added

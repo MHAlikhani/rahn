@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-05-30. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-06-13. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -144,9 +144,11 @@ Deterministic checking with fixed evaluation order, no environment dependence, a
 
 Evolution is a commit DAG; branches are refs to commit records (which immutably name states and parents). Diff is semantic (object-level). Merge is three-way over state semantics (ADR 0007): each side's object-level effects (with content) are computed against the common ancestor; both sides touching an object merges only when their effects are provably identical; anything else — including ambiguous identical additions and application-order hazards — fails closed with an explanation. Merged candidates pass the normal verification gate. Property tests assert merge commutativity for disjoint effects over random networks.
 
-## 16. Observation **[Future — Stage 4]**
+## 16. Observation **[Implemented — v0.4; ingestion measured]**
 
-Planned: observations (health, latency, statistics, events) as first-class objects linked to the states/transitions they concern; observation pipeline separated from decision-making. No observation machinery exists in v0.1; this section describes design intent only.
+Observation is a first-class record (ADR 0013): `{seq, time_ns, subject, metric, value}` with exact integer values (counter/gauge/event), **caller-supplied timestamps** (no implicit clocks — determinism holds end-to-end, test-enforced), positional sequence numbers, and `(time_ns, seq)` total ordering. Records are validated at ingest against the current HEAD state and carry that state id as provenance; unknown subjects are rejected. Storage is an append-only, versioned-framed log with loud corruption refusal. The CLI exposes `rahn observe` and machine-readable `rahn observations` output.
+
+**Scope:** measurement *records* only — no aggregation, no units system, no clock authority beyond the caller, and no causal semantics (§17 remains future). Ingestion is measured (§27): read/parse of 10⁵ records costs ~68 ms, but single-record append is ~144 µs (per-append file open+flush), recorded as known performance debt.
 
 ## 17. Causal Memory **[Future — Stage 5, core research]**
 
@@ -192,6 +194,8 @@ No experiments have been run yet; the methodology is pre-registered in docs/rese
 
 The first measurement-kind evidence exists as of Stage 2 (v0.2.0-alpha): scaling timings for state construction, canonical serialization, identity hashing, diff, verification, and shortest-path on ring topologies of 10 to 100 000 nodes, recorded with environment and methodology in [docs/research/stages/v0.2.md](../research/stages/v0.2.md). Headline scoped observations: serialization and identity hashing remain in the low milliseconds at 10⁵ objects; verification of the structural invariant floor over 10⁵ links costs ~100 ms (single machine, release build). These are baseline measurements of one workload on one machine — not performance claims, and not yet reproducible cross-machine.
 
+Stage 4 added **observation ingestion measurements** (E-obs): encoding+appending 10⁵ records costs ~25.8 s (~3 878 rec/s; ~144 µs single-append median, dominated by per-append file open+flush — recorded as debt); full read+parse of 10⁵ records costs ~68 ms; storage ≈156.5 B/record. Single machine, medians, methodology in [docs/research/stages/v0.4.md](../research/stages/v0.4.md). [Measured]
+
 Stage 3 added the first **plan/observation differential evidence** (E6, partial): on Linux CI, the real-execution test instantiates a 2-node/1-link topology in network namespaces and asserts the observed namespace state (`ip netns list`, `ip -n rahn-a link show`) contains the planned objects, then asserts complete teardown. No plan/observation mismatches were observed in this scenario. Scoped strictly: one scenario, link-level connectivity, no addressing or traffic. [Experimental — CI-validated]
 
 Previously this section read: **None — no benchmark or controlled experiment had been conducted.** What existed was test evidence (docs/testing.md): deterministic identity across runs and platforms, canonical round-trip exactness, corrupted-state refusal, fail-closed merge behavior, verification gating. Test evidence demonstrates *behavior under the tested conditions*; it is not a performance or effectiveness result. This section will report experiment outcomes with full methodology or state that none exist — it will never be padded.
@@ -206,7 +210,7 @@ Previously this section read: **None — no benchmark or controlled experiment h
 6. **Single-writer, local-only** through Stage 5.
 7. **Ergonomics tax** for explicitness; if it proves too high in practice, the project fails regardless of architectural soundness.
 8. **Limited measurement evidence.** The only measurements are the Stage 2 single-machine scaling baselines (§27); no cross-machine, no real-network, and no comparative measurements exist.
-9. **Transition-application cost (known performance debt, recorded).** Repeated operation application currently clones the whole network — roughly O(m·n) for m batched operations on an n-object network. Acceptable at measured scales (§27); a copy-on-write or batched-apply design would require its own ADR and has deliberately not been attempted.
+9. **Transition-application cost (known performance debt, recorded).** Repeated operation application currently clones the whole network — roughly O(m·n) for m batched operations on an n-object network. (b) observation ingestion is dominated by per-append file open+flush (~144 µs). Both are acceptable at measured scales (§27); copy-on-write, batched-apply, or buffered-writer designs would require their own ADRs and have deliberately not been attempted.
 
 Full list with reasoning: docs/research/limitations.md.
 
@@ -242,3 +246,4 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 | v0.2 | 2026-04-24 | Full initial draft; claim-status markers throughout; §27 states explicitly that no measurements exist; scoped novelty statement | Post-v0.1 hardening milestone (Stage 1); first implementation exists, test-grade evidence available |
 | v0.3 | 2026-05-08 | Interface-based state model (ADR 0011) reflected in §10/§12/§13; graph queries and isolation constraints in §13; first scaling measurements in §27 (single-machine, methodology recorded) | Stage 2 (v0.2.0-alpha) |
 | v0.4 | 2026-05-30 | §19 updated: namespace execution backend implemented (ADR 0012), simulation remains default; §24 adds rahn-exec; §27 gains first E6 differential evidence (CI, 2-node scenario); §28 limitation 1 reworded | Stage 3 (v0.3.0-alpha) |
+| v0.5 | 2026-06-13 | §16 upgraded from [Future] to [Implemented]: deterministic observation model (ADR 0013) with ingestion measurements in §27; §17 causal memory remains [Future] with the observation log as its designated input | Stage 4 (v0.4.0-alpha) |

@@ -28,9 +28,9 @@ First point where RAHN touches real networking: isolated topologies inside Linux
 
 Success: RAHN can create and manipulate isolated Linux network topologies. **Achieved for the link-level model** (namespaces, veth, host-safety tests, CI-validated); addressing and traffic control remain future work.
 
-## Stage 4 — RAHN 0.4: observability
+## Stage 4 — RAHN 0.4: observability *(implemented in v0.4.0-alpha; see docs/research/stages/v0.4.md)*
 
-Network observations, events, health, latency, packet statistics, transition provenance. Begin connecting state ↔ observation.
+Network observations, events, health, latency, packet statistics, transition provenance. **Achieved:** observations are associated with states by validated provenance (state id per record). Causal interpretation remains Stage 5.
 
 ## Stage 5 — RAHN 0.5: causal memory
 
@@ -64,4 +64,4 @@ Success: RAHN provides a coherent, documented abstraction for representing and s
 
 ## Release honesty
 
-The current release is **`v0.3.0-alpha`** (isolated Linux execution: namespaces + veth via iproute2, explicit opt-in, structural host-safety guarantees; default remains simulation). Releases so far: `v0.1.0-alpha.1` (*"an experimental state engine for evolving network topologies"*), `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 4 — observability (v0.4).** The white paper matures with the evidence.
+The current release is **`v0.4.0-alpha`** (deterministic observations: state-associated, provenance-bearing, append-only log). Releases so far: `v0.1.0-alpha.1` (*"an experimental state engine for evolving network topologies"*), `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 5 — causal memory (v0.5).** The white paper matures with the evidence.
