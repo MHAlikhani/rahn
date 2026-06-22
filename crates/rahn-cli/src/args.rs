@@ -77,6 +77,15 @@ pub enum Command {
     Observations {
         filter: Option<String>,
     },
+    Relate {
+        from: String,
+        to: String,
+        status: String,
+        note: String,
+    },
+    Explain {
+        anchor: String,
+    },
 }
 
 pub const USAGE: &str = r#"rahn — a stateful execution architecture for evolving networks (v0.3; simulation-only by default, isolated Linux namespaces with explicit opt-in)
@@ -103,6 +112,8 @@ USAGE:
     rahn destroy --yes-i-know <branch-or-commit-id>
     rahn observe <node|node/iface> <metric> counter:<u64>|gauge:<i64>|event:<text> --at <unix-ns>
     rahn observations [<subject-filter>]
+    rahn relate <anchor> <anchor> temporal-correlation|hypothesis|verified --note <text>
+    rahn explain <anchor>
 
 REFS: a branch name or a full 64-character commit id.
 ENDPOINTS: node/interface pairs (e.g. web/eth0).
@@ -384,6 +395,41 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
                 value,
                 at_ns,
             })
+        }
+        "relate" => {
+            let from = next(&mut it, "relate <from> <to> <status> --note <text>")?;
+            let to = next(&mut it, "relate <from> <to> <status> --note <text>")?;
+            let status = next(&mut it, "relate <from> <to> <status> --note <text>")?;
+            let mut note = None;
+            while let Some(arg) = it.next() {
+                if arg == "--note" {
+                    if note.is_some() {
+                        return Err(format!(
+                            "--note given twice
+
+{USAGE}"
+                        ));
+                    }
+                    note = Some(next(&mut it, "--note <text>")?);
+                } else {
+                    return Err(format!(
+                        "unknown relate argument {arg:?}
+
+{USAGE}"
+                    ));
+                }
+            }
+            Ok(Command::Relate {
+                from,
+                to,
+                status,
+                note: note.unwrap_or_default(),
+            })
+        }
+        "explain" => {
+            let anchor = next(&mut it, "explain <anchor>")?;
+            expect_end(&mut it, "explain")?;
+            Ok(Command::Explain { anchor })
         }
         "observations" => match it.next() {
             None => Ok(Command::Observations { filter: None }),

@@ -86,6 +86,13 @@ pub fn run(dir: &Path, command: Command) -> Result<String, CliError> {
             at_ns,
         } => observe_cmd(dir, subject, metric, value, at_ns),
         Command::Observations { filter } => observations_cmd(dir, filter),
+        Command::Relate {
+            from,
+            to,
+            status,
+            note,
+        } => relate_cmd(dir, from, to, status, note),
+        Command::Explain { anchor } => explain_cmd(dir, anchor),
     }
 }
 
@@ -762,6 +769,114 @@ fn observations_cmd(dir: &Path, filter: Option<String>) -> Result<String, CliErr
             o.value,
             &o.state_ref[..12]
         ));
+    }
+    Ok(out)
+}
+
+/// Record an explicit causal edge (ADR 0014).
+fn relate_cmd(
+    dir: &Path,
+    from: String,
+    to: String,
+    status: String,
+    note: String,
+) -> Result<String, CliError> {
+    use rahn_state::causal::{anchor_exists, Anchor, Status};
+    let store = open_repo(dir)?;
+    let from_a = Anchor::parse(&from).map_err(|e| CliError::Runtime(e.to_string()))?;
+    let to_a = Anchor::parse(&to).map_err(|e| CliError::Runtime(e.to_string()))?;
+    let status = Status::parse(&status).map_err(|e| CliError::Runtime(e.to_string()))?;
+
+    // Anchor existence: observations from the log, commits from the store.
+    let obs_count = store
+        .observations()?
+        .len()
+        .map_err(|e| CliError::Runtime(e.to_string()))? as u64;
+    let commit_ok = |id: &[u8; 32]| {
+        CommitId::from_hex(&rahn_state::identity::StateId::from_bytes(*id).as_hex())
+            .map(|c| store.get_commit(c).unwrap_or(None).is_some())
+            .unwrap_or(false)
+    };
+    let graph = store
+        .causal()?
+        .load()
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+    graph
+        .check_insert(&from_a, &to_a, status, |a| {
+            anchor_exists(a, obs_count, commit_ok)
+        })
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+
+    let seq = graph.edges().len() as u64;
+    let edge = rahn_state::causal::CausalEdge::new(seq, from_a, to_a, status, note)
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+    store
+        .causal()?
+        .append(&edge)
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+    Ok(format!(
+        "related seq={} {} -> {} [{}]{}",
+        edge.seq,
+        edge.from,
+        edge.to,
+        edge.status.as_str(),
+        if edge.note.is_empty() {
+            String::new()
+        } else {
+            format!(" — {}", edge.note)
+        }
+    ))
+}
+
+/// Explain an anchor: its connected component with edge statuses. The
+/// output is asserted structure, not proven causality.
+fn explain_cmd(dir: &Path, anchor: String) -> Result<String, CliError> {
+    use rahn_state::causal::{anchor_exists, Anchor};
+    let store = open_repo(dir)?;
+    let a = Anchor::parse(&anchor).map_err(|e| CliError::Runtime(e.to_string()))?;
+    let obs_count = store
+        .observations()?
+        .len()
+        .map_err(|e| CliError::Runtime(e.to_string()))? as u64;
+    let commit_ok = |id: &[u8; 32]| {
+        CommitId::from_hex(&rahn_state::identity::StateId::from_bytes(*id).as_hex())
+            .map(|c| store.get_commit(c).unwrap_or(None).is_some())
+            .unwrap_or(false)
+    };
+    let graph = store
+        .causal()?
+        .load()
+        .map_err(|e| CliError::Runtime(e.to_string()))?;
+    if !anchor_exists(&a, obs_count, commit_ok) {
+        return Err(CliError::Runtime(
+            rahn_state::causal::CausalError::DanglingAnchor {
+                anchor: a.to_string(),
+            }
+            .to_string(),
+        ));
+    }
+    let component = graph.incident_around(&a);
+    let mut out = format!(
+        "incident around {} ({} anchor(s)) — asserted relations, statuses as recorded:
+",
+        a,
+        component.len()
+    );
+    for e in graph.edges() {
+        if component.contains(&e.from) && component.contains(&e.to) {
+            out.push_str(&format!(
+                "  {} -> {} [{}]{}
+",
+                e.from,
+                e.to,
+                e.status.as_str(),
+                if e.note.is_empty() {
+                    String::new()
+                } else {
+                    format!(" — {}", e.note)
+                }
+            ));
+        }
     }
     Ok(out)
 }

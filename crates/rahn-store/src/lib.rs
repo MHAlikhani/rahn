@@ -281,6 +281,17 @@ impl Store {
         })
     }
 
+    // -- causal log (append-only; model belongs to rahn-state) -------------
+
+    pub fn causal(&self) -> Result<rahn_state::causal_log::CausalLog, StoreError> {
+        rahn_state::causal_log::CausalLog::open(&self.root).map_err(|e| {
+            StoreError::Malformed(CanonicalError {
+                message: e.to_string(),
+                offset: 0,
+            })
+        })
+    }
+
     // -- constitution (raw text; parsing belongs to rahn-verify) ------------
 
     pub fn load_constitution_text(&self) -> Result<String, StoreError> {

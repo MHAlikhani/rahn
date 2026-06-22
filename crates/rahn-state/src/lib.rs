@@ -4,6 +4,8 @@
 //! transitions, semantic diff, and commit records for RAHN.
 
 pub mod canonical;
+pub mod causal;
+pub mod causal_log;
 pub mod commit;
 pub mod diff;
 pub mod graph;

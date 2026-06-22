@@ -415,3 +415,89 @@ fn observation_ingest_listing_and_determinism() {
     // byte-identical observation logs (caller-supplied time, positional seq).
     assert_eq!(a, b, "observation logs must be deterministic");
 }
+
+#[test]
+fn causal_edges_cycles_status_rules_and_explain() {
+    let run_once = |tag: &str| {
+        let dir = temp_repo(tag);
+        ok(&dir, &["init"]);
+        ok(&dir, &["node", "add", "a"]);
+        ok(&dir, &["commit", "-m", "base"]);
+        ok(&dir, &["observe", "a", "link_up", "event:up", "--at", "10"]);
+        ok(
+            &dir,
+            &["observe", "a", "latency_ns", "counter:99", "--at", "20"],
+        );
+        // Hypothesis edge between observations.
+        ok(
+            &dir,
+            &[
+                "relate",
+                "obs:0",
+                "obs:1",
+                "hypothesis",
+                "--note",
+                "up before latency",
+            ],
+        );
+        // Cycle rejected.
+        let err = fail(
+            &dir,
+            &["relate", "obs:1", "obs:0", "hypothesis", "--note", "x"],
+        );
+        assert!(err.contains("cycle"), "{err}");
+        // Verified requires commit anchors.
+        let err = fail(
+            &dir,
+            &["relate", "obs:0", "obs:1", "verified", "--note", "x"],
+        );
+        assert!(err.contains("Commit anchors"), "{err}");
+        // Dangling anchors rejected.
+        let err = fail(
+            &dir,
+            &["relate", "obs:0", "obs:42", "hypothesis", "--note", "x"],
+        );
+        assert!(err.contains("does not exist"), "{err}");
+        std::fs::remove_dir_all(&dir).ok();
+        let dir = temp_repo(tag);
+        ok(&dir, &["init"]);
+        ok(&dir, &["node", "add", "a"]);
+        ok(&dir, &["commit", "-m", "c1"]);
+        ok(&dir, &["node", "add", "b"]);
+        ok(&dir, &["commit", "-m", "c2"]);
+        let hex_of = |line: &str| {
+            line.split_whitespace()
+                .find(|t| t.len() == 64)
+                .unwrap()
+                .to_string()
+        };
+        let commit_lines: Vec<String> = ok(&dir, &["log"])
+            .lines()
+            .filter(|l| l.contains("commit "))
+            .map(|l| l.to_string())
+            .collect();
+        let c1 = hex_of(&commit_lines[1]); // oldest
+        let c2 = hex_of(&commit_lines[0]); // newest
+        ok(
+            &dir,
+            &[
+                "relate",
+                &format!("commit:{c1}"),
+                &format!("commit:{c2}"),
+                "verified",
+                "--note",
+                "c2 follows c1",
+            ],
+        );
+        // Explain shows the asserted structure.
+        let out = ok(&dir, &["explain", &format!("commit:{c1}")]);
+        assert!(out.contains("[verified]"), "{out}");
+        assert!(out.contains("c2 follows c1"), "{out}");
+        let log = std::fs::read(dir.join(".rahn/causal.log")).unwrap();
+        std::fs::remove_dir_all(&dir).ok();
+        log
+    };
+    let a = run_once("causal-a");
+    let b = run_once("causal-b");
+    assert_eq!(a, b, "causal logs must be deterministic");
+}

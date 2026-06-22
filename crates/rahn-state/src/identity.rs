@@ -26,6 +26,10 @@ impl StateId {
         hex_to_32(hex).map(Self)
     }
 
+    pub fn from_bytes(bytes: [u8; 32]) -> Self {
+        Self(bytes)
+    }
+
     pub fn as_hex(&self) -> String {
         to_hex(&self.0)
     }
