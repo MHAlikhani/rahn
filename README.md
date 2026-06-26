@@ -34,7 +34,7 @@ It is **not** "Git for networks". Git inspires certain concepts (immutable histo
 
 ## Status
 
-**v0.4.0-alpha — Stage 4: deterministic observability.**
+**v0.5.0-alpha — Stage 5: causal memory (asserted, status-labeled).**
 
 An experimental, deterministic state engine for evolving network topologies: interfaces and interface-addressed links, canonical serialization (format v2), content-addressed state identity, local persistence, explicit transitions, semantic diff, branches, fail-closed semantic merge, deterministic path discovery, isolation constraints, a deterministic invariant engine, verification-gated commits, and simulation-first execution. **By default `rahn apply` prints the exact commands and touches nothing**; real execution is explicit opt-in (`--execute --yes-i-know`): isolated Linux network namespaces + veth links via iproute2, with structural host-safety guarantees (ADR 0012) — Linux + root only, CI-validated.
 
@@ -61,11 +61,12 @@ The primary implementation language is **Rust**. Rust is an implementation choic
 - **Implemented (v0.2):** deterministic interface-based network graph (nodes, interfaces, interface-endpoint links), canonical serialization (format v2), content-addressed state identity, local content-addressed persistence, explicit transitions, semantic diff, branches with checkout, fail-closed semantic merge, deterministic graph queries (shortest path with lexicographic tie-break, reachability, neighbors, components), connectivity and isolation constraints, deterministic invariant engine, and verification-gated commits. Scaling evidence: [docs/research/stages/v0.2.md](docs/research/stages/v0.2.md).
 - **Implemented (v0.3, opt-in):** isolated Linux execution — network namespaces and veth links via iproute2, with structural host-safety guarantees (host-side operations limited to `rahn-*` namespaces), `--execute --yes-i-know` gating, and CI validation. The default remains simulation: `rahn apply` prints the exact commands and touches nothing.
 - **Implemented (v0.4):** deterministic observations — structured `Observation` records (counter/gauge/event; exact integer values) with caller-supplied timestamps, positional sequence numbers, append-only storage, `(time_ns, seq)` ordering, and validated state provenance per record; `rahn observe` / `rahn observations`. Ingestion evidence: [docs/research/stages/v0.4.md](docs/research/stages/v0.4.md).
-- **Not implemented (do not assume otherwise):** eBPF/XDP, P4, addressing, traffic control, causal memory (v0.5 is the next stage, not yet started), distributed state, AI, DSL.
-- **Next (Stage 5 / v0.5):** causal memory — causal hypotheses anchored in observations and transitions (see [ROADMAP.md](ROADMAP.md)).
+- **Implemented (v0.5):** causal memory — explicit causal edges between immutable anchors (observations, commits) with strict epistemic statuses (`temporal-correlation` / `hypothesis` / `verified` — the last only between commits); DAG enforcement; dangling-anchor rejection; `rahn relate` / `rahn explain` (incidents as connected components). **The system proves nothing about the world: edges are asserted, statuses are honest.** Evidence: [docs/research/stages/v0.5.md](docs/research/stages/v0.5.md).
+- **Not implemented (do not assume otherwise):** eBPF/XDP, P4, addressing, traffic control, causal *inference* (edges are asserted, not discovered), automatic edge extraction, distributed state, AI, DSL.
+- **Next (Stage 6 / v0.6):** distributed state — consistency requirements derived first (RQ7), mechanisms chosen after (see [ROADMAP.md](ROADMAP.md)).
 - **Deferred within Stage 2's scope:** typed addressing on interfaces, service objects, constraint-level merge-conflict analysis.
 
-**Current limitations:** no addressing (namespaces have links but no IPs — connectivity is link-existence only), no traffic control, no causal reasoning (only observation records exist), no distributed state; execution requires Linux, root, and iproute2, and is CI-validated for a minimal scenario; alpha-grade software with no production use.
+**Current limitations:** no addressing (namespaces have links but no IPs — connectivity is link-existence only), no traffic control, no automatic causal analysis (edges are human-asserted), no distributed state; execution requires Linux, root, and iproute2, and is CI-validated for a minimal scenario; alpha-grade software with no production use.
 
 ## Project
 

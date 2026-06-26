@@ -32,11 +32,9 @@ Success: RAHN can create and manipulate isolated Linux network topologies. **Ach
 
 Network observations, events, health, latency, packet statistics, transition provenance. **Achieved:** observations are associated with states by validated provenance (state id per record). Causal interpretation remains Stage 5.
 
-## Stage 5 — RAHN 0.5: causal memory
+## Stage 5 — RAHN 0.5: causal memory *(implemented in v0.5.0-alpha; see docs/research/stages/v0.5.md)*
 
-Causal events and edges; state-linked incidents; historical replay; incident reconstruction (`rahn explain`). Potential research milestone.
-
-Success: RAHN can connect network observations and historical state transitions.
+**Achieved:** causal edges between observations and commits with strict epistemic statuses (temporal-correlation / hypothesis / verified-with-Commits-only); DAG enforcement; `rahn relate` / `rahn explain`; incidents as connected components. Historical replay and narrative `explain <incident>` remain future work within/beyond this stage.
 
 ## Stage 6 — RAHN 0.6: distributed state
 
@@ -64,4 +62,4 @@ Success: RAHN provides a coherent, documented abstraction for representing and s
 
 ## Release honesty
 
-The current release is **`v0.4.0-alpha`** (deterministic observations: state-associated, provenance-bearing, append-only log). Releases so far: `v0.1.0-alpha.1` (*"an experimental state engine for evolving network topologies"*), `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 5 — causal memory (v0.5).** The white paper matures with the evidence.
+The current release is **`v0.5.0-alpha`** (causal memory: explicit, status-labeled causal edges over observations and commits; no inference). Releases so far: `v0.1.0-alpha.1` (*"an experimental state engine for evolving network topologies"*), `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 6 — distributed state (v0.6), requirements-first.** The white paper matures with the evidence.

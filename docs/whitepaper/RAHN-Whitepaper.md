@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-06-13. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-06-26. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -150,9 +150,11 @@ Observation is a first-class record (ADR 0013): `{seq, time_ns, subject, metric,
 
 **Scope:** measurement *records* only — no aggregation, no units system, no clock authority beyond the caller, and no causal semantics (§17 remains future). Ingestion is measured (§27): read/parse of 10⁵ records costs ~68 ms, but single-record append is ~144 µs (per-append file open+flush), recorded as known performance debt.
 
-## 17. Causal Memory **[Future — Stage 5, core research]**
+## 17. Causal Memory **[Implemented — v0.5, as asserted structure; inference remains Future]**
 
-Planned: a causal graph over observations and transitions enabling "which transition introduced this change?" reasoning, with explicit epistemic status per edge: **temporal correlation**, **causal hypothesis**, **verified causal relation**. This is the project's most important open research direction (RQ5). Nothing causal exists in v0.1; recorded transitions and their provenance are the designed substrate.
+Causal memory is implemented as an explicit, append-only edge set over immutable anchors — `Observation(seq)` records (ADR 0013) and content-addressed `Commit` ids — with strict epistemic statuses: **temporal-correlation** (ordering only), **hypothesis** (suspected link), and **verified**, the last structurally restricted to edges whose *both* anchors are Commits (the only class with mechanically checkable provenance). The edge set is a DAG (cycle-closing insertions are rejected), anchors must exist at creation, and the system never generates edges automatically: every relation is an explicit assertion whose status labels its epistemic strength. Incidents are query-time connected components (`rahn explain`), with output carrying statuses verbatim.
+
+**Honest boundary:** RAHN records and queries *asserted* structure; it discovers nothing. Attribution fidelity (RQ5) — how trustworthy hypothesis chains are against real telemetry — remains the open research question and requires the addressing/traffic deferrals to be lifted before it can be exercised meaningfully. Graph-operation cost is measured (§27).
 
 ## 18. Replay **[Partially available; full replay Future]**
 
@@ -193,6 +195,8 @@ No experiments have been run yet; the methodology is pre-registered in docs/rese
 ## 27. Results
 
 The first measurement-kind evidence exists as of Stage 2 (v0.2.0-alpha): scaling timings for state construction, canonical serialization, identity hashing, diff, verification, and shortest-path on ring topologies of 10 to 100 000 nodes, recorded with environment and methodology in [docs/research/stages/v0.2.md](../research/stages/v0.2.md). Headline scoped observations: serialization and identity hashing remain in the low milliseconds at 10⁵ objects; verification of the structural invariant floor over 10⁵ links costs ~100 ms (single machine, release build). These are baseline measurements of one workload on one machine — not performance claims, and not yet reproducible cross-machine.
+
+Stage 5 added **causal-graph measurements** (E-causal): on a 10 000-edge linear chain (deepest DFS case), graph build costs 18.5 ms, a full-chain cycle check 4.3 ms, and an incident query 5.7 ms — the last after fixing an O(V·E) first implementation (2 701.9 ms) found by this benchmark and replaced with a reverse adjacency index. Methodology in [docs/research/stages/v0.5.md](../research/stages/v0.5.md). [Measured]
 
 Stage 4 added **observation ingestion measurements** (E-obs): encoding+appending 10⁵ records costs ~25.8 s (~3 878 rec/s; ~144 µs single-append median, dominated by per-append file open+flush — recorded as debt); full read+parse of 10⁵ records costs ~68 ms; storage ≈156.5 B/record. Single machine, medians, methodology in [docs/research/stages/v0.4.md](../research/stages/v0.4.md). [Measured]
 
@@ -247,3 +251,4 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 | v0.3 | 2026-05-08 | Interface-based state model (ADR 0011) reflected in §10/§12/§13; graph queries and isolation constraints in §13; first scaling measurements in §27 (single-machine, methodology recorded) | Stage 2 (v0.2.0-alpha) |
 | v0.4 | 2026-05-30 | §19 updated: namespace execution backend implemented (ADR 0012), simulation remains default; §24 adds rahn-exec; §27 gains first E6 differential evidence (CI, 2-node scenario); §28 limitation 1 reworded | Stage 3 (v0.3.0-alpha) |
 | v0.5 | 2026-06-13 | §16 upgraded from [Future] to [Implemented]: deterministic observation model (ADR 0013) with ingestion measurements in §27; §17 causal memory remains [Future] with the observation log as its designated input | Stage 4 (v0.4.0-alpha) |
+| v0.6 | 2026-06-26 | §17 upgraded to [Implemented, asserted structure]: causal edges with epistemic statuses (ADR 0014), DAG enforcement, incident queries; E-causal measurements in §27 (incl. the O(V·E)→O(component) fix found by benchmark) | Stage 5 (v0.5.0-alpha) |

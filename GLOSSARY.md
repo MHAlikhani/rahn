@@ -18,8 +18,8 @@ Canonical terminology. Terms are defined here first; implementation and docs mus
 - **Merge** — combination of two branches of state evolution. Network-aware and semantic: conflicting constraints/infeasible combinations are detected and explained; never a textual merge.
 - **Diff** — a semantic comparison of two states (objects added/removed/changed), not a text diff.
 - **Observation** — an immutable, structured record `{seq, time_ns, subject, metric, value}` (ADR 0013) associated with a validated state; subjects are nodes/interfaces; values are exact integers or bounded event text; ordering is `(time_ns, seq)`; timestamps are caller-supplied.
-- **Causal memory / causal graph** — the graph linking observations, events, and state transitions so that "what changed and why" is answerable. Not a metrics graph.
-- **Causal relation** — a directed edge asserting that one event/transition contributed to another.
+- **Causal memory / causal graph** — the asserted, DAG-structured edge set over observations and commits so that "what changed and why" is answerable as *labeled hypotheses*. Not a metrics graph and not proven causality.
+- **Causal relation** — an explicit, directed edge between immutable anchors (observations, commits) with an epistemic status (`temporal-correlation`, `hypothesis`, `verified` — the last only Commit-anchored). Asserted by humans, never inferred; stored as an append-only DAG (ADR 0014).
 - **Replay / time travel** — reconstruction of network state (and associated observations) as of an earlier point, from immutable history.
 - **Execution plan** — the explicit sequence of low-level actions that would realize a transition on a real network. Produced for every transition; inspected in simulation.
 - **Execution backend** — an adapter that executes a plan against a substrate. Implemented: the Linux namespace backend (ADR 0012; `rahn-exec`); simulation (plan printing) remains the default. Separated from state representation.

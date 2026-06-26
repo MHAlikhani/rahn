@@ -4,6 +4,32 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.5.0-alpha] — Stage 5: Causal Memory
+
+### Added
+- **Causal edges (ADR 0014, `rahn-state::causal`):** explicit relations
+  between immutable anchors (`obs:<seq>` / `commit:<id>`) with strict
+  epistemic statuses — `temporal-correlation`, `hypothesis`,
+  `verified` (the last only between Commit anchors, structurally
+  enforced).
+- **DAG invariant:** edge insertions that would close a cycle are
+  rejected (deterministic DFS); dangling anchors are rejected against
+  the observation log and commit store.
+- **Append-only causal log** (`.rahn/causal.log`) with versioned
+  framing and loud corruption refusal.
+- **Incident query:** connected component around an anchor
+  (`rahn explain`); reverse-adjacency index keeps it O(component)
+  (an O(V·E) first implementation was found by benchmark and fixed:
+  2 702 ms -> 5.7 ms on a 10k-edge chain).
+- CLI: `rahn relate ... --note`, `rahn explain <anchor>` — output
+  carries edge statuses and never presents hypotheses as proven.
+- Graph benchmark harness (`causal_scaling`); results in
+  `docs/research/stages/v0.5.md`.
+
+### Compatibility
+- No canonical-format change for states; `causal.log` is a new,
+  separate artifact with its own versioned framing.
+
 ## [0.4.0-alpha] — Stage 4: Observability
 
 ### Added
