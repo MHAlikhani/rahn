@@ -2,11 +2,12 @@
 
 # RAHN Limitations
 
-Status: living research document (updated at v0.3.0-alpha / Stage 3). Honest limitations of the architecture and of the current implementation state. This document must never shrink by hiding a limitation — only by resolving it (with evidence) or narrowing a claim.
+Status: living research document (updated at v0.5.0-alpha / Stage 5). Honest limitations of the architecture and of the current implementation state. This document must never shrink by hiding a limitation — only by resolving it (with evidence) or narrowing a claim.
 
 ## Limitations of the current project state
 
-- **Implementation is alpha-grade.** The v0.3 state engine (interfaces, interface-endpoint links, canonical format v2, graph queries, isolation constraints) and the namespace execution backend (ADR 0012: opt-in, Linux + root, link-level connectivity) are implemented and test-enforced ([testing.md](../testing.md)), but no production use, external review, or real deployment exists; the Linux execution path is validated by CI only.
+- **Implementation is alpha-grade.** The v0.5 system (interface-based state engine, canonical format v2, graph queries, isolation constraints, namespace execution backend per ADR 0012, observations per ADR 0013, causal memory per ADR 0014) is implemented and test-enforced ([testing.md](../testing.md)), but no production use, external review, or real deployment exists; the Linux execution path is validated by CI only.
+- **Causality is asserted, never inferred.** Edge statuses are honest labels; there is no automatic causal analysis, no AI reasoning, and no distributed causal memory.
 - **Evidence is partial.** Determinism claims are test-enforced; the only measurements are the Stage 2 single-machine scaling baselines ([stages/v0.2.md](stages/v0.2.md)). Hypotheses ([hypotheses.md](hypotheses.md)) are largely untested; the full experiment program (E2 completion, E3–E7) has not run.
 - **No novelty claims are warranted yet.** Prior-art analysis ([prior-art.md](prior-art.md)) is a working survey and must be deepened before the white paper asserts any novelty.
 - **Known performance debt (recorded, not yet addressed):** repeated operation application currently clones the whole network, producing roughly O(m·n) cost for m batched operations on an n-object network. Acceptable at measured scales (see [stages/v0.2.md](stages/v0.2.md)); a copy-on-write or batched-apply design would require its own ADR. Do not benchmark future changes against this as-is without noting the debt.
