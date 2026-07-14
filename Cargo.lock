@@ -79,6 +79,16 @@ name = "rahn-core"
 version = "0.5.0-alpha"
 
 [[package]]
+name = "rahn-dist"
+version = "0.5.0-alpha"
+dependencies = [
+ "rahn-core",
+ "rahn-state",
+ "rahn-store",
+ "rahn-verify",
+]
+
+[[package]]
 name = "rahn-exec"
 version = "0.5.0-alpha"
 dependencies = [

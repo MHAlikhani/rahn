@@ -138,6 +138,11 @@ impl Store {
         })
     }
 
+    /// Repository root (`.rahn` directory). Read access for diagnostics.
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
     fn object_path(&self, hex: &str) -> PathBuf {
         let mut p = self.root.join("objects").join(&hex[..2]);
         p.push(&hex[2..]);
