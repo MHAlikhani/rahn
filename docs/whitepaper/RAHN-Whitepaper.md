@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-06-26. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-07-19. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -168,9 +168,11 @@ Execution is separated from representation through an explicit, inspectable **ex
 
 v0.1 posture **[Implemented]**: no network I/O; no privileged operations; default mode read-only/simulated; all loaded state treated as untrusted input (strict total parsing; hash verification precedes use; corruption refused loudly). Future concerns **[Proposed/Future]**: identity, authentication, capability-based execution, signed transitions, provenance verification, replay-attack resistance, privilege separation. The threat model lives in docs/spec/security.md and the security policy in SECURITY.md.
 
-## 21. Distributed Operation **[Future — Stage 6, deliberately unsolved]**
+## 21. Distributed Operation **[Implemented — v0.6, as peer sync; strong consistency explicitly not claimed]**
 
-Replication, identity, consistency, synchronization, and conflict handling will be researched only after local state semantics are stable — and mechanism selection (consensus, CRDTs, or otherwise) follows a requirements derivation (RQ7), not familiarity. No distributed claims are made in this paper.
+The requirements derivation (RQ7) concluded that RAHN's writes are low-frequency, human-scale, and merge-aware — so the v0.6 model is **peer synchronization over content-addressed history** (ADR 0015), not leader consensus: every replica is authoritative for its own history; synchronization exchanges only immutable hash-verified records (branch-tip offers + fetched commits/states with complete ancestries); divergence converges exclusively through the fail-closed semantic merge, producing **byte-identical merge commits on every replica** (deterministic: parents ordered lexicographically by commit id); conflicts fail closed and persist. Under partition, local writes remain available and divergence is represented rather than prevented.
+
+**Explicitly not claimed:** linearizability, serializability, or any cross-replica strong consistency; per-replica read-your-writes and monotonic history are the only read guarantees. **Deliberate non-concepts:** leader election and epochs (nothing for an epoch to order without a single writer); CRDT convergence (constraint conflicts require explanation, not silent resolution). Replica identity is self-asserted (documented trust boundary; integrity via content hashes; replay is idempotent); signed transitions remain Future. Sync transport is measured (§27) with per-object cost recorded as known debt.
 
 ## 22. Programmability **[Future — Stage 9+]**
 
@@ -196,6 +198,8 @@ No experiments have been run yet; the methodology is pre-registered in docs/rese
 
 The first measurement-kind evidence exists as of Stage 2 (v0.2.0-alpha): scaling timings for state construction, canonical serialization, identity hashing, diff, verification, and shortest-path on ring topologies of 10 to 100 000 nodes, recorded with environment and methodology in [docs/research/stages/v0.2.md](../research/stages/v0.2.md). Headline scoped observations: serialization and identity hashing remain in the low milliseconds at 10⁵ objects; verification of the structural invariant floor over 10⁵ links costs ~100 ms (single machine, release build). These are baseline measurements of one workload on one machine — not performance claims, and not yet reproducible cross-machine.
 
+Stage 6 added **sync measurements** (E-sync): replicating a 10 000-commit history between fresh repositories costs ~80.9 s (~3–8 ms/object — per-object file open/rename plus double hashing; transport-shaped, not algorithm-shaped); `offer` is sub-millisecond at all scales; smaller sizes: 10 commits ≈ 21 ms, 100 ≈ 145 ms, 1 000 ≈ 2 981 ms. Single machine, medians, methodology in [docs/research/stages/v0.6.md](../research/stages/v0.6.md). [Measured]
+
 Stage 5 added **causal-graph measurements** (E-causal): on a 10 000-edge linear chain (deepest DFS case), graph build costs 18.5 ms, a full-chain cycle check 4.3 ms, and an incident query 5.7 ms — the last after fixing an O(V·E) first implementation (2 701.9 ms) found by this benchmark and replaced with a reverse adjacency index. Methodology in [docs/research/stages/v0.5.md](../research/stages/v0.5.md). [Measured]
 
 Stage 4 added **observation ingestion measurements** (E-obs): encoding+appending 10⁵ records costs ~25.8 s (~3 878 rec/s; ~144 µs single-append median, dominated by per-append file open+flush — recorded as debt); full read+parse of 10⁵ records costs ~68 ms; storage ≈156.5 B/record. Single machine, medians, methodology in [docs/research/stages/v0.4.md](../research/stages/v0.4.md). [Measured]
@@ -214,7 +218,7 @@ Previously this section read: **None — no benchmark or controlled experiment h
 6. **Single-writer, local-only** through Stage 5.
 7. **Ergonomics tax** for explicitness; if it proves too high in practice, the project fails regardless of architectural soundness.
 8. **Limited measurement evidence.** The only measurements are the Stage 2 single-machine scaling baselines (§27); no cross-machine, no real-network, and no comparative measurements exist.
-9. **Transition-application cost (known performance debt, recorded).** Repeated operation application currently clones the whole network — roughly O(m·n) for m batched operations on an n-object network. (b) observation ingestion is dominated by per-append file open+flush (~144 µs). Both are acceptable at measured scales (§27); copy-on-write, batched-apply, or buffered-writer designs would require their own ADRs and have deliberately not been attempted.
+9. **Transition-application cost (known performance debt, recorded).** Repeated operation application currently clones the whole network — roughly O(m·n) for m batched operations on an n-object network. (b) observation ingestion is dominated by per-append file open+flush (~144 µs); (c) distributed sync transport costs ~3–8 ms/object (per-object file operations + double hashing) — a packfile/batched-transfer design is the natural follow-up. All are acceptable at measured scales (§27); copy-on-write, batched-apply, buffered-writer, or packed-transfer designs would require their own ADRs and have deliberately not been attempted.
 
 Full list with reasoning: docs/research/limitations.md.
 
@@ -252,3 +256,4 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 | v0.4 | 2026-05-30 | §19 updated: namespace execution backend implemented (ADR 0012), simulation remains default; §24 adds rahn-exec; §27 gains first E6 differential evidence (CI, 2-node scenario); §28 limitation 1 reworded | Stage 3 (v0.3.0-alpha) |
 | v0.5 | 2026-06-13 | §16 upgraded from [Future] to [Implemented]: deterministic observation model (ADR 0013) with ingestion measurements in §27; §17 causal memory remains [Future] with the observation log as its designated input | Stage 4 (v0.4.0-alpha) |
 | v0.6 | 2026-06-26 | §17 upgraded to [Implemented, asserted structure]: causal edges with epistemic statuses (ADR 0014), DAG enforcement, incident queries; E-causal measurements in §27 (incl. the O(V·E)→O(component) fix found by benchmark) | Stage 5 (v0.5.0-alpha) |
+| v0.7 | 2026-07-19 | §21 upgraded from [Future] to [Implemented, peer sync]: consistency model per RQ7 (ADR 0015), byte-identical convergence, fail-closed divergence; E-sync measurements in §27; explicit non-claims recorded | Stage 6 (v0.6.0-alpha) |

@@ -4,6 +4,31 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.6.0-alpha] — Stage 6: Distributed State
+
+### Added
+- **`rahn-dist` crate (ADR 0015):** deterministic two-way peer sync
+  over content-addressed history — branch-tip offers, fetch of missing
+  commits/states by hash (complete ancestries only), strict-ahead/behind
+  adoption, and divergent-tip convergence via the fail-closed semantic
+  merge producing **byte-identical merge commits on all replicas**
+  (parents lexicographically ordered, message `sync merge`).
+- **Fail-closed divergence:** merge conflicts and constitution
+  rejections leave divergent tips in place with explainable reports;
+  repeated syncs reproduce the conflict; nothing is auto-resolved.
+- **Consistency model (documented, not claimed):** per-replica
+  read-your-writes and monotonic history; no linearizability or
+  cross-replica strong consistency; no leader/epoch concept (deliberate).
+- Sync benchmark harness (`sync_scaling`); results in
+  `docs/research/stages/v0.6.md` (~3–8 ms/object transport cost recorded
+  as known performance debt; packing is a Stage 7 follow-up).
+- Stage report: `docs/research/stages/v0.6.md`.
+
+### Security
+- Replica identity is self-asserted (documented trust boundary);
+  integrity via content hashes; replay is idempotent/harmless. No PKI
+  by design; signed transitions remain Future.
+
 ## [0.5.0-alpha] — Stage 5: Causal Memory
 
 ### Added

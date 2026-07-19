@@ -36,11 +36,11 @@ Network observations, events, health, latency, packet statistics, transition pro
 
 **Achieved:** causal edges between observations and commits with strict epistemic statuses (temporal-correlation / hypothesis / verified-with-Commits-only); DAG enforcement; `rahn relate` / `rahn explain`; incidents as connected components. Historical replay and narrative `explain <incident>` remain future work within/beyond this stage.
 
-## Stage 6 — RAHN 0.6: distributed state
+## Stage 6 — RAHN 0.6: distributed state *(implemented in v0.6.0-alpha; see docs/research/stages/v0.6.md)*
 
-Replicated state, consistency model, node identity, synchronization, conflict handling. **Do not** adopt Raft (or any consensus) by familiarity — first identify the actual consistency requirements.
+Peer sync over content-addressed history (ADR 0015): every replica authoritative for its own history; convergence only via fail-closed semantic merge producing byte-identical merge commits; conflicts persist, never auto-resolved. No leader/epoch (deliberate non-concept); no linearizability claims.
 
-## Stage 7 — RAHN 0.7: execution backends
+## Stage 7 — RAHN 0.7: execution backends *(next milestone)*
 
 Adapters for Linux, namespaces, eBPF, XDP, selected programmable dataplanes. Abstract network state stays separated from backend execution.
 
@@ -62,4 +62,4 @@ Success: RAHN provides a coherent, documented abstraction for representing and s
 
 ## Release honesty
 
-The current release is **`v0.5.0-alpha`** (causal memory: explicit, status-labeled causal edges over observations and commits; no inference). Releases so far: `v0.1.0-alpha.1` (*"an experimental state engine for evolving network topologies"*), `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 6 — distributed state (v0.6), requirements-first.** The white paper matures with the evidence.
+The current release is **`v0.6.0-alpha`** (peer sync over content-addressed history; deterministic convergence; fail-closed divergence). Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 7 — execution backends (v0.7).** The white paper matures with the evidence.

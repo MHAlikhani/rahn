@@ -66,12 +66,6 @@ fn build(tag: &str, n: usize) -> Store {
     store
 }
 
-fn two_repos(tag: &str) -> (Store, Store) {
-    let a = build(&format!("{tag}-a"), 0);
-    let b = Store::init(temp(&format!("{tag}-b")).join(".rahn")).unwrap();
-    (a, b)
-}
-
 #[test]
 #[ignore]
 fn sync_scaling_benchmark() {
@@ -86,8 +80,18 @@ fn sync_scaling_benchmark() {
         let root = temp(&format!("s{n}"));
         let a = build(&format!("s{n}"), n);
         let b = Store::init(root.join("b/.rahn")).unwrap();
-        let o = median((0..3).map(|_| ms(|| { offer(&a).unwrap(); })).collect());
-        let sync = ms(|| { sync_pair(&a, &id_a, &b, &id_b).unwrap(); });
+        let o = median(
+            (0..3)
+                .map(|_| {
+                    ms(|| {
+                        offer(&a).unwrap();
+                    })
+                })
+                .collect(),
+        );
+        let sync = ms(|| {
+            sync_pair(&a, &id_a, &b, &id_b).unwrap();
+        });
         let objects = {
             let mut count = 0;
             for d in std::fs::read_dir(a.root().join("objects"))
