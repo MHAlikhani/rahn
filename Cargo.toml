@@ -7,7 +7,7 @@ version = "0.6.0-alpha"
 edition = "2021"
 license = "Apache-2.0"
 repository = "https://github.com/MHAlikhani/rahn"
-authors = ["The RAHN Project Contributors"]
+authors = ["Mohammad Hossein Alikhani", "The RAHN Project Contributors"]
 
 [workspace.dependencies]
 rahn-core = { path = "crates/rahn-core" }

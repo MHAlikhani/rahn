@@ -30,7 +30,7 @@ Success: RAHN can create and manipulate isolated Linux network topologies. **Ach
 
 ## Stage 4 — RAHN 0.4: observability *(implemented in v0.4.0-alpha; see docs/research/stages/v0.4.md)*
 
-Network observations, events, health, latency, packet statistics, transition provenance. **Achieved:** observations are associated with states by validated provenance (state id per record). Causal interpretation remains Stage 5.
+Network observations, events, health, latency, packet statistics, transition provenance. **Achieved:** observations are associated with states by validated provenance (state id per record). Causal interpretation is Stage 5's causal-memory model (asserted edges, no inference).
 
 ## Stage 5 — RAHN 0.5: causal memory *(implemented in v0.5.0-alpha; see docs/research/stages/v0.5.md)*
 
