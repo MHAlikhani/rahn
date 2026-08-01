@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-//! Simulation-only execution planning (ADR 0008).
+//! Simulation-only execution planning (ADR 0008) and the execution
+//! backend abstraction (ADR 0016).
 //!
 //! `plan` derives the explicit sequence of actions that would realize a
 //! target state from a current state. This crate NEVER touches the host,
@@ -12,6 +13,8 @@ use std::fmt;
 
 use rahn_core::{Endpoint, Network};
 use rahn_state::diff;
+
+pub mod backend;
 
 /// One concrete action of an execution plan.
 #[derive(Debug, Clone, PartialEq, Eq)]

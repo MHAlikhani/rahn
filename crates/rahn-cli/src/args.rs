@@ -61,6 +61,7 @@ pub enum Command {
     },
     Apply {
         name: String,
+        backend: String,
         execute: bool,
         yes_i_know: bool,
     },
@@ -108,7 +109,7 @@ USAGE:
     rahn verify
     rahn log
     rahn inspect <branch-or-commit-id>
-    rahn apply [--execute --yes-i-know] <branch-or-commit-id>
+    rahn apply [--backend <name>] [--execute --yes-i-know] <branch-or-commit-id>
     rahn destroy --yes-i-know <branch-or-commit-id>
     rahn observe <node|node/iface> <metric> counter:<u64>|gauge:<i64>|event:<text> --at <unix-ns>
     rahn observations [<subject-filter>]
@@ -270,8 +271,9 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
         "apply" => {
             let mut execute = false;
             let mut yes_i_know = false;
+            let mut backend: Option<String> = None;
             let mut name = None;
-            for arg in &mut it {
+            while let Some(arg) = it.next() {
                 match arg.as_str() {
                     "--execute" => {
                         if execute {
@@ -292,6 +294,16 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
                             ));
                         }
                         yes_i_know = true;
+                    }
+                    "--backend" => {
+                        if backend.is_some() {
+                            return Err(format!(
+                                "--backend given twice
+
+{USAGE}"
+                            ));
+                        }
+                        backend = Some(next(&mut it, "--backend <name>")?);
                     }
                     other if name.is_none() => name = Some(other.to_owned()),
                     _ => {
@@ -319,6 +331,7 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
             }
             Ok(Command::Apply {
                 name,
+                backend: backend.unwrap_or_else(|| "simulation".to_owned()),
                 execute,
                 yes_i_know,
             })

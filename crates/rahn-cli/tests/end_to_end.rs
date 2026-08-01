@@ -104,14 +104,36 @@ fn full_lifecycle_init_commit_branch_diff_verify_apply_log() {
     assert!(out.contains("add_interface d/eth0"), "{out}");
     assert!(out.contains("add_link c/eth0 d/eth0"), "{out}");
 
-    // Simulated apply: prints the exact namespace commands, touches nothing.
+    // Simulated apply (default backend): model-level plan, touches nothing.
     let out = ok(&dir, &["apply", "experiment"]);
-    assert!(out.contains("Execution plan (2 command(s))"), "{out}");
-    assert!(out.contains("ip -n rahn-c link del"), "{out}");
-    assert!(out.contains("ip netns del rahn-d"), "{out}");
-    assert!(out.contains("simulation only"), "{out}");
+    assert!(out.contains("backend: simulation"), "{out}");
+    assert!(out.contains("Execution plan (2 step(s))"), "{out}");
+    assert!(out.contains("remove link c/eth0 <-> d/eth0"), "{out}");
+    assert!(out.contains("remove node d"), "{out}");
     // Interface removals subsumed by node removal must NOT appear.
     assert!(!out.contains("interface"), "{out}");
+    assert!(out.contains("dry run"), "{out}");
+    // linux-ns dry run shows the exact namespace commands (ADR 0012).
+    let out = ok(&dir, &["apply", "--backend", "linux-ns", "experiment"]);
+    assert!(out.contains("backend: linux-ns"), "{out}");
+    assert!(out.contains("ip -n rahn-c link del"), "{out}");
+    assert!(out.contains("ip netns del rahn-d"), "{out}");
+    // Unknown backend fails explicitly.
+    let err = fail(&dir, &["apply", "--backend", "ebpf", "experiment"]);
+    assert!(err.contains("unknown execution backend"), "{err}");
+    // Simulation cannot execute, even with the gate satisfied.
+    let err = fail(
+        &dir,
+        &[
+            "apply",
+            "--backend",
+            "simulation",
+            "--execute",
+            "--yes-i-know",
+            "experiment",
+        ],
+    );
+    assert!(err.contains("cannot execute"), "{err}");
     // Opt-in gating: --execute without --yes-i-know is a usage error.
     let argv: Vec<String> = ["apply", "experiment", "--execute"]
         .iter()

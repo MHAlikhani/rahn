@@ -17,6 +17,8 @@ use rahn_core::{Endpoint, Network};
 use rahn_sim::Action;
 use sha2::{Digest, Sha256};
 
+pub mod backend;
+
 /// Deterministic, IFNAMSIZ-safe interface name for a link endpoint:
 /// `r` + 7 lowercase hex chars of SHA-256("node/iface").
 pub fn veth_name(e: &Endpoint) -> String {

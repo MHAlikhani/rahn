@@ -75,9 +75,10 @@ pub fn run(dir: &Path, command: Command) -> Result<String, CliError> {
         Command::Inspect { name } => inspect_cmd(dir, name),
         Command::Apply {
             name,
+            backend,
             execute,
             yes_i_know,
-        } => apply_cmd(dir, name, execute, yes_i_know),
+        } => apply_cmd(dir, name, &backend, execute, yes_i_know),
         Command::Destroy { name, yes_i_know } => destroy_cmd(dir, name, yes_i_know),
         Command::Observe {
             subject,
@@ -583,64 +584,86 @@ fn inspect_cmd(dir: &Path, name: String) -> Result<String, CliError> {
     Ok(out)
 }
 
+/// Backend registry (ADR 0016). Unknown names fail explicitly.
+fn select_backend(
+    name: &str,
+) -> Result<std::sync::Arc<dyn rahn_sim::backend::ExecutionBackend>, CliError> {
+    use std::sync::Arc;
+    match name {
+        "simulation" => Ok(Arc::new(rahn_sim::backend::SimulationBackend)),
+        "linux-ns" => Ok(Arc::new(rahn_exec::backend::LinuxNamespaceBackend)),
+        other => Err(CliError::Runtime(format!(
+            "unknown execution backend {other:?} (available: simulation, linux-ns)"
+        ))),
+    }
+}
+
 fn apply_cmd(
     dir: &Path,
     name: String,
+    backend_name: &str,
     execute: bool,
     _yes_i_know: bool,
 ) -> Result<String, CliError> {
     let store = open_repo(dir)?;
+    let backend = select_backend(backend_name)?;
     let target_commit = resolve_commit(&store, &name)?;
     let target = state_of_commit(&store, target_commit)?;
     let current = match head_commit(&store)? {
         Some(id) => state_of_commit(&store, id)?,
         None => State::empty(),
     };
-    let cmds = rahn_exec::commands_for(&current.network, &target.network)
+    let steps = backend
+        .plan(&current.network, &target.network)
         .map_err(|e| CliError::Runtime(e.to_string()))?;
     if !execute {
         let mut out = format!(
             "target: {}
+backend: {}
 ",
-            name
+            name,
+            backend.name()
         );
-        if cmds.is_empty() {
+        if steps.is_empty() {
             out.push_str(
                 "Execution plan: (no changes)
 ",
             );
         } else {
             out.push_str(&format!(
-                "Execution plan ({} command(s)):
+                "Execution plan ({} step(s)):
 ",
-                cmds.len()
+                steps.len()
             ));
-            for (i, c) in cmds.iter().enumerate() {
+            for (i, s) in steps.iter().enumerate() {
                 out.push_str(&format!(
-                    "  {}. {c}
+                    "  {}. {s}
 ",
                     i + 1
                 ));
             }
             out.push_str(
-                "(simulation only — pass --execute --yes-i-know to run against Linux namespaces)
+                "(dry run — pass --execute --yes-i-know to realize this plan)
 ",
             );
         }
         return Ok(out);
     }
-    // Real execution: Linux only (ADR 0012).
-    if !cfg!(target_os = "linux") {
+    // Real execution: simulation cannot execute by definition (ADR 0016);
+    // real backends enforce their own platform gates.
+    if backend.name() == "simulation" {
         return Err(CliError::Runtime(
-            "execution requires Linux (this build/platform refuses; ADR 0012)".into(),
+            "the simulation backend cannot execute (it is a description only);              select a real backend, e.g. --backend linux-ns"
+                .into(),
         ));
     }
-    match rahn_exec::execute(&cmds) {
+    match rahn_exec::backend::LinuxNamespaceBackend::execute(&steps) {
         Ok(n) => Ok(format!(
-            "executed {n} command(s) against network namespaces (destroy with: rahn destroy --yes-i-know {name})"
+            "executed {n} step(s) via backend {} (destroy with: rahn destroy --yes-i-know {name})",
+            backend.name()
         )),
         Err((pos, e)) => Err(CliError::Runtime(format!(
-            "execution failed at command {pos}: {e}
+            "execution failed at step {pos}: {e}
 recover with: rahn destroy --yes-i-know {name}"
         ))),
     }
