@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-07-19. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-08-06. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -162,7 +162,7 @@ Committed states are immutable and content-addressed, so *state* reconstruction 
 
 ## 19. Execution Architecture **[Implemented for simulation; backends Proposed]**
 
-Execution is separated from representation through an explicit, inspectable **execution plan** (dependency-safe ordering: removals before additions). The default remains **simulation**: `rahn apply` prints the exact command sequence and performs no I/O. The first real backend (v0.3, ADR 0012) maps plans deterministically to iproute2 commands: nodes become network namespaces (`rahn-<node>`), interfaces become dummy interfaces, links become veth pairs with deterministic IFNAMSIZ-safe names. Real execution requires `--execute --yes-i-know`, Linux, and root; host-side operations are structurally restricted to `rahn-*` namespaces (test-enforced); `rahn destroy --yes-i-know` is the recovery path. **[Implemented; validated on Linux CI for a 2-node scenario]** No addressing exists, so connectivity is link-existence only. **[Future]**
+Execution is separated from representation through an explicit, inspectable **execution plan** (dependency-safe ordering: removals before additions). The default remains **simulation**: `rahn apply` prints the exact command sequence and performs no I/O. The first real backend (v0.3, ADR 0012) maps plans deterministically to iproute2 commands: nodes become network namespaces (`rahn-<node>`), interfaces become dummy interfaces, links become veth pairs with deterministic IFNAMSIZ-safe names. Since v0.7, backends sit behind an explicit `ExecutionBackend` trait (ADR 0016) with capability negotiation; the namespace backend's semantics are unchanged. Real execution requires `--execute --yes-i-know`, Linux, and root; host-side operations are structurally restricted to `rahn-*` namespaces (test-enforced); `rahn destroy --yes-i-know` is the recovery path. **[Implemented; validated on Linux CI for a 2-node scenario]** No addressing exists, so connectivity is link-existence only. **[Future]**
 
 ## 20. Security
 
@@ -257,3 +257,4 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 | v0.5 | 2026-06-13 | §16 upgraded from [Future] to [Implemented]: deterministic observation model (ADR 0013) with ingestion measurements in §27; §17 causal memory remains [Future] with the observation log as its designated input | Stage 4 (v0.4.0-alpha) |
 | v0.6 | 2026-06-26 | §17 upgraded to [Implemented, asserted structure]: causal edges with epistemic statuses (ADR 0014), DAG enforcement, incident queries; E-causal measurements in §27 (incl. the O(V·E)→O(component) fix found by benchmark) | Stage 5 (v0.5.0-alpha) |
 | v0.7 | 2026-07-19 | §21 upgraded from [Future] to [Implemented, peer sync]: consistency model per RQ7 (ADR 0015), byte-identical convergence, fail-closed divergence; E-sync measurements in §27; explicit non-claims recorded | Stage 6 (v0.6.0-alpha) |
+| v0.8 | 2026-08-06 | §19: backends formalized behind the ExecutionBackend trait (ADR 0016) with capability negotiation; simulation made a backend rather than a special case | Stage 7 (v0.7.0-alpha) |

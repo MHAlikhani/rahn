@@ -40,9 +40,9 @@ Network observations, events, health, latency, packet statistics, transition pro
 
 Peer sync over content-addressed history (ADR 0015): every replica authoritative for its own history; convergence only via fail-closed semantic merge producing byte-identical merge commits; conflicts persist, never auto-resolved. No leader/epoch (deliberate non-concept); no linearizability claims.
 
-## Stage 7 — RAHN 0.7: execution backends *(next milestone)*
+## Stage 7 — RAHN 0.7: execution backends *(implemented in v0.7.0-alpha; see docs/research/stages/v0.7.md)*
 
-Adapters for Linux, namespaces, eBPF, XDP, selected programmable dataplanes. Abstract network state stays separated from backend execution.
+Adapters for Linux, namespaces, eBPF, XDP, selected programmable dataplanes. **Achieved:** ExecutionBackend trait (ADR 0016) with simulation (default, Describe-only) and linux-ns backends; capability negotiation with explicit refusal; no dataplane code yet.
 
 ## Stage 8 — RAHN 0.8: network CI / verification ecosystem
 
@@ -62,4 +62,4 @@ Success: RAHN provides a coherent, documented abstraction for representing and s
 
 ## Release honesty
 
-The current release is **`v0.6.0-alpha`** (peer sync over content-addressed history; deterministic convergence; fail-closed divergence). Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 7 — execution backends (v0.7).** The white paper matures with the evidence.
+The current release is **`v0.7.0-alpha`** (execution backend abstraction; simulation default, linux-ns behind the trait). Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 8 — network CI / verification ecosystem (v0.8).** The white paper matures with the evidence.

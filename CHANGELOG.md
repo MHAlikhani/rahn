@@ -4,6 +4,26 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.7.0-alpha] — Stage 7: Execution Backends
+
+### Added
+- **Execution backend abstraction (ADR 0016, `rahn-sim::backend`):**
+  `ExecutionBackend` trait (name, capabilities, pure
+  `plan(current, target) -> Vec<BackendStep>`); two-level step model
+  (`Describe` model actions vs `Invoke` host invocations); capability
+  negotiation with explicit refusal of unsupported capabilities.
+- **Backends:** `simulation` (default; description-only; cannot execute
+  by definition) and `linux-ns` (ADR 0012 namespace semantics unchanged,
+  migrated behind the trait; Linux/root gate inside the backend).
+- CLI: `rahn apply --backend <name>`; explicit registry with
+  unknown-backend rejection; dry runs render either step kind.
+- Stage report: `docs/research/stages/v0.7.md`.
+
+### Compatibility
+- No canonical-format change. `rahn apply` default output now includes a
+  `backend:` line and renders model-level steps for the default backend
+  (previously namespace commands were shown unconditionally).
+
 ## [0.6.0-alpha] — Stage 6: Distributed State
 
 ### Added
