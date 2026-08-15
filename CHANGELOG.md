@@ -4,6 +4,21 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.8.0-alpha] — Stage 8: Network CI / Verification
+
+### Added
+- **`rahn test [ref]` (ADR 0017):** machine-readable verification of a
+  committed state (default HEAD) — deterministic TSV report
+  (`PASS|FAIL<TAB>id<TAB>evidence`) with exit-code contract (0 pass,
+  1 failure, 2 usage). Invariant ids are a stable machine contract.
+- **CI example:** `examples/network-ci.yml` (GitHub Actions gate on
+  `.rahn/**` changes).
+- Stage report: `docs/research/stages/v0.8.md`.
+
+### Compatibility
+- No canonical-format change. Invariant ids in reports must not be
+  renamed without an ADR (machine contract).
+
 ## [0.7.0-alpha] — Stage 7: Execution Backends
 
 ### Added

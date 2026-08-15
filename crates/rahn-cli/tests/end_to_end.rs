@@ -523,3 +523,45 @@ fn causal_edges_cycles_status_rules_and_explain() {
     let b = run_once("causal-b");
     assert_eq!(a, b, "causal logs must be deterministic");
 }
+
+#[test]
+fn ci_test_command_semantics() {
+    let dir = temp_repo("citest");
+    ok(&dir, &["init"]);
+    // Empty repository: HEAD state is empty, structural floor passes.
+    let out = ok(&dir, &["test"]);
+    assert!(out.contains("state "), "{out}");
+    assert!(out.contains("test PASSED (4 invariants)"), "{out}");
+    // Commit a topology, then test an older ref by commit id.
+    ok(&dir, &["node", "add", "a"]);
+    ok(&dir, &["interface", "add", "a", "eth0"]);
+    ok(&dir, &["commit", "-m", "c1"]);
+    ok(&dir, &["node", "add", "b"]);
+    ok(&dir, &["interface", "add", "b", "eth0"]);
+    ok(&dir, &["link", "add", "a/eth0", "b/eth0"]);
+    ok(&dir, &["commit", "-m", "c2"]);
+    let c1 = ok(&dir, &["log"])
+        .lines()
+        .rfind(|l| l.contains("commit "))
+        .unwrap()
+        .split_whitespace()
+        .find(|t| t.len() == 64)
+        .unwrap()
+        .to_string();
+    // Both refs verify deterministically; identical state -> identical bytes.
+    let head1 = ok(&dir, &["test"]);
+    let head2 = ok(&dir, &["test"]);
+    assert_eq!(head1, head2, "test output must be deterministic");
+    let old = ok(&dir, &["test", &c1]);
+    assert!(old.contains("test PASSED (4 invariants)"), "{old}");
+    // Constitution violation via test: fail-closed exit semantics.
+    std::fs::write(
+        dir.join(".rahn/constitution"),
+        "require-connectivity a nonexist\n",
+    )
+    .unwrap();
+    let err = fail(&dir, &["test"]);
+    assert!(err.contains("test FAILED"), "{err}");
+    assert!(err.contains("FAIL\tnamed-connectivity:a:nonexist"), "{err}");
+    std::fs::remove_dir_all(&dir).ok();
+}

@@ -87,6 +87,9 @@ pub enum Command {
     Explain {
         anchor: String,
     },
+    Test {
+        ref_name: Option<String>,
+    },
 }
 
 pub const USAGE: &str = r#"rahn — a stateful execution architecture for evolving networks (v0.3; simulation-only by default, isolated Linux namespaces with explicit opt-in)
@@ -115,6 +118,7 @@ USAGE:
     rahn observations [<subject-filter>]
     rahn relate <anchor> <anchor> temporal-correlation|hypothesis|verified --note <text>
     rahn explain <anchor>
+    rahn test [<branch-or-commit-id>]
 
 REFS: a branch name or a full 64-character commit id.
 ENDPOINTS: node/interface pairs (e.g. web/eth0).
@@ -439,6 +443,15 @@ pub fn parse(args: &[String]) -> Result<Command, String> {
                 note: note.unwrap_or_default(),
             })
         }
+        "test" => match it.next() {
+            None => Ok(Command::Test { ref_name: None }),
+            Some(r) => {
+                expect_end(&mut it, "test")?;
+                Ok(Command::Test {
+                    ref_name: Some(r.clone()),
+                })
+            }
+        },
         "explain" => {
             let anchor = next(&mut it, "explain <anchor>")?;
             expect_end(&mut it, "explain")?;

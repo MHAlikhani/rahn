@@ -44,9 +44,9 @@ Peer sync over content-addressed history (ADR 0015): every replica authoritative
 
 Adapters for Linux, namespaces, eBPF, XDP, selected programmable dataplanes. **Achieved:** ExecutionBackend trait (ADR 0016) with simulation (default, Describe-only) and linux-ns backends; capability negotiation with explicit refusal; no dataplane code yet.
 
-## Stage 8 — RAHN 0.8: network CI / verification ecosystem
+## Stage 8 — RAHN 0.8: network CI / verification ecosystem *(implemented in v0.8.0-alpha; see docs/research/stages/v0.8.md)*
 
-`rahn test`, `rahn verify`, `rahn simulate`, `rahn replay`; CI integration (GitHub Actions, GitLab, local). Goal: a network change is testable before deployment.
+`rahn test`, `rahn verify`, `rahn simulate`, `rahn replay`; CI integration (GitHub Actions, GitLab, local). **Achieved:** `rahn test [ref]` — deterministic TSV verification with exit-code contract (ADR 0017); example CI workflow. Reachability-class checks grow with addressing.
 
 Success: network changes participate in CI and verification workflows.
 
@@ -62,4 +62,4 @@ Success: RAHN provides a coherent, documented abstraction for representing and s
 
 ## Release honesty
 
-The current release is **`v0.7.0-alpha`** (execution backend abstraction; simulation default, linux-ns behind the trait). Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 8 — network CI / verification ecosystem (v0.8).** The white paper matures with the evidence.
+The current release is **`v0.8.0-alpha`** (CI verification: `rahn test` with exit-code contract). Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha` (backend abstraction), `v0.8.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 9 — programmability (v0.9).** The white paper matures with the evidence.

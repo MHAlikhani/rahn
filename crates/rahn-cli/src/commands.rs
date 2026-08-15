@@ -94,6 +94,7 @@ pub fn run(dir: &Path, command: Command) -> Result<String, CliError> {
             note,
         } => relate_cmd(dir, from, to, status, note),
         Command::Explain { anchor } => explain_cmd(dir, anchor),
+        Command::Test { ref_name } => test_cmd(dir, ref_name),
     }
 }
 
@@ -582,6 +583,56 @@ fn inspect_cmd(dir: &Path, name: String) -> Result<String, CliError> {
         out.push_str(&format!("  link {link}\n"));
     }
     Ok(out)
+}
+
+/// CI verification of a committed state (ADR 0017).
+///
+/// Deterministic TSV report; exit code 1 on any failed invariant
+/// (propagated via CliError::Runtime), 0 on pass.
+fn test_cmd(dir: &Path, ref_name: Option<String>) -> Result<String, CliError> {
+    let store = open_repo(dir)?;
+    let state = match ref_name.as_deref() {
+        None => match head_commit(&store)? {
+            Some(id) => state_of_commit(&store, id)?,
+            None => State::empty(),
+        },
+        Some(r) => {
+            let commit = resolve_commit(&store, r)?;
+            state_of_commit(&store, commit)?
+        }
+    };
+    let constitution = constitution_of(&store)?;
+    let report = verify(&state, &constitution);
+    let mut out = format!(
+        "state {}
+",
+        report.state_id.as_hex()
+    );
+    for r in &report.reports {
+        out.push_str(&format!(
+            "{}	{}	{}
+",
+            if r.passed { "PASS" } else { "FAIL" },
+            r.id,
+            r.evidence
+        ));
+    }
+    if report.passed() {
+        out.push_str(&format!(
+            "test PASSED ({} invariants)
+",
+            report.reports.len()
+        ));
+        Ok(out)
+    } else {
+        out.push_str(&format!(
+            "test FAILED ({} of {} invariants)
+",
+            report.failed_ids().len(),
+            report.reports.len()
+        ));
+        Err(CliError::Runtime(out))
+    }
 }
 
 /// Backend registry (ADR 0016). Unknown names fail explicitly.

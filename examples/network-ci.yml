@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Example: gate a network change through RAHN verification in CI (ADR 0017).
+# Copy into .github/workflows/ and commit a .rahn repository with your
+# network state; the workflow fails the pipeline if any invariant fails.
+
+name: network-verification
+on:
+  pull_request:
+    paths: [".rahn/**"]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build rahn CLI
+        run: cargo build --release -p rahn-cli
+      - name: Verify committed network state (exit code is the gate)
+        run: |
+          ./target/release/rahn test
+      # A constitution with connectivity/isolation requirements makes this
+      # gate catch reachability violations too:
+      #   .rahn/constitution:
+      #     require-connectivity web db
+      #     prohibit-connectivity public db

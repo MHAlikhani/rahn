@@ -2,7 +2,7 @@
 
 # RAHN Specification: Execution
 
-Status: **Draft — normative for v0.3.** The simulation default and the Linux namespace backend (ADR 0012) are implemented; the statements below are test-enforced where marked.
+Status: **Draft — normative for v0.8.** The simulation default and the Linux namespace backend (ADR 0012) are implemented; the statements below are test-enforced where marked.
 
 Normative keywords: MUST / MUST NOT / SHOULD / SHOULD NOT / MAY (RFC 2119 sense). Normative language is used only where behavior is intentionally defined.
 
