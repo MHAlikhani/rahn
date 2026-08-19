@@ -1,0 +1,15 @@
+[package]
+name = "rahn-sdk"
+description = "Curated public API facade for RAHN (ADR 0018)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+rahn-core = { workspace = true }
+rahn-state = { workspace = true }
+rahn-store = { workspace = true }
+rahn-verify = { workspace = true }
+rahn-sim = { workspace = true }

@@ -17,4 +17,5 @@ rahn-verify = { path = "crates/rahn-verify" }
 rahn-sim = { path = "crates/rahn-sim" }
 rahn-exec = { path = "crates/rahn-exec" }
 rahn-dist = { path = "crates/rahn-dist" }
+rahn-sdk = { path = "crates/rahn-sdk" }
 sha2 = { version = "0.10", default-features = false }
