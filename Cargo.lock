@@ -99,6 +99,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "rahn-sdk"
+version = "0.8.0-alpha"
+dependencies = [
+ "rahn-core",
+ "rahn-sim",
+ "rahn-state",
+ "rahn-store",
+ "rahn-verify",
+]
+
+[[package]]
 name = "rahn-sim"
 version = "0.8.0-alpha"
 dependencies = [

@@ -15,5 +15,5 @@ pub mod model;
 
 pub use error::ModelError;
 pub use model::{
-    validate_id, Endpoint, Interface, Link, Metadata, Network, State, VerificationSummary,
+    validate_id, Endpoint, Interface, Link, Metadata, Network, Node, State, VerificationSummary,
 };

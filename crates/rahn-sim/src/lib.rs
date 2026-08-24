@@ -15,6 +15,7 @@ use rahn_core::{Endpoint, Network};
 use rahn_state::diff;
 
 pub mod backend;
+pub use backend::SimulationBackend;
 
 /// One concrete action of an execution plan.
 #[derive(Debug, Clone, PartialEq, Eq)]

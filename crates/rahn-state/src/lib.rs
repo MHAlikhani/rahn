@@ -15,10 +15,11 @@ pub mod obs;
 pub mod transition;
 
 pub use canonical::{canonical_bytes, parse_canonical, CanonicalError, CANONICAL_FORMAT_VERSION};
+pub use causal::{Anchor, CausalEdge, CausalError, CausalGraph, Status};
 pub use commit::{canonical_commit_bytes, CommitId, CommitRecord};
 pub use diff::{diff, Diff};
 pub use graph::{components, neighbors, reachable_from, shortest_path};
 pub use history::common_ancestor;
 pub use identity::StateId;
 pub use obs::{order_key, ObsError, Observation, Subject, Value};
-pub use transition::{apply, Operation, TransitionError};
+pub use transition::{apply, apply_all, Operation, TransitionError};
