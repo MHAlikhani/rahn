@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-08-15. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-08-28. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -174,9 +174,9 @@ The requirements derivation (RQ7) concluded that RAHN's writes are low-frequency
 
 **Explicitly not claimed:** linearizability, serializability, or any cross-replica strong consistency; per-replica read-your-writes and monotonic history are the only read guarantees. **Deliberate non-concepts:** leader election and epochs (nothing for an epoch to order without a single writer); CRDT convergence (constraint conflicts require explanation, not silent resolution). Replica identity is self-asserted (documented trust boundary; integrity via content hashes; replay is idempotent); signed transitions remain Future. Sync transport is measured (§27) with per-object cost recorded as known debt.
 
-## 22. Programmability **[Future — Stage 9+]**
+## 22. Programmability **[Partially Implemented — v0.9]**
 
-API, SDK, formalized IR, policy language, and DSL evaluation come after the IR is understood. The v0.1 public surface is the CLI and the crate APIs; neither is stable, and both say so.
+The IR is declared (ADR 0018): the transition `Operation` vocabulary plus the canonical byte encoding — the representation every artifact compiles to or derives from; a future DSL compiles *to* Operations and is deliberately deferred until authoring evidence demands it. The public surface is formalized as the **`rahn-sdk` facade**: a curated, documented, doctest-covered API with compile-time surface guards; anything outside it is internal. Pre-1.0 policy: SDK-breaking changes land in MINOR releases with migration notes. Language bindings beyond Rust remain [Future].
 
 ## 23. AI / Neuro-Symbolic Extensions **[Future]**
 
@@ -259,3 +259,4 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 | v0.7 | 2026-07-19 | §21 upgraded from [Future] to [Implemented, peer sync]: consistency model per RQ7 (ADR 0015), byte-identical convergence, fail-closed divergence; E-sync measurements in §27; explicit non-claims recorded | Stage 6 (v0.6.0-alpha) |
 | v0.8 | 2026-08-06 | §19: backends formalized behind the ExecutionBackend trait (ADR 0016) with capability negotiation; simulation made a backend rather than a special case | Stage 7 (v0.7.0-alpha) |
 | v0.9 | 2026-08-15 | CI surface documented (ADR 0017): `rahn test` with exit-code contract and deterministic TSV; example workflow; scope limited to committed states | Stage 8 (v0.8.0-alpha) |
+| v1.0 | 2026-08-28 | §22 upgraded to [Partially Implemented]: IR declared (ADR 0018), `rahn-sdk` facade with surface guards; DSL deferred | Stage 9 (v0.9.0-alpha) |

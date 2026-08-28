@@ -50,7 +50,7 @@ Adapters for Linux, namespaces, eBPF, XDP, selected programmable dataplanes. **A
 
 Success: network changes participate in CI and verification workflows.
 
-## Stage 9 — RAHN 0.9: programmability
+## Stage 9 — RAHN 0.9: programmability *(implemented in v0.9.0-alpha; see docs/research/stages/v0.9.md)*
 
 RAHN API, SDK, formalized IR, policy language, stronger execution planning; begin evaluating DSL design.
 
@@ -62,4 +62,4 @@ Success: RAHN provides a coherent, documented abstraction for representing and s
 
 ## Release honesty
 
-The current release is **`v0.8.0-alpha`** (CI verification: `rahn test` with exit-code contract). Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha` (backend abstraction), `v0.8.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 9 — programmability (v0.9).** The white paper matures with the evidence.
+The current release is **`v0.9.0-alpha`** (programmability: `rahn-sdk` facade, IR declared). Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha` (backend abstraction), `v0.8.0-alpha` (CI verification), `v0.9.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 10 — v1.0 stable architecture (final stage).** The white paper matures with the evidence.

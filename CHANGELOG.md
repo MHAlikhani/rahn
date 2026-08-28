@@ -4,6 +4,20 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [0.9.0-alpha] — Stage 9: Programmability
+
+### Added
+- **`rahn-sdk` crate (ADR 0018):** curated public API facade —
+  `prelude` grouped by concern (model, IR, graph queries, observations,
+  causality, verification, execution, persistence); doc examples run as
+  doctests; compile-time API-surface guards.
+- **IR declared:** transition `Operation` vocabulary + canonical byte
+  encoding (ADR 0003 format v2) are the interchange representation;
+  future DSL output compiles to Operations. DSL itself deferred.
+- **Versioning policy:** pre-1.0, breaking SDK changes land in MINOR
+  releases with CHANGELOG migration notes.
+- Stage report: `docs/research/stages/v0.9.md`.
+
 ## [0.8.0-alpha] — Stage 8: Network CI / Verification
 
 ### Added

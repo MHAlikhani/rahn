@@ -34,7 +34,7 @@ It is **not** "Git for networks". Git inspires certain concepts (immutable histo
 
 ## Status
 
-**v0.8.0-alpha — Stage 8: network CI / verification.**
+**v0.9.0-alpha — Stage 9: programmability (`rahn-sdk`).**
 
 An experimental, deterministic state engine for evolving network topologies: interfaces and interface-addressed links, canonical serialization (format v2), content-addressed state identity, local persistence, explicit transitions, semantic diff, branches, fail-closed semantic merge, deterministic path discovery, isolation constraints, a deterministic invariant engine, verification-gated commits, and simulation-first execution. **By default `rahn apply` prints the exact commands and touches nothing**; real execution is explicit opt-in (`--execute --yes-i-know`): isolated Linux network namespaces + veth links via iproute2, with structural host-safety guarantees (ADR 0012) — Linux + root only, CI-validated.
 
@@ -65,8 +65,9 @@ The primary implementation language is **Rust**. Rust is an implementation choic
 - **Implemented (v0.6):** peer synchronization over content-addressed history — every replica authoritative for its own history; sync exchanges only immutable hash-verified records; divergence converges through the fail-closed semantic merge, producing **byte-identical merge commits on all replicas**; conflicts fail closed and persist (never auto-resolved). Per-replica read-your-writes only — **no linearizability or strong-consistency claims**. Evidence: [docs/research/stages/v0.6.md](docs/research/stages/v0.6.md).
 - **Implemented (v0.7):** execution backend abstraction (ADR 0016) — `ExecutionBackend` trait with capability negotiation and explicit refusal of unsupported capabilities; `simulation` backend (default, description-only, cannot execute); `linux-ns` backend behind the same interface (ADR 0012 semantics unchanged); `rahn apply --backend <name>`. No dataplane code yet — eBPF/XDP are future trait implementations.
 - **Implemented (v0.8):** `rahn test [ref]` — deterministic, exit-code-driven verification of any committed state for CI pipelines (ADR 0017); example GitHub Actions gate in [examples/network-ci.yml](examples/network-ci.yml).
+- **Implemented (v0.9):** `rahn-sdk` — curated public API facade with doc-tested examples and compile-time API-surface guards; the IR is formally declared (ADR 0018): transition Operations + canonical byte encoding. DSL deliberately deferred.
 - **Not implemented (do not assume otherwise):** eBPF/XDP, P4, addressing, traffic control, causal *inference*, automatic edge extraction, distributed consensus/leader election, authentication (replica identity is self-asserted), AI, DSL.
-- **Next (Stage 9 / v0.9):** programmability — API/SDK/IR (see [ROADMAP.md](ROADMAP.md)).
+- **Next (Stage 10 / v1.0):** stable architecture — the final maturity gate (see [ROADMAP.md](ROADMAP.md)).
 - **Deferred within Stage 2's scope:** typed addressing on interfaces, service objects, constraint-level merge-conflict analysis.
 
 **Current limitations:** no addressing (namespaces have links but no IPs — connectivity is link-existence only), no traffic control, no automatic causal analysis (edges are human-asserted), no cross-replica strong consistency or authentication; execution requires Linux, root, and iproute2, and is CI-validated for a minimal scenario; alpha-grade software with no production use.
