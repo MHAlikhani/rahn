@@ -54,12 +54,12 @@ Success: network changes participate in CI and verification workflows.
 
 RAHN API, SDK, formalized IR, policy language, stronger execution planning; begin evaluating DSL design.
 
-## Stage 10 — RAHN 1.0
+## Stage 10 — RAHN 1.0 *(released as v1.0.0; see docs/research/v1.0-review.md)*
 
-Only when: state semantics are stable; APIs are documented; the execution model is trustworthy; the security model is credible; reproducibility is strong; tests are comprehensive; documentation is mature; ecosystem boundaries are clear.
+The final gate was evaluated in docs/research/v1.0-review.md against the charter requirements; verdict: met, with limitations carried forward explicitly (no addressing/tc, recorded performance debts, CI-scoped execution validation, no signed transitions, single-machine measurements, unverified binary reproducibility).
 
 Success: RAHN provides a coherent, documented abstraction for representing and safely evolving network state.
 
 ## Release honesty
 
-The current release is **`v0.9.0-alpha`** (programmability: `rahn-sdk` facade, IR declared). Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha` (backend abstraction), `v0.8.0-alpha` (CI verification), `v0.9.0-alpha`. No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. **Next: Stage 10 — v1.0 stable architecture (final stage).** The white paper matures with the evidence.
+The current release is **`v1.0.0`** — the first stable release. Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha` (backend abstraction), `v0.8.0-alpha` (CI verification), `v0.9.0-alpha` (programmability), `v1.0.0` (stable architecture). No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. Post-1.0 development continues inside the stable extension model (ADR 0019): addressing, traffic control, dataplane backends, signed transitions, and log replication are candidate directions requiring their own ADRs. The white paper matures with the evidence.

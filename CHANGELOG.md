@@ -4,6 +4,27 @@
 
 All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
 
+## [1.0.0] — Stable Architecture
+
+The first stable release. Semver now applies: `rahn-sdk`, the CLI
+behavior contracts (exit codes, `rahn test` output schema), and the
+canonical format v2 + Operation IR are stable; breaking changes only in
+MAJOR with migration notes (ADR 0019).
+
+### Added
+- **Stability and compatibility commitment (ADR 0019):** frozen IR
+  format for 1.x, stable extension model (backends, invariants,
+  observations, sync), deprecation policy, release process.
+- **Final research artifacts:** `docs/research/final-comparison.md`
+  (scoped uniqueness statement, per-system distinction at v1.0) and
+  `docs/research/v1.0-review.md` (charter gate checklist, security and
+  dependency audits, honest carried-forward limitations).
+- Dependency audit: 1 direct dependency (sha2) + audited transitive
+  closure (docs/third-party.md).
+
+### Fixed
+- None in this release — stabilization only.
+
 ## [0.9.0-alpha] — Stage 9: Programmability
 
 ### Added

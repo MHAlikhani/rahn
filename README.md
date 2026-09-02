@@ -34,7 +34,7 @@ It is **not** "Git for networks". Git inspires certain concepts (immutable histo
 
 ## Status
 
-**v0.9.0-alpha — Stage 9: programmability (`rahn-sdk`).**
+**v1.0.0 — Stable architecture release.**
 
 An experimental, deterministic state engine for evolving network topologies: interfaces and interface-addressed links, canonical serialization (format v2), content-addressed state identity, local persistence, explicit transitions, semantic diff, branches, fail-closed semantic merge, deterministic path discovery, isolation constraints, a deterministic invariant engine, verification-gated commits, and simulation-first execution. **By default `rahn apply` prints the exact commands and touches nothing**; real execution is explicit opt-in (`--execute --yes-i-know`): isolated Linux network namespaces + veth links via iproute2, with structural host-safety guarantees (ADR 0012) — Linux + root only, CI-validated.
 
@@ -67,7 +67,7 @@ The primary implementation language is **Rust**. Rust is an implementation choic
 - **Implemented (v0.8):** `rahn test [ref]` — deterministic, exit-code-driven verification of any committed state for CI pipelines (ADR 0017); example GitHub Actions gate in [examples/network-ci.yml](examples/network-ci.yml).
 - **Implemented (v0.9):** `rahn-sdk` — curated public API facade with doc-tested examples and compile-time API-surface guards; the IR is formally declared (ADR 0018): transition Operations + canonical byte encoding. DSL deliberately deferred.
 - **Not implemented (do not assume otherwise):** eBPF/XDP, P4, addressing, traffic control, causal *inference*, automatic edge extraction, distributed consensus/leader election, authentication (replica identity is self-asserted), AI, DSL.
-- **Next (Stage 10 / v1.0):** stable architecture — the final maturity gate (see [ROADMAP.md](ROADMAP.md)).
+- **Stability (v1.0):** semver via `rahn-sdk` + CLI contracts; canonical format v2 frozen for 1.x; extension model stable (ADR 0019). Research continues within these extension points.
 - **Deferred within Stage 2's scope:** typed addressing on interfaces, service objects, constraint-level merge-conflict analysis.
 
 **Current limitations:** no addressing (namespaces have links but no IPs — connectivity is link-existence only), no traffic control, no automatic causal analysis (edges are human-asserted), no cross-replica strong consistency or authentication; execution requires Linux, root, and iproute2, and is CI-validated for a minimal scenario; alpha-grade software with no production use.

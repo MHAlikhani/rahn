@@ -2,8 +2,8 @@
 
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
-**White Paper v0.2 — Initial Draft (technical research document)**
-Date: 2026-08-28. Repository: https://github.com/MHAlikhani/rahn
+**White Paper v1.0 — Stable Release Document**
+Date: 2026-09-02. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -260,3 +260,4 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 | v0.8 | 2026-08-06 | §19: backends formalized behind the ExecutionBackend trait (ADR 0016) with capability negotiation; simulation made a backend rather than a special case | Stage 7 (v0.7.0-alpha) |
 | v0.9 | 2026-08-15 | CI surface documented (ADR 0017): `rahn test` with exit-code contract and deterministic TSV; example workflow; scope limited to committed states | Stage 8 (v0.8.0-alpha) |
 | v1.0 | 2026-08-28 | §22 upgraded to [Partially Implemented]: IR declared (ADR 0018), `rahn-sdk` facade with surface guards; DSL deferred | Stage 9 (v0.9.0-alpha) |
+| v1.1 | 2026-09-02 | **v1.0.0 stable release document.** Final structure per charter §51: all sections present, evidence-linked to measured stages (§27: scaling, observation ingestion, causal-graph ops, sync transport, E6 partial); final-comparison and v1.0 review referenced; compatibility commitment (ADR 0019) recorded; limitations carried forward explicitly | Stage 10 (v1.0.0) |
