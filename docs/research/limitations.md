@@ -2,13 +2,13 @@
 
 # RAHN Limitations
 
-Status: living research document (updated at v0.5.0-alpha / Stage 5). Honest limitations of the architecture and of the current implementation state. This document must never shrink by hiding a limitation — only by resolving it (with evidence) or narrowing a claim.
+Status: living research document (updated at v1.0.0). Honest limitations of the architecture and of the current implementation state. This document must never shrink by hiding a limitation — only by resolving it (with evidence) or narrowing a claim.
 
 ## Limitations of the current project state
 
-- **Implementation is alpha-grade.** The v0.5 system (interface-based state engine, canonical format v2, graph queries, isolation constraints, namespace execution backend per ADR 0012, observations per ADR 0013, causal memory per ADR 0014) is implemented and test-enforced ([testing.md](../testing.md)), but no production use, external review, or real deployment exists; the Linux execution path is validated by CI only.
+- **Stable architecture, young implementation.** The v1.0 system (interface-based state engine, canonical format v2, graph queries, isolation constraints, namespace execution backend per ADR 0012, observations per ADR 0013, causal memory per ADR 0014) is implemented and test-enforced ([testing.md](../testing.md)), but no production use, external review, or real deployment exists; the Linux execution path is validated by CI only. v1.0 marks architectural stability (semver, frozen IR format, ADR 0019) — **not** production readiness.
 - **Causality is asserted, never inferred.** Edge statuses are honest labels; there is no automatic causal analysis, no AI reasoning, and no distributed causal memory.
-- **Evidence is partial.** Determinism claims are test-enforced; the only measurements are the Stage 2 single-machine scaling baselines ([stages/v0.2.md](stages/v0.2.md)). Hypotheses ([hypotheses.md](hypotheses.md)) are largely untested; the full experiment program (E2 completion, E3–E7) has not run.
+- **Evidence is partial.** Determinism claims are test-enforced; measurements are single-machine baselines (state scaling, observation ingestion, causal-graph operations, sync transport — [stages/](stages/)). Hypotheses ([hypotheses.md](hypotheses.md)) are largely untested; the experiment program is partial (E2 and E6 partial, E3–E5 and E7 not run).
 - **No novelty claims are warranted yet.** Prior-art analysis ([prior-art.md](prior-art.md)) is a working survey and must be deepened before the white paper asserts any novelty.
 - **Known performance debt (recorded, not yet addressed):** repeated operation application currently clones the whole network, producing roughly O(m·n) cost for m batched operations on an n-object network. Acceptable at measured scales (see [stages/v0.2.md](stages/v0.2.md)); a copy-on-write or batched-apply design would require its own ADR. Do not benchmark future changes against this as-is without noting the debt.
 
@@ -19,7 +19,7 @@ Status: living research document (updated at v0.5.0-alpha / Stage 5). Honest lim
 3. **Merge is incomplete in principle.** Semantic conflict detection cannot be complete in general; RAHN compensates by failing closed, which means some mergeable states will be rejected.
 4. **Determinism costs.** Canonical serialization, content hashing, and explicit transitions cost CPU and storage; immutable history grows unboundedly until pruning is designed.
 5. **Explainability is bounded by instrumentation.** `rahn explain` can only trace what was recorded; gaps in observation yield gaps in causal chains, and confidence in attribution will be probabilistic at best.
-6. **Single-writer in early stages.** Stages 0–5 assume local, single-writer state; distributed operation (Stage 6) is unsolved by design until its requirements are derived.
+6. **Single-writer per replica.** Stages 0–5 assumed local, single-writer state; distributed operation arrived at Stage 6 as per-replica authority plus explicit peer sync (ADR 0015), with no cross-replica strong consistency and no single-writer mode.
 7. **Ergonomics tax.** Explicitness (transitions, verification, recorded provenance) is more work than editing configs. If this tax proves too high, the project fails in practice even if the architecture is sound.
 8. **Rust is an implementation choice with consequences.** Compile-time strictness slows exploration; the architecture must not become Rust-shaped rather than problem-shaped.
 

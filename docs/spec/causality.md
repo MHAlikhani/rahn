@@ -8,7 +8,7 @@ Normative keywords: MUST / MUST NOT / SHOULD / SHOULD NOT / MAY (RFC 2119 sense)
 
 ## Reserved
 
-Causal memory is a Stage 5+ research direction (RQ5, H5). Reserved. When specified: causal edges MUST reference recorded events/transitions, attribution SHOULD carry confidence information, and rahn explain output MUST distinguish established causality from inference.
+Causal *inference* is a research direction (RQ5, H5) and is reserved: implementations MUST NOT infer edges. Causal edges MUST reference recorded events/transitions, attribution SHOULD carry confidence information (the `status` label), and `rahn explain` output MUST distinguish established causality from hypothesis.
 
 ## Normative seeds (v0.5)
 

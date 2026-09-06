@@ -3,7 +3,7 @@
 # RAHN: A Stateful Execution Architecture for Evolving Networks
 
 **White Paper v1.0 — Stable Release Document**
-Date: 2026-09-02. Repository: https://github.com/MHAlikhani/rahn
+Date: 2026-09-06. Repository: https://github.com/MHAlikhani/rahn
 Versioned independently of the codebase; revisions correspond to meaningful architectural changes. Version history at the end.
 
 **Licensing:** RAHN software is licensed under Apache License 2.0. RAHN documentation and research materials (including this paper) are licensed under CC BY 4.0 unless otherwise stated. The paper's license does not change the software license.
@@ -240,7 +240,7 @@ Primary citations are added as the survey deepens (docs/research/prior-art.md ca
 
 1. IETF RFC 9315, *An Analysis of Intent-Based Networking* (intent decomposition and assurance analysis).
 2. Apache License 2.0; Creative Commons Attribution 4.0 International (project licensing).
-3. The RAHN repository itself: ADRs 0001–0010, docs/spec/, docs/research/, docs/testing.md, docs/reproducibility.md.
+3. The RAHN repository itself: ADRs 0001–0019, docs/spec/, docs/research/, docs/testing.md, docs/reproducibility.md.
 
 **Fabrication rule: no reference appears in this paper that the project has not actually consulted.**
 

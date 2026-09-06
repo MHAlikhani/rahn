@@ -2,13 +2,13 @@
 
 # RAHN Benchmark Methodology
 
-Status: living research document (Stage 0). Anti-goal: meaningless benchmark numbers (e.g., "X% faster" with no baseline, environment, or methodology).
+Status: living research document. Anti-goal: meaningless benchmark numbers (e.g., "X% faster" with no baseline, environment, or methodology).
 
-## What to benchmark (when implementation exists)
+## What to benchmark
 
 State creation · state serialization · state hashing/identity · diff · branch creation · merge · invariant verification · persistence (commit/load) · graph operations (from Stage 2).
 
-Timing is explicitly **not** a v0.1 priority (charter: correctness over speed); benchmarks exist to catch regressions and to test hypotheses (E2), not to advertise.
+Timing is explicitly **not** a priority (charter: correctness over speed); benchmarks exist to catch regressions and to test hypotheses (E2), not to advertise.
 
 ## Rules
 

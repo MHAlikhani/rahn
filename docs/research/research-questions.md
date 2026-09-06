@@ -26,7 +26,7 @@ Can network transitions be verified before execution?
 - **Method:** v0.1 invariant engine (structural + connectivity); grow the vocabulary in Stage 2; measure checking cost against topology scale (E2, benches/).
 - **Measurable result:** per-invariant pass/fail with evidence on all candidate states; verification latency distribution at 10²–10⁵ objects.
 - **Limitations:** verification covers only encoded invariants ("verified" means exactly that and nothing more); expressiveness vs. decidability tension (RQ4-related).
-- **Status:** implemented for the v0.1 vocabulary; cost measurement pending.
+- **Status:** implemented; E2 partial (verification/path cost measured at 10²–10⁵ objects in the Stage 2 scaling run — [stages/v0.2.md](stages/v0.2.md)), full constraint-budget measurement pending.
 
 ## RQ3 — Semantic branches and merges
 
@@ -34,7 +34,7 @@ Can network branches and merges be defined semantically rather than textually?
 
 - **Motivation:** textual merge cannot see constraint feasibility; wrong merges are worse than rejected merges.
 - **Hypothesis (H4):** for non-conflicting topology changes, three-way semantic merge succeeds; for touching changes, conflicts are detected and explained, never silently resolved.
-- **Method:** fail-closed merge with content-aware effect comparison; seeded property tests (commutativity for disjoint effects); conflict-class coverage tests; Stage 2 extends to constraint-level infeasibility.
+- **Method:** fail-closed merge with content-aware effect comparison; seeded property tests (commutativity for disjoint effects); conflict-class coverage tests; constraint-level infeasibility analysis remains open (the Stage 2 roadmap item was not delivered — [stages/v0.2.md](stages/v0.2.md)).
 - **Measurable result:** detection precision/recall on injected conflict scenarios (E3); false-rejection rate on known-clean merges.
 - **Limitations:** completeness is impossible in general; the design compensates by failing closed — measurable as the false-rejection rate.
 - **Status:** implemented for the v0.1 vocabulary; E3 study pending.
@@ -59,7 +59,7 @@ Can observations be linked reliably to state transitions?
 - **Method:** fault-injection scenarios with ground-truth causal chains (E4); compare attribution precision/recall against a telemetry-only baseline.
 - **Measurable result:** attribution precision/recall; time-to-explanation.
 - **Limitations:** imperfect telemetry and concurrent changes bound fidelity; output must distinguish temporal correlation, causal hypothesis, and verified relation.
-- **Status:** open; Stage 4–5.
+- **Status:** open; the mechanisms exist (observations per ADR 0013, asserted edges per ADR 0014), but E4 has not run.
 
 ## RQ6 — Incident reconstruction / replay
 
@@ -70,7 +70,7 @@ Can network incidents be reconstructed from state + observations?
 - **Method:** record full scenario evolution; replay at sampled timestamps (E5); compare against ground truth.
 - **Measurable result:** reconstruction error; replay latency; storage growth.
 - **Limitations:** observations capture only what was instrumented; fidelity is intrinsically partial.
-- **Status:** open; Stage 5. (State-only replay of committed history is already possible via `rahn inspect`.)
+- **Status:** open; E5 has not run. (State-only replay of committed history is already possible via `rahn inspect`.)
 
 ## RQ7 — Consistency requirements for distributed state
 
@@ -81,7 +81,7 @@ What consistency model does replicated RAHN state actually need?
 - **Method:** workload study of candidate deployment patterns (E7) *before* mechanism selection; document findings as ADR.
 - **Measurable result:** a written requirements specification (write rates, staleness tolerance, conflict semantics) plus an evaluated candidate list.
 - **Limitations:** requirements derived from assumed workloads may miss real ones; revisited on evidence.
-- **Status:** open; Stage 6. Deliberately deferred.
+- **Status:** requirements derived and recorded (ADR 0015); the workload study (E7) has not run.
 
 ## RQ8 — Multi-backend execution
 
@@ -92,7 +92,7 @@ Can the same abstract state model target multiple execution backends?
 - **Method:** keep plan format specified and test-frozen; Stage 3 namespace backend as first real target; differential testing of planned vs. observed effects (E6).
 - **Measurable result:** plan/observation mismatch rate by operation class; number of backends implementable without core changes.
 - **Limitations:** backend fidelity varies; mismatches are expected and must be reported, not hidden.
-- **Status:** open; seam implemented (rahn-sim), first backend pending Stage 3.
+- **Status:** open; the seam and two backends are implemented (`rahn-sim`, `linux-ns` — ADR 0012/0016), and the plan/observation differential (E6) is partial.
 
 ## RQ9 — AI as advisor, not authority
 

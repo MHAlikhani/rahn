@@ -2,7 +2,7 @@
 
 # RAHN Concepts
 
-An introduction to the ideas behind RAHN. Definitions in [../GLOSSARY.md](../GLOSSARY.md); the normative model will live in [spec/](spec/).
+An introduction to the ideas behind RAHN. Definitions in [../GLOSSARY.md](../GLOSSARY.md); the normative model lives in [spec/](spec/).
 
 ## The core idea
 
@@ -60,11 +60,11 @@ This is not a metrics graph; it is causality linked to state transitions.
 
 ## Evolution, branching, semantic merge
 
-Evolution is a graph: S0 → S1 → S2 → S3, and it may branch. Branches are lightweight references. Diff and merge are semantic operations on network meaning, not text. Merges can produce **semantic conflicts** — e.g., branch A adds `latency <= 10ms`, branch B requires post-quantum encryption, and no available path satisfies both. RAHN must detect and explain such conflicts; v0.1 fails closed rather than auto-resolving.
+Evolution is a graph: S0 → S1 → S2 → S3, and it may branch. Branches are lightweight references. Diff and merge are semantic operations on network meaning, not text. Merges can produce **semantic conflicts** — e.g., branch A adds `latency <= 10ms`, branch B requires post-quantum encryption, and no available path satisfies both. RAHN detects and explains such conflicts and fails closed rather than auto-resolving them.
 
 ## Time travel and replay
 
-`rahn replay --at <timestamp>` should reconstruct relevant state and observations for an earlier point; `rahn explain <incident>` should trace an incident to its origin transition and causal chain. Not implemented in v0.1 — but immutable, content-addressed history is designed for it from day one.
+`rahn replay --at <timestamp>` should reconstruct relevant state and observations for an earlier point; `rahn explain <incident>` should trace an incident to its origin transition and causal chain. State-only replay of committed history is already possible via `rahn inspect`, and `rahn explain <anchor>` traces recorded causal edges (ADR 0014); a `replay` command and the narrative incident form do not exist — but immutable, content-addressed history is designed for them from day one.
 
 ## AI as an optional layer
 

@@ -2,7 +2,7 @@
 
 # RAHN Experiment Plan
 
-Status: living research document (Stage 0). Experiments must be reproducible: every experiment records its code commit, environment, inputs, and raw results alongside the analysis.
+Status: living research document. Experiments must be reproducible: every experiment records its code commit, environment, inputs, and raw results alongside the analysis.
 
 ## Principles
 
@@ -50,6 +50,6 @@ Status: living research document (Stage 0). Experiments must be reproducible: ev
 
 ## Reproducibility requirements
 
-- Experiment harness lives in-repo (`experiments/` once the workspace exists); deterministic inputs or generated-with-seed inputs.
+- Experiment harness lives in-repo (`experiments/`, or crate-level ignored harnesses as with the Stage 2 scaling run); deterministic inputs or generated-with-seed inputs.
 - Every result document records: commit, date, hardware, OS, toolchain, methodology, raw data.
 - Benchmarks follow [benchmark-methodology.md](benchmark-methodology.md) — no meaningless benchmark numbers in project materials.

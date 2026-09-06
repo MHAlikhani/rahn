@@ -1,11 +1,13 @@
 [package]
 name = "rahn-cli"
-description = "Command-line interface for the RAHN state engine (simulation-only)."
+description = "Command-line interface for RAHN's stateful network execution architecture."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [[bin]]
 name = "rahn"

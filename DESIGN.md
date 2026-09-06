@@ -15,7 +15,7 @@ The project follows nineteen architectural principles (charter §19), applied as
 5. **No hidden global mutable state.** All mutable context is passed explicitly.
 6. **No unnecessary runtime magic.** No reflection-driven behavior, no dynamic dispatch where static suffices.
 7. **No AI dependency in the core.** AI is an optional reasoning layer consuming state, proposing candidates that pass through the same verifier as any other transition.
-8. **No network side effects by default.** The only execution mode in v0.1 is simulation.
+8. **No network side effects by default.** Simulation is the default; the isolated namespace backend is opt-in (ADR 0012).
 9. **Verify before execute.** Enforced structurally: the execution engine cannot be reached without a verification result.
 10. **Simple primitives over frameworks.**
 11–13. **Separation** of control plane from execution plane, representation from execution, observation from decision.

@@ -6,7 +6,7 @@ Status: a **research roadmap**, not a fixed promise. Stages are ordered by depen
 
 Every architectural change follows: create/update ADR → update ARCHITECTURE.md → update white paper → document the reason.
 
-## Stage 0 — Research / Foundation (current)
+## Stage 0 — Research / Foundation *(completed)*
 
 Prior-art analysis, terminology, architecture specification, invariants, threat model, state model, open questions, repository bootstrap. Deliverables: ARCHITECTURE.md, DESIGN.md, research corpus, ROADMAP.md, ADRs. No large implementation.
 
@@ -56,10 +56,25 @@ RAHN API, SDK, formalized IR, policy language, stronger execution planning; begi
 
 ## Stage 10 — RAHN 1.0 *(released as v1.0.0; see docs/research/v1.0-review.md)*
 
+> **Status: stable architecture achieved — the staged roadmap above is history.** Current release: **v1.0.0**. All further work is post-v1.0 extension/research and is independently scoped below.
+
 The final gate was evaluated in docs/research/v1.0-review.md against the charter requirements; verdict: met, with limitations carried forward explicitly (no addressing/tc, recorded performance debts, CI-scoped execution validation, no signed transitions, single-machine measurements, unverified binary reproducibility).
 
 Success: RAHN provides a coherent, documented abstraction for representing and safely evolving network state.
 
 ## Release honesty
 
-The current release is **`v1.0.0`** — the first stable release. Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha` (backend abstraction), `v0.8.0-alpha` (CI verification), `v0.9.0-alpha` (programmability), `v1.0.0` (stable architecture). No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins. Post-1.0 development continues inside the stable extension model (ADR 0019): addressing, traffic control, dataplane backends, signed transitions, and log replication are candidate directions requiring their own ADRs. The white paper matures with the evidence.
+The current release is **`v1.0.0`** — the first stable release. Releases so far: `v0.1.0-alpha.1`, `v0.1.0-alpha.2` (hardening), `v0.2.0-alpha` (network graph), `v0.3.0-alpha` (isolated Linux execution), `v0.4.0-alpha` (observability), `v0.5.0-alpha` (causal memory), `v0.6.0-alpha` (distributed state), `v0.7.0-alpha` (backend abstraction), `v0.8.0-alpha` (CI verification), `v0.9.0-alpha` (programmability), `v1.0.0` (stable architecture). No release may be presented as a production network controller or a replacement for SDN, IBN, network OSes, or digital twins.
+
+## Post-v1.0 extensions (independently scoped — nothing is scheduled)
+
+Per ADR 0019, each major extension requires its own ADR, specification, research evidence, and compatibility review before any implementation:
+
+- **Addressing** on interfaces (typed address fields; canonical format bump).
+- **Traffic control** (tc-class capabilities in the backend model).
+- **Signed transitions / authenticated replicas** (replaces the self-asserted v0.6 trust boundary).
+- **Replicated logs** (observation/causal log synchronization).
+- **Additional dataplane backends** (eBPF/XDP, P4-class — ADR 0016 extension points).
+- **DSL** (only if authoring evidence shows Operations are insufficient; ADR 0018 reconsideration condition).
+
+Nothing here is implemented, scheduled, or promised; each item stays a candidate until its ADR is accepted. The white paper matures with the evidence.

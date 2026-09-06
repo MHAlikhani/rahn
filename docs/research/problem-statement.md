@@ -2,7 +2,7 @@
 
 # RAHN Problem Statement
 
-Status: living research document (Stage 0).
+Status: living research document.
 
 ## The problem in one paragraph
 

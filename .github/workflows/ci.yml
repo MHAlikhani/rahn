@@ -1,4 +1,4 @@
-# RAHN CI: format, lint, and test on every push and PR.
+# RAHN CI: format, lint, test, execute, and check documentation on every push and PR.
 # Main branch must remain stable; this workflow is the gate.
 
 name: CI
@@ -77,3 +77,11 @@ jobs:
             grep -q "SPDX-License-Identifier: Apache-2.0\|license.workspace = true\|license = \"Apache-2.0\"" "$f" || { echo "missing SPDX/license: $f"; missing=1; }
           done
           exit $missing
+
+  docs:
+    name: Documentation checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Links, SPDX headers, roadmap drift, llms.txt
+        run: python3 scripts/check_docs.py

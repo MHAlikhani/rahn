@@ -6,7 +6,7 @@ Authoritative record of externally sourced components used by or included in RAH
 
 **Current status: one dependency.** `sha2` (SHA-256 for content-addressed state identity and object integrity; ADR 0002). License verified from the crate metadata at time of addition: `Apache-2.0 OR MIT` — compatible with the project's Apache-2.0 default; neither alternative imposes obligations beyond attribution.
 
-When the implementation begins (Rust workspace), every dependency must be recorded here **before or at the time it is added**, with:
+Every dependency must be recorded here **before or at the time it is added**, with:
 
 - component name and version
 - source URL

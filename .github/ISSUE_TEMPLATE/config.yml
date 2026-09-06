@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Issue template configuration. Blank issues are disabled: use the templates,
+# or the contact links below. Security issues never go through public issues.
+blank_issues_enabled: false
+contact_links:
+  # Category links use the slugs of the categories that exist on the
+  # repository; the full category design is in docs/community/discussions.md.
+  - name: Technical Questions
+    url: https://github.com/MHAlikhani/rahn/discussions/categories/technical-questions
+    about: Ask how to build, run, or reason about RAHN (see docs/community/discussions.md for where posts belong)
+  - name: Research Ideas
+    url: https://github.com/MHAlikhani/rahn/discussions/categories/research-ideas
+    about: Hypotheses, prior-art pointers, and experiment proposals
+  - name: Report a security vulnerability
+    url: https://github.com/MHAlikhani/rahn/security/advisories/new
+    about: Private security reports - do not open a public issue (see SECURITY.md)

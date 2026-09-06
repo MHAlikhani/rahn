@@ -10,7 +10,7 @@ labels: ["feature"]
 
 **Does it strengthen the core abstraction?** RAHN accepts features that answer yes to: *Does this strengthen verifiable, evolving network state?* Explain the connection or expect deferral (charter rule; see CONTRIBUTING.md).
 
-**Proposed stage:** v0.1 hardening / v0.2 / later / unsure. Feature work for later stages should usually wait — say so if you know.
+**Proposed scope:** post-v1.0 extension candidate / research direction / later / unsure (see ROADMAP.md's post-v1.0 extensions). Extensions wait for their own ADR — say so if you know.
 
 **Proposed approach:** a sketch, not a spec. Alternatives you considered.
 

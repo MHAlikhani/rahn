@@ -31,4 +31,4 @@ Normative keywords: MUST / MUST NOT / SHOULD / SHOULD NOT / MAY (RFC 2119 sense)
 
 ## Reserved
 
-Causal relations between observations/events/transitions are **Reserved** for Stage 5 (docs/spec/causality.md) and MUST NOT be implied by this specification.
+Causal relations between observations/events/transitions are specified separately (docs/spec/causality.md, ADR 0014) and MUST NOT be implied by this specification.

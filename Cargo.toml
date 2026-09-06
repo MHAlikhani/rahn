@@ -8,6 +8,8 @@ edition = "2021"
 license = "Apache-2.0"
 repository = "https://github.com/MHAlikhani/rahn"
 authors = ["Mohammad Hossein Alikhani", "The RAHN Project Contributors"]
+keywords = ["networking", "network-state", "deterministic", "verification", "simulation"]
+categories = ["command-line-utilities", "network-programming", "development-tools", "simulation"]
 
 [workspace.dependencies]
 rahn-core = { path = "crates/rahn-core" }

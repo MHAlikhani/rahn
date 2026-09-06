@@ -2,7 +2,7 @@
 
 # RAHN Hypotheses
 
-Status: living research document (Stage 0). Each hypothesis is falsifiable and names what would refute it. Do not state hypotheses as facts in any RAHN material.
+Status: living research document. Each hypothesis is falsifiable and names what would refute it. Do not state hypotheses as facts in any RAHN material.
 
 ## H1 — Deterministic network state is practical
 A useful fraction of network meaning (topology, policy, identity, intent, constraints) can be captured in a deterministic, content-addressed state object whose identity is stable across runs and platforms.

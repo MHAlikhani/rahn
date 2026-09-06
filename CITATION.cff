@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use RAHN in research, cite this repository."
+title: "RAHN: a stateful execution architecture for evolving networks"
+abstract: >-
+  RAHN models network state as a deterministic, content-addressed object: changes are
+  explicit transitions, every candidate state passes a constitution of invariants
+  before it can be committed, evolution uses branches with a fail-closed semantic
+  merge, and execution is simulation-first. v1.0.0 is a stable architecture, not a
+  production network controller. Source code is Apache-2.0; documentation,
+  specification, and research materials are CC BY 4.0.
+authors:
+  - family-names: Alikhani
+    given-names: Mohammad Hossein
+    email: mohammad.hosein.alikhani08@gmail.com
+version: 1.0.0
+date-released: 2026-09-02
+license: Apache-2.0
+repository-code: "https://github.com/MHAlikhani/rahn"
+url: "https://github.com/MHAlikhani/rahn"
+keywords:
+  - network state
+  - network verification
+  - network simulation
+  - deterministic
+  - content-addressed
+  - infrastructure as code
+  - Rust

@@ -16,4 +16,4 @@ labels: ["bug"]
 
 **Output:** the exact command output (verbatim).
 
-**Classification (maintainers will confirm):** bug / v0.1 hardening.
+**Classification (maintainers will confirm):** bug / regression / hardening.

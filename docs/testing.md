@@ -2,17 +2,17 @@
 
 # RAHN Testing Strategy
 
-Testing is part of the architecture (DESIGN.md principle 19; charter §27). This document describes the strategy, the current suite, and the rules for extending it.
+Testing is part of the architecture (DESIGN.md implementation rules; charter §27). This document describes the strategy, the current suite, and the rules for extending it.
 
 ## Principles
 
-1. **Correctness over speed** (v0.1 priority). Tests may be slow; wrong results may not.
+1. **Correctness over speed** (DESIGN.md priority order). Tests may be slow; wrong results may not.
 2. **Tests live close to semantics.** Unit tests sit next to the code whose semantics they pin; end-to-end tests encode user-visible flows.
 3. **Determinism extends to tests.** No wall-clock, no network, no system randomness in test inputs. Property tests use a seeded xorshift PRNG so any failure reproduces from the printed seed.
 4. **Every regression gets a test.** Edge cases discovered in review or incident analysis are added as named tests referencing the scenario.
 5. **"Verified" is only as good as its tests.** The test suite is the evidence behind the [Implemented] claims in the white paper and specs.
 
-## Current suite layout (v0.1)
+## Current suite layout
 
 | Location | What it pins |
 |---|---|
@@ -23,7 +23,12 @@ Testing is part of the architecture (DESIGN.md principle 19; charter §27). This
 | `crates/rahn-state/src/commit.rs` | Commit record round-trip, parent-count limits, trailing-byte rejection |
 | `crates/rahn-state/src/diff.rs` | Semantic diff: additions, removals, metadata changes, empty diff |
 | `crates/rahn-state/src/history.rs` | Common ancestor: linear, branched, diamond, disjoint histories |
-| `crates/rahn-state/tests/properties.rs` | Seeded property tests over random networks: canonical round-trip + identity stability (200 seeds); diff-derived operations reconstruct the target (200 seeds); merge of disjoint removals is commutative and valid (100 seeds) |
+| `crates/rahn-state/tests/properties.rs` | Seeded property tests over random networks: canonical round-trip + identity stability (200 seeds); diff-derived operations reconstruct the target (200 seeds); merge of disjoint removals is commutative and valid (100 seeds); shortest path is a valid walk (100 seeds) |
+| `crates/rahn-state/src/obs.rs`, `obs/log.rs` | Observation records: deterministic ingest, append-only versioned framing, malformed-framing refusal, provenance (state id per record) |
+| `crates/rahn-state/src/causal.rs`, `causal_log.rs` | Causal edges: status restrictions (`verified` requires commit anchors), DAG enforcement, dangling-anchor rejection, append-only framing |
+| `crates/rahn-dist/tests/sync_scenarios.rs` | Peer sync: adoption, byte-identical convergence, fail-closed conflict persistence, restart recovery, corrupted-data refusal, idempotency |
+| `crates/rahn-exec/src/lib.rs`, `backend.rs` | Plan→iproute2 mapping, host-safety restriction (`rahn-*` namespaces), non-Linux refusal, capability negotiation |
+| `crates/rahn-sdk/src/lib.rs` | Public API surface guards, IR round-trip, doctest examples |
 | `crates/rahn-store/src/lib.rs` | Content-addressed round-trip, deduplication, commit round-trip, **corrupted-object refusal**, refs/HEAD, index, re-init refusal |
 | `crates/rahn-verify/src/constitution.rs` | Constitution parsing: round-trip, unknown keywords, arity, invalid ids |
 | `crates/rahn-verify/src/invariants.rs` | Each invariant's pass and fail behavior, evidence strings, determinism, structural floor always checked |
@@ -36,19 +41,22 @@ Testing is part of the architecture (DESIGN.md principle 19; charter §27). This
 Run everything:
 
 ```console
-cargo test          # ~90 tests across 16 binaries
+cargo test          # 136 tests pass, 4 ignored harnesses, 27 binaries (Windows, --all-features; counts vary by platform and feature flags)
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 ```
 
-The suite also includes `crates/rahn-state/tests/scaling.rs` — an ignored
-benchmark harness (run with `--release -- --ignored --nocapture`), documented
-in `docs/research/stages/v0.2.md`.
+The suite also contains ignored benchmark harnesses —
+`crates/rahn-state/tests/{scaling,obs_scaling,causal_scaling}.rs`,
+`crates/rahn-dist/tests/sync_scaling.rs`, and the Linux-only
+`crates/rahn-exec/tests/linux_real.rs` — which run with
+`--release -- --ignored --nocapture`; `scaling.rs` is documented in
+`docs/research/stages/v0.2.md`.
 
 ## What the tests deliberately do NOT cover yet
 
-- **Benchmarks**: none (charter: no premature optimization). Benchmarks arrive with `benches/` when a hypothesis needs them (docs/research/benchmark-methodology.md).
-- **Fuzzing**: structured malformed-input tests exist, but no continuous fuzzer. Planned when the parse surface grows (Stage 2+).
+- **Benchmarks in CI**: none (charter: no premature optimization) — the ignored harnesses above are run manually, and no `benches/` suite exists yet. A `benches/` suite arrives when a hypothesis needs one (docs/research/benchmark-methodology.md).
+- **Fuzzing**: structured malformed-input tests exist, but no continuous fuzzer. Planned when the parse surface grows.
 - **Cross-platform CI matrix**: determinism tests are designed for it; CI (GitHub Actions) runs on Linux and Windows.
 - **Model checking / formal verification**: future methodology (docs/research/experiment-plan.md).
 

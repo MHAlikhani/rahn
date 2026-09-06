@@ -21,10 +21,10 @@ Core runtime · state model · verification · networking adapters · eBPF · si
 ## Ground rules
 
 - **Determinism is non-negotiable.** No nondeterministic iteration order, timestamps-as-logic, or hidden global state.
-- **No network side effects** outside approved execution backends (none exist before v0.3).
+- **No network side effects** outside approved execution backends (simulation is the default; the `linux-ns` backend is the approved opt-in, ADR 0012/0016).
 - **No AI in the core.**
 - **Small modules, strong types, explicit errors.** Make invalid states hard to represent.
-- **Tests close to semantics:** unit, property, integration, deterministic fixtures, malformed-input tests, serialization round-trips. For v0.1, correctness outranks speed.
+- **Tests close to semantics:** unit, property, integration, deterministic fixtures, malformed-input tests, serialization round-trips. Correctness outranks speed (DESIGN.md priority order).
 - **Documentation is part of the architecture.** Architectural changes require an ADR plus updates to ARCHITECTURE.md and (when significant) the white paper. Do not silently change core assumptions.
 
 ## Developer setup
@@ -38,7 +38,7 @@ cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 ```
 
-The benchmark harness runs with `cargo test -p rahn-state --release --test scaling -- --ignored --nocapture`. No other toolchain is required for documentation-only contributions.
+The benchmark harness runs with `cargo test -p rahn-state --release --test scaling -- --ignored --nocapture`. No other toolchain is required for documentation-only contributions. The workspace layout, the full command set (including the ignored benchmark harnesses and the runnable demo), and the pull-request verification matrix are in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Process
 
@@ -47,7 +47,21 @@ The benchmark harness runs with `cargo test -p rahn-state --release --test scali
 3. Submit a pull request with tests and, where behavior is user-visible, documentation updates.
 4. Every PR is reviewed for architectural fit, determinism, and test coverage.
 
-Good first issues are labeled `good-first-issue`.
+Where a conversation belongs: questions → Discussions (Technical Questions); early ideas → Architecture & Design or Research Ideas; design drafts → Architecture & Design. A discussion never replaces an ADR. The formal path stays: issue template → ADR → spec/ARCHITECTURE → implementation. Categories and their rules: [docs/community/discussions.md](docs/community/discussions.md).
+
+Good first issues are labeled `good first issue` (GitHub's default).
+
+## Agent-assisted contributions
+
+Contributions made with coding agents (any tool) are welcome and held to the same bar as any other contribution.
+
+- The human submitting the pull request is responsible for the change and must be able to explain and defend it, including why each design choice is correct.
+- Disclose agent assistance in the pull request: which parts were agent-produced, and with what tool.
+- Agents must not weaken tests, CI, determinism, or architectural boundaries to make a change pass. A change that does so is rejected regardless of its quality otherwise.
+- Architectural changes still follow design-proposal issue → accepted ADR → spec/ARCHITECTURE update → implementation, no matter who or what authored them. Accepted ADRs are immutable.
+- Documentation claims must be verified against the implementation; anything unverified is reported as unverified.
+
+[AGENTS.md](AGENTS.md) is how agents work in this repository (reading order, commands, prohibitions, reporting); this section is the project's policy for the contributions they produce.
 
 ## Licensing of Contributions
 
@@ -64,3 +78,10 @@ Do not open public issues for security problems — see [SECURITY.md](SECURITY.m
 ## Conduct
 
 Be respectful and precise. The community standard is [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Community structure
+
+- [CONTRIBUTOR_PATH.md](CONTRIBUTOR_PATH.md) — how to grow from a first contribution to maintainer, aligned with GOVERNANCE.md.
+- [docs/community/good-first-issues.md](docs/community/good-first-issues.md) — curated entry points for a first contribution.
+- [docs/community/issue-drafts.md](docs/community/issue-drafts.md) — planned issues, drafted and grounded before filing.
+- [docs/community/discussions.md](docs/community/discussions.md) — discussion categories, and where questions belong.

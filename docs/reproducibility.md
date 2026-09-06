@@ -4,7 +4,7 @@
 
 Reproducibility is a design goal of the architecture, not an afterthought (charter §29). This document states what is reproducible today, how, and what is not yet.
 
-## What is reproducible in v0.1
+## What is reproducible
 
 ### 1. State identity and history
 
@@ -37,9 +37,9 @@ Every future experiment must record — before its results are quotable — purp
 | Area | Status | Plan |
 |---|---|---|
 | Release binaries | Not yet built reproducibly (Rust builds embed some paths by default) | Evaluate `cargo` reproducible-build options at the first tagged release with artifacts |
-| Real-network experiments | None exist (no real execution before Stage 3) | Namespace-based experiments will be scripted end-to-end in-repo (E6) |
+| Real-network experiments | One CI-validated scenario (namespace execution, E6 partial) | Namespace-based experiments scripted end-to-end in-repo |
 | Benchmarks | The Stage 2 scaling harness (`crates/rahn-state/tests/scaling.rs`) is deterministic and rerunnable from the repo; recorded results are in [research/stages/v0.2.md](research/stages/v0.2.md). Timing numbers are environment-specific by nature | Cross-machine timing comparison when a second environment is available |
-| Distributed replay | Out of scope (Stage 6+) | Requires the consistency model to be derived first (RQ7) |
+| Distributed replay | Out of scope — observation and causal logs are per-replica local (ADR 0015) | Requires log replication, a future extension |
 
 ## Canonical-format evolution rule
 

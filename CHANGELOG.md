@@ -2,7 +2,7 @@
 
 # Changelog
 
-All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versioning is semantic once releases begin.
+All notable changes to the RAHN project (architecture, documentation, and later software) are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/). Pre-1.0 milestones were versioned as documented alpha releases; from **v1.0.0** the project follows its stable versioning policy — strict semver with breaking changes only in MAJOR, limited to the stable surface (rahn-sdk, CLI contracts, IR — ADR 0019).
 
 ## [1.0.0] — Stable Architecture
 
@@ -260,7 +260,7 @@ MAJOR with migration notes (ADR 0019).
   marked as such); ADR 0007 implementation amendment; third-party
   inventory records `sha2 0.10.9 (Apache-2.0 OR MIT)`.
 
-## [Unreleased] — Stage 0: Research / Foundation
+## [Stage 0 — archived bootstrap history] — Research / Foundation
 
 ### Added
 - Initial documentation corpus: README, ARCHITECTURE, DESIGN, GLOSSARY, ROADMAP, CONTRIBUTING, SECURITY, GOVERNANCE.

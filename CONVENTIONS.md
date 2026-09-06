@@ -1,0 +1,7 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+# CONVENTIONS.md
+
+The canonical agent instructions for this repository are in [AGENTS.md](AGENTS.md). Read it before acting: repository map, mandatory reading order, non-negotiable rules, build/test commands, prohibitions, and how to report results.
+
+Do not fork or restate that content here. Project policy for agent-assisted contributions is in [CONTRIBUTING.md](CONTRIBUTING.md).

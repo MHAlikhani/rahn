@@ -8,7 +8,7 @@ Normative keywords: MUST / MUST NOT / SHOULD / SHOULD NOT / MAY (RFC 2119 sense)
 
 ## Reserved
 
-No wire protocol is defined in v0.1 (networking and distribution are later-stage). This document is reserved; when a protocol is specified, it MUST reuse existing transports (e.g., QUIC/TLS) unless an architectural requirement cannot be met otherwise.
+No new wire protocol is defined: peer sync (ADR 0015) is a deterministic data-exchange model, not a transport. Authentication and log replication remain reserved; when a wire protocol is specified, it MUST reuse existing transports (e.g., QUIC/TLS) unless an architectural requirement cannot be met otherwise.
 
 ## Normative seeds (v0.6, ADR 0015)
 

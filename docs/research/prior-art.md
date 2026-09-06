@@ -101,7 +101,7 @@ For every major system: problem solved, abstraction, strengths, limitations, ove
 - **Abstraction:** topology description → containers/VMs/namespaces with virtual links.
 - **Strengths:** realistic behavior; broad ecosystem.
 - **Limitations:** the lab *is* the artifact; no versioned semantic state, no invariants, no causality; topology files are configs, not content-addressed states.
-- **Overlap:** RAHN Stage 3 (Linux namespaces) will build on similar primitives (veth, netns).
+- **Overlap:** RAHN's namespace backend (Stage 3, ADR 0012) builds on similar primitives (veth, netns).
 - **Differences:** for these tools, execution is the product; for RAHN, execution is a stage gated by verification and recorded for causality.
 - **Integration:** containerlab-style topologies could be import/export formats for RAHN states.
 - **Conflicts:** RAHN is not a simulator (charter §3).
@@ -162,7 +162,7 @@ For every major system: problem solved, abstraction, strengths, limitations, ove
 ### Consensus and replication (Raft, Paxos, CRDTs)
 
 - **Problem solved:** replicating state under failure.
-- **Relevance:** Stage 6 — explicitly *not to be chosen by familiarity* (charter §21). RAHN must first derive its consistency requirements (RQ7: who writes network state, how stale may views be, what conflict semantics do network merges need?).
+- **Relevance:** Stage 6 derived its requirements first (RQ7, ADR 0015) and explicitly *did not* choose by familiarity (charter §21).
 - **Conflicts:** premature adoption would bake in assumptions before requirements exist.
 
 ### Formal verification of networks (Header Space Analysis, VeriFlow, NetKAT, Minesweeper)

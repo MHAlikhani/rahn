@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
 # RAHN Licensing Policy
 
 **Authoritative project licensing policy.** This document explains the licensing model; it does not modify any license text. It is not legal advice. Where a decision has material legal consequences it is marked **[LEGAL REVIEW]**.
@@ -29,7 +31,7 @@ The two licenses apply to different classes of material. Examples:
 
 | Path | License |
 |---|---|
-| `crates/**` (future Rust source) | Apache-2.0 |
+| `crates/**` (Rust source) | Apache-2.0 |
 | `examples/*.rs`, `tests/**`, `scripts/*`, CI configs | Apache-2.0 |
 | `README.md`, `ARCHITECTURE.md`, `DESIGN.md`, `docs/**` prose | CC-BY-4.0 |
 | `docs/spec/**` specification prose | CC-BY-4.0 |
@@ -94,7 +96,7 @@ Software licensing does not grant trademark rights. The RAHN name and logo are g
 
 - Release artifacts must state: source code Apache-2.0; included documentation CC-BY-4.0 where applicable; third-party components retain their own licenses; bundled dependencies may carry additional notices. Required notices must never be silently omitted.
 - Container images (future): component licensing is documented per component (RAHN software, base image, system libraries, package artifacts, external binaries); no universal license applies to an image.
-- SBOM (SPDX or CycloneDX) is not required for v0.1 but the repository is structured so it can be added later.
+- SBOM (SPDX or CycloneDX) is not required at v1.0 but the repository is structured so it can be added later.
 - Automated license auditing (SPDX scanning, dependency license checks, SBOM generation, drift detection) is added when the repository is large enough to need it, following detect → classify → review → resolve rather than blind blocking.
 
 ## Relicensing
