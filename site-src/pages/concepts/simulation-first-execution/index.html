@@ -1,0 +1,34 @@
+---
+{
+  "title": "Simulation-First Execution — Why RAHN Never Touches the Network by Default",
+  "description": "RAHN executes every plan in simulation by default. Real execution is opt-in, isolated in Linux namespaces, and unreachable without verification.",
+  "slug": "concepts/simulation-first-execution/",
+  "crumb": "Simulation-first execution",
+  "group": { "slug": "concepts", "name": "Concepts" },
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Concept</p>
+<h1>Simulation-first execution</h1>
+<p class="section-lede">Changing a real network is the most consequential thing a state tool can do. RAHN's answer is a layered boundary: <strong>every plan executes in simulation by default</strong>, and real execution is opt-in, isolated, and gated — in that order, enforced structurally rather than by convention.</p>
+
+<h2>The layers</h2>
+<ol>
+  <li><strong>Simulation default.</strong> The default backend produces an execution plan and simulates it — descriptions of what would happen, touching nothing. The simulation backend cannot reach the host by construction.</li>
+  <li><strong>Verification gate.</strong> The execution path is structurally unreachable without a <a href="/rahn/concepts/network-verification/">verification result</a>. This is a type-level and flow-level property of the code, not a warning message.</li>
+  <li><strong>Explicit opt-in.</strong> Real execution requires <code>--execute --yes-i-know</code> — a deliberate, unskippable acknowledgment.</li>
+  <li><strong>Isolation.</strong> Real changes run only through isolated Linux network namespaces: host-side operations are limited to <code>ip netns add/del rahn-*</code>, and all link/interface mutations happen inside <code>ip netns exec rahn-*</code> (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0012-linux-ns-execution.md">ADR 0012</a>). Non-Linux platforms refuse execution at runtime.</li>
+</ol>
+
+<h2>The backend abstraction</h2>
+<p>Since v0.7 (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0016-execution-backends.md">ADR 0016</a>), backends sit behind an <code>ExecutionBackend</code> trait with capability negotiation: the simulation backend and the <code>linux-ns</code> backend implement the same interface, and unsupported capabilities are refused explicitly. <code>rahn apply --backend</code> selects the target.</p>
+
+<h2>Honest limits of the boundary</h2>
+<p>The model-reality gap is the deepest limitation: RAHN models a subset of network meaning, and it must never execute against a real network it cannot observe. The Linux execution path is validated by CI only — no independent host-safety review has been performed yet (that review is an open <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/issue-drafts.md">contribution opportunity</a>). Both facts are recorded in the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a>. v1.0 marks architectural stability, not production readiness.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/network-verification/">Network verification</a> — the gate that precedes any plan</li>
+  <li><a href="/rahn/architecture/">Architecture</a> — the execution lifecycle end to end</li>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/execution.md">Execution specification</a> — the normative boundary</li>
+</ul>

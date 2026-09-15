@@ -1,20 +1,25 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-# site/ — public landing page
+# site/ — public website
 
-Static, dependency-free landing page for RAHN, deployed to GitHub Pages by
-[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) (source: this folder,
-deployed on every push that touches `site/**`).
+Static website for RAHN, deployed to GitHub Pages at
+`https://mhalikhani.github.io/rahn/` by
+[`.github/workflows/pages.yml`](../.github/workflows/pages.yml)
+(build → validate → deploy on every push touching `site/**` or `site-src/**`).
 
-- `index.html` — the page: semantic HTML, Open Graph/Twitter metadata, JSON-LD
-  (`SoftwareSourceCode` + `FAQPage`), light mode only
-- `assets/css/style.css` — single stylesheet, custom properties, responsive breakpoints
-  at 960px/720px, honors `prefers-reduced-motion`
-- `assets/js/main.js` — optional progressive enhancement (mobile nav, FAQ accordion,
-  header shadow); the page is fully functional without it
-- `assets/img/` — brand assets (derived from the project logo) and favicons
-- `robots.txt`, `sitemap.xml`, `404.html` — crawler and error-surface basics
+**Do not edit `site/` by hand** — it is generated output.
 
-Canonical URL: `https://mhalikhani.github.io/rahn/`. When renaming the repository or
-Pages target, update the canonical URL, Open Graph/Twitter image URLs, and `sitemap.xml`
-to match. Code in this folder is licensed Apache-2.0 like the rest of the source.
+- **`../site-src/pages/*.html`** — page sources: JSON front matter (title,
+  description, slug, breadcrumb group, schema type) + HTML body.
+  The build enforces unique titles and unique meta descriptions.
+- **`../site-src/assets/`** — stylesheets, scripts, and brand images.
+- **`../site-src/static/`** — copied verbatim (`robots.txt`, `404.html`).
+- **`../scripts/build-site.mjs`** — the zero-dependency generator (Node ≥ 18):
+  shared layout with full metadata, Open Graph/Twitter tags, canonical URLs,
+  BreadcrumbList/TechArticle/FAQPage JSON-LD, and a generated `sitemap.xml`.
+- **`../scripts/validate-site.mjs`** — static SEO validation: uniqueness,
+  canonical URLs, JSON-LD parsing, OG/Twitter completeness, internal-link and
+  GitHub-file-link resolution, sitemap/robots consistency.
+
+When renaming the repository or Pages target, update `BASE` in both scripts.
+Code in this folder is licensed Apache-2.0 like the rest of the source.

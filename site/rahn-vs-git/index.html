@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAHN vs Git — Why RAHN Is Not "Git for Networks"</title>
+  <meta name="description" content="RAHN borrows Git content-addressed objects but is not Git for networks. A precise comparison of state models, transitions, verification, and merge semantics.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mhalikhani.github.io/rahn/rahn-vs-git/">
+  <meta name="theme-color" content="#264c54">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="RAHN">
+  <meta property="og:title" content="RAHN vs Git — Why RAHN Is Not "Git for Networks"">
+  <meta property="og:description" content="RAHN borrows Git content-addressed objects but is not Git for networks. A precise comparison of state models, transitions, verification, and merge semantics.">
+  <meta property="og:url" content="https://mhalikhani.github.io/rahn/rahn-vs-git/">
+  <meta property="og:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <meta property="og:image:width" content="1672">
+  <meta property="og:image:height" content="536">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RAHN vs Git — Why RAHN Is Not "Git for Networks"">
+  <meta name="twitter:description" content="RAHN borrows Git content-addressed objects but is not Git for networks. A precise comparison of state models, transitions, verification, and merge semantics.">
+  <meta name="twitter:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rahn/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="/rahn/assets/img/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/rahn/assets/img/favicon-512.png">
+  <link rel="apple-touch-icon" href="/rahn/assets/img/favicon-180.png">
+  <link rel="stylesheet" href="/rahn/assets/css/style.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"RAHN","item":"https://mhalikhani.github.io/rahn/"},{"@type":"ListItem","position":2,"name":"RAHN vs Git","item":"https://mhalikhani.github.io/rahn/rahn-vs-git/"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"RAHN vs Git — Why RAHN Is Not \"Git for Networks\"","description":"RAHN borrows Git content-addressed objects but is not Git for networks. A precise comparison of state models, transitions, verification, and merge semantics.","url":"https://mhalikhani.github.io/rahn/rahn-vs-git/","image":"https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"RAHN","url":"https://mhalikhani.github.io/rahn/"},"about":{"@type":"SoftwareSourceCode","name":"RAHN","codeRepository":"https://github.com/MHAlikhani/rahn","programmingLanguage":"Rust"},"license":"https://spdx.org/licenses/Apache-2.0"}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="/rahn/" aria-label="RAHN home">
+        <span class="brand-mark" aria-hidden="true"><img src="/rahn/assets/img/mark-teal.png" alt="" width="24" height="35"></span>
+        <span class="brand-name">RAHN</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="/rahn/">Home</a>
+        <a href="/rahn/concepts/">Concepts</a>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specs</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a class="nav-github" href="https://github.com/MHAlikhani/rahn" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+<main id="main">
+<article class="doc"><p class="eyebrow">Comparison</p>
+<h1>RAHN vs Git</h1>
+<p class="section-lede">The most common description of RAHN is "Git for networks". It is a useful gesture and a misleading summary. RAHN borrows Git's central mechanism — <a href="/rahn/concepts/content-addressing/">content-addressed</a> objects forming an immutable history — but its payload, change model, and safety model are all different. This page makes the comparison precise, without attacking Git: for source code, Git is the right tool.</p>
+
+<h2>The real similarity</h2>
+<p>Both systems store immutable, content-addressed objects; both let you branch, diff, and merge; both make history a first-class structure rather than a side effect. RAHN's canonical serialization and SHA-256 ids are deliberately in that lineage, because the properties that made Git transformative for code — integrity you can verify, history you can traverse, identity independent of location — are exactly what network state has never had.</p>
+
+<h2>Where the analogy breaks down</h2>
+<h3>1. Source code is text; network state is a typed model with semantics</h3>
+<p>Git's unit of meaning is a line of text in a file. RAHN's unit is a typed object — a node, an interface, a link — with topology semantics: reachability, isolation, connectivity. A "change" to network state can invalidate the <em>meaning</em> of the whole model even when every individual edit looks local. Text diffs cannot see that; semantic diffs are required, which is why RAHN's diff operates on the object model rather than on bytes.</p>
+
+<h3>2. Commits vs transitions</h3>
+<p>A Git commit is whatever you staged. A RAHN transition is an explicit operation from a closed vocabulary, applied purely to produce a new <a href="/rahn/concepts/network-state/">state value</a>. The vocabulary is part of the contract: the set of possible changes is enumerable, inspectable before application, and explainable afterwards.</p>
+
+<h3>3. No verification gate in code hosting</h3>
+<p>Git will happily commit a repository that does not compile. RAHN will not commit a state that violates its <a href="/rahn/concepts/network-invariants/">constitution</a>: verification precedes the commit, and the <a href="/rahn/concepts/simulation-first-execution/">execution</a> of any plan is structurally unreachable without a verification result. In Git-based infrastructure, correctness checks live outside the VCS in CI; in RAHN, the gate is part of the state machine itself, because the cost of a bad change is a broken network, not a broken build.</p>
+
+<h3>4. Merging means preserving meaning, not combining text</h3>
+<p>A three-way text merge combines lines. A network-state merge must combine <em>semantics</em> — two changes that are individually valid can be jointly invalid (both sides touching the same object, conflicting connectivity). RAHN's merge fails closed: conflicts are detected and explained, never silently resolved, at the known price of rejecting some mergeable states (a recorded limitation). Git's merge model would be actively dangerous here.</p>
+
+<h3>5. History has epistemology</h3>
+<p>Git history records what changed. RAHN history is annotated with <a href="/rahn/concepts/causal-memory/">causal memory</a> — explicit edges between observations and commits, labeled with epistemic status — because in networking, "what changed" is usually asked after an incident, with the follow-up "what caused it?".</p>
+
+<h2>The honest summary</h2>
+<p>RAHN is what happens when you keep Git's content-addressed discipline and rebuild everything else for a domain where state has topology semantics, changes have physical consequences, and "verified" must mean something. If you want the one-sentence version: <strong>Git versions text; RAHN versions the meaning of a network — and gates every change on proof.</strong></p>
+
+<h2>Go deeper</h2>
+<ul>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/prior-art.md">Prior-art survey</a> — Git and content-addressed systems in the wider landscape</li>
+  <li><a href="/rahn/architecture/">Architecture</a> — the chosen design and its trade-offs</li>
+  <li><a href="/rahn/concepts/network-state/">Network state</a> — the payload being versioned</li>
+</ul></article>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">RAHN</span>
+        <p>A stateful execution architecture for evolving networks. Research project — not production software.</p>
+      </div>
+      <nav class="footer-col" aria-label="Concepts">
+        <h3>Concepts</h3>
+        <a href="/rahn/concepts/network-state/">Network state</a>
+        <a href="/rahn/concepts/deterministic-state/">Deterministic state</a>
+        <a href="/rahn/concepts/content-addressing/">Content addressing</a>
+        <a href="/rahn/concepts/network-verification/">Verification</a>
+        <a href="/rahn/concepts/network-invariants/">Invariants</a>
+        <a href="/rahn/concepts/causal-memory/">Causal memory</a>
+        <a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a>
+      </nav>
+      <nav class="footer-col" aria-label="Project">
+        <h3>Project</h3>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specifications</a>
+        <a href="/rahn/whitepaper/">White paper</a>
+        <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>
+        <a href="/rahn/why-rust/">Why Rust</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h3>Community</h3>
+        <a href="/rahn/contributing/">Contributing</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a href="https://github.com/MHAlikhani/rahn/discussions" rel="noopener">Discussions</a>
+        <a href="https://github.com/MHAlikhani/rahn/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+      </nav>
+    </div>
+    <div class="container footer-legal">
+      <p>Code licensed Apache-2.0 · Documents licensed CC-BY-4.0 · RAHN is an architectural research project, not a production network controller.</p>
+      <a href="#top" class="to-top">Back to top ↑</a>
+    </div>
+  </footer>
+  <script src="/rahn/assets/js/main.js" defer></script>
+</body>
+</html>

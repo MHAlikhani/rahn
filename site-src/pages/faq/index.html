@@ -1,0 +1,87 @@
+---
+{
+  "title": "RAHN FAQ — Network State, Verification, Rust, and Honest Boundaries",
+  "description": "Technical FAQ about RAHN: network state, verification, invariants, controllers vs IaC, Git comparison, simulation vs execution, why Rust, and how to contribute.",
+  "slug": "faq/",
+  "crumb": "FAQ",
+  "schema": "FAQPage"
+}
+---
+<p class="eyebrow">Questions</p>
+<h1>Frequently asked questions</h1>
+<p class="section-lede">Direct answers, each grounded in the repository's documents. Where an answer has an edge, the edge is part of the answer.</p>
+
+<div class="faq">
+  <details>
+    <summary>What is RAHN?</summary>
+    <p>A stateful execution architecture for evolving networks: deterministic, content-addressed network state, explicit transitions, invariant-gated verification before execution, branching with fail-closed semantic merge, and causal memory. It is an open-source architectural research project in Rust, not a product.</p>
+  </details>
+  <details>
+    <summary>What is network state?</summary>
+    <p>The complete, modeled condition of a network at a point in time — nodes, interfaces, and links as typed objects with canonical serialization. RAHN treats it as a first-class value you can hash, diff, branch, and verify. See <a href="/rahn/concepts/network-state/">network state</a>.</p>
+  </details>
+  <details>
+    <summary>What does "deterministic network state" mean?</summary>
+    <p>Same inputs → byte-identical states, ids, and reports on every machine and every run. No nondeterministic iteration order, no timestamps as logic, no RNG, no hidden global state. Enforced by seeded property tests on multiple platforms in CI. See <a href="/rahn/concepts/deterministic-state/">deterministic state</a>.</p>
+  </details>
+  <details>
+    <summary>What is content-addressed network state?</summary>
+    <p>A state's identity is the SHA-256 of its canonical serialization. Identity depends only on content: two states with the same bytes are the same state, wherever they occur. This makes integrity checkable, history immutable, and synchronization trustless. See <a href="/rahn/concepts/content-addressing/">content addressing</a>.</p>
+  </details>
+  <details>
+    <summary>How does RAHN verify network changes?</summary>
+    <p>Every transition must pass the constitution — a set of invariants evaluated deterministically over the state. Violations are rejected with the violated invariant, the offending objects, and the producing transition. <code>rahn test</code> turns verification into a CI-ready report with an exit-code contract. See <a href="/rahn/concepts/network-verification/">network verification</a>.</p>
+  </details>
+  <details>
+    <summary>What are network invariants?</summary>
+    <p>Rules that must always hold: a structural floor (referential integrity, link endpoints, no duplicate links, no self-loops) plus declared constraints like <code>require-connectivity a b</code>. The honest rule: "verified" means "all encoded invariants hold" — nothing more. See <a href="/rahn/concepts/network-invariants/">network invariants</a>.</p>
+  </details>
+  <details>
+    <summary>How does RAHN model network topology?</summary>
+    <p>Nodes own first-class interfaces; links connect (node, interface) endpoints. Graph queries (shortest path, neighbors, reachability, connected components) and isolation constraints operate over that induced graph. Canonical format v2 carries the model (ADR 0011).</p>
+  </details>
+  <details>
+    <summary>Is RAHN a network controller?</summary>
+    <p>No. RAHN is an architectural research project at research maturity. It is not a production network controller, and v1.0 marks architectural stability — not production readiness. No production deployment, external review, or real-world operation exists.</p>
+  </details>
+  <details>
+    <summary>Is RAHN an SDN controller?</summary>
+    <p>No. RAHN does not manage devices or program forwarding. It versions and verifies a model of network state; SDN controllers could one day be consumers of such a model, which is a different role.</p>
+  </details>
+  <details>
+    <summary>Is RAHN an Infrastructure-as-Code tool?</summary>
+    <p>No. IaC tools declare desired configuration for provisioning engines. RAHN owns and versions the state itself — including observing it, branching it, and attributing causes — which is a different layer with different semantics.</p>
+  </details>
+  <details>
+    <summary>Is RAHN "Git for networks"?</summary>
+    <p>It borrows Git's content-addressed object discipline, but the payload, change model, and safety model differ: typed topology semantics instead of text, explicit transitions instead of staged edits, a verification gate inside the state machine instead of CI outside it, and fail-closed semantic merge instead of textual three-way merge. See <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>.</p>
+  </details>
+  <details>
+    <summary>Can RAHN simulate network changes?</summary>
+    <p>Yes — that is the default. Every plan executes in simulation against a backend that cannot touch the host, producing an inspectable description of what would happen.</p>
+  </details>
+  <details>
+    <summary>Can RAHN execute real network changes?</summary>
+    <p>Only opt-in and only isolated: <code>--execute --yes-i-know</code>, against Linux network namespaces, with host-side operations restricted to <code>ip netns add/del rahn-*</code>, after verification, on Linux only. The execution path is structurally unreachable without a verification result. See <a href="/rahn/concepts/simulation-first-execution/">simulation-first execution</a>.</p>
+  </details>
+  <details>
+    <summary>Why is RAHN written in Rust?</summary>
+    <p>Because the architecture's rules are enforceable in Rust's type system: pure transitions via ownership, strict typed parsing of untrusted input, memory safety at the namespace-execution edge, a determinism-friendly runtime, and a one-direct-dependency supply chain. The costs are stated too. See <a href="/rahn/why-rust/">why Rust</a>.</p>
+  </details>
+  <details>
+    <summary>Is RAHN production-ready?</summary>
+    <p>No, and it says so everywhere. v1.0 is architectural stability: frozen core model, frozen canonical format for 1.x, semver-stable SDK surface. It is not a production readiness claim, and the limitations baseline records what would have to change for that conversation.</p>
+  </details>
+  <details>
+    <summary>Does RAHN use AI?</summary>
+    <p>No. The core is deliberately model-free: correct, explainable, and reproducible without any model. Causal memory records explicitly asserted relationships with epistemic status — it never infers. AI-as-advisor is a framed research question (RQ9) and a candidate for the future, outside the core.</p>
+  </details>
+  <details>
+    <summary>How can someone contribute?</summary>
+    <p>Through the design-proposal → ADR path for architectural changes, or by picking a curated <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md">good first issue</a> with acceptance criteria — measurement studies, fuzzing, CI matrix, documentation. The process is in <a href="/rahn/contributing/">contributing</a>.</p>
+  </details>
+  <details>
+    <summary>Where can someone experiment with RAHN?</summary>
+    <p>Clone <a href="https://github.com/MHAlikhani/rahn">the repository</a>, <code>cargo build</code>, and run <code>bash examples/demo/demo.sh</code> — a simulation-only end-to-end walkthrough. The <a href="https://github.com/MHAlikhani/rahn/blob/main/examples/cli-walkthrough.md">CLI walkthrough</a> covers the full workflow. A Rust toolchain is the only requirement.</p>
+  </details>
+</div>

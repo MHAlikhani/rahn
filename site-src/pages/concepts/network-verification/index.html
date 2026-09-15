@@ -1,0 +1,32 @@
+---
+{
+  "title": "Network Verification in RAHN — Check Before Change",
+  "description": "How RAHN verifies network changes: invariants gate every commit, CI gets an exit-code contract, and execution is unreachable without a verification result.",
+  "slug": "concepts/network-verification/",
+  "crumb": "Network verification",
+  "group": { "slug": "concepts", "name": "Concepts" },
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Concept</p>
+<h1>Network verification</h1>
+<p class="section-lede">Verification is the act of proving that a network state satisfies its declared rules <em>before</em> the state changes or anything executes. In RAHN it is not a review step — it is a structural gate that cannot be bypassed.</p>
+
+<h2>The gate</h2>
+<p>Every commit must pass the <a href="/rahn/concepts/network-invariants/">constitution of invariants</a>. If an invariant fails, the transition is rejected with an explanation that names the violated invariant, the offending objects, and the transition that produced them. The execution path is <em>structurally</em> unreachable without a verification result — not discouraged, unreachable. Real execution additionally requires explicit opt-in (<code>--execute --yes-i-know</code>) and runs only in isolated Linux network namespaces (see <a href="/rahn/concepts/simulation-first-execution/">simulation-first execution</a>).</p>
+
+<h2>Verification in CI</h2>
+<p>Since v0.8 (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0017-ci-verification.md">ADR 0017</a>), <code>rahn test [ref]</code> produces a deterministic, machine-readable verification report over any committed state, with an exit-code contract (0 = verified, 1 = violation, 2 = usage error) so pipelines can gate on it. Invariant ids are a machine contract. An example GitHub Actions gate ships in <a href="https://github.com/MHAlikhani/rahn/blob/main/examples/network-ci.yml">examples/network-ci.yml</a>.</p>
+
+<h2>What "verified" means — and does not</h2>
+<p>This is the honesty rule at the center of RAHN's epistemology: <strong>"verified" means "all encoded invariants hold" — nothing more.</strong> Verification is only as good as its encoding; unencoded failure modes pass. RAHN never presents a green check as a general safety claim, and the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a> says so in those words.</p>
+
+<h2>Open research</h2>
+<p>Verification cost at scale is research question <a href="/rahn/research/#questions">RQ2</a>: the invariant engine is implemented for the v0.1 vocabulary, but the latency distribution across 10²–10⁵ objects has not yet been measured (experiment E2). Constitution expressiveness — which real-world invariants the language can encode — is <a href="/rahn/research/#questions">RQ4</a>. Both are open to contributors; see <a href="/rahn/contributing/">contributing</a>.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/network-invariants/">Network invariants</a> — what is being checked</li>
+  <li><a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a> — what happens after verification</li>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/invariants.md">Invariants specification</a> and <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0006-verification-model.md">ADR 0006</a> — the normative rules</li>
+</ul>

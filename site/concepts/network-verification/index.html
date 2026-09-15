@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Verification in RAHN — Check Before Change</title>
+  <meta name="description" content="How RAHN verifies network changes: invariants gate every commit, CI gets an exit-code contract, and execution is unreachable without a verification result.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mhalikhani.github.io/rahn/concepts/network-verification/">
+  <meta name="theme-color" content="#264c54">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="RAHN">
+  <meta property="og:title" content="Network Verification in RAHN — Check Before Change">
+  <meta property="og:description" content="How RAHN verifies network changes: invariants gate every commit, CI gets an exit-code contract, and execution is unreachable without a verification result.">
+  <meta property="og:url" content="https://mhalikhani.github.io/rahn/concepts/network-verification/">
+  <meta property="og:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <meta property="og:image:width" content="1672">
+  <meta property="og:image:height" content="536">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Network Verification in RAHN — Check Before Change">
+  <meta name="twitter:description" content="How RAHN verifies network changes: invariants gate every commit, CI gets an exit-code contract, and execution is unreachable without a verification result.">
+  <meta name="twitter:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rahn/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="/rahn/assets/img/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/rahn/assets/img/favicon-512.png">
+  <link rel="apple-touch-icon" href="/rahn/assets/img/favicon-180.png">
+  <link rel="stylesheet" href="/rahn/assets/css/style.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"RAHN","item":"https://mhalikhani.github.io/rahn/"},{"@type":"ListItem","position":2,"name":"Concepts","item":"https://mhalikhani.github.io/rahn/concepts/"},{"@type":"ListItem","position":3,"name":"Network verification","item":"https://mhalikhani.github.io/rahn/concepts/network-verification/"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Network Verification in RAHN — Check Before Change","description":"How RAHN verifies network changes: invariants gate every commit, CI gets an exit-code contract, and execution is unreachable without a verification result.","url":"https://mhalikhani.github.io/rahn/concepts/network-verification/","image":"https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"RAHN","url":"https://mhalikhani.github.io/rahn/"},"about":{"@type":"SoftwareSourceCode","name":"RAHN","codeRepository":"https://github.com/MHAlikhani/rahn","programmingLanguage":"Rust"},"license":"https://spdx.org/licenses/Apache-2.0"}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="/rahn/" aria-label="RAHN home">
+        <span class="brand-mark" aria-hidden="true"><img src="/rahn/assets/img/mark-teal.png" alt="" width="24" height="35"></span>
+        <span class="brand-name">RAHN</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="/rahn/">Home</a>
+        <a href="/rahn/concepts/">Concepts</a>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specs</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a class="nav-github" href="https://github.com/MHAlikhani/rahn" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+<main id="main">
+<article class="doc"><nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="/">RAHN</a></li><li aria-hidden="true">›</li><li><a href="/concepts/">Concepts</a></li><li aria-hidden="true">›</li><li aria-current="page">Network verification</li></ol></nav><p class="eyebrow">Concept</p>
+<h1>Network verification</h1>
+<p class="section-lede">Verification is the act of proving that a network state satisfies its declared rules <em>before</em> the state changes or anything executes. In RAHN it is not a review step — it is a structural gate that cannot be bypassed.</p>
+
+<h2>The gate</h2>
+<p>Every commit must pass the <a href="/rahn/concepts/network-invariants/">constitution of invariants</a>. If an invariant fails, the transition is rejected with an explanation that names the violated invariant, the offending objects, and the transition that produced them. The execution path is <em>structurally</em> unreachable without a verification result — not discouraged, unreachable. Real execution additionally requires explicit opt-in (<code>--execute --yes-i-know</code>) and runs only in isolated Linux network namespaces (see <a href="/rahn/concepts/simulation-first-execution/">simulation-first execution</a>).</p>
+
+<h2>Verification in CI</h2>
+<p>Since v0.8 (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0017-ci-verification.md">ADR 0017</a>), <code>rahn test [ref]</code> produces a deterministic, machine-readable verification report over any committed state, with an exit-code contract (0 = verified, 1 = violation, 2 = usage error) so pipelines can gate on it. Invariant ids are a machine contract. An example GitHub Actions gate ships in <a href="https://github.com/MHAlikhani/rahn/blob/main/examples/network-ci.yml">examples/network-ci.yml</a>.</p>
+
+<h2>What "verified" means — and does not</h2>
+<p>This is the honesty rule at the center of RAHN's epistemology: <strong>"verified" means "all encoded invariants hold" — nothing more.</strong> Verification is only as good as its encoding; unencoded failure modes pass. RAHN never presents a green check as a general safety claim, and the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a> says so in those words.</p>
+
+<h2>Open research</h2>
+<p>Verification cost at scale is research question <a href="/rahn/research/#questions">RQ2</a>: the invariant engine is implemented for the v0.1 vocabulary, but the latency distribution across 10²–10⁵ objects has not yet been measured (experiment E2). Constitution expressiveness — which real-world invariants the language can encode — is <a href="/rahn/research/#questions">RQ4</a>. Both are open to contributors; see <a href="/rahn/contributing/">contributing</a>.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/network-invariants/">Network invariants</a> — what is being checked</li>
+  <li><a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a> — what happens after verification</li>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/invariants.md">Invariants specification</a> and <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0006-verification-model.md">ADR 0006</a> — the normative rules</li>
+</ul></article>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">RAHN</span>
+        <p>A stateful execution architecture for evolving networks. Research project — not production software.</p>
+      </div>
+      <nav class="footer-col" aria-label="Concepts">
+        <h3>Concepts</h3>
+        <a href="/rahn/concepts/network-state/">Network state</a>
+        <a href="/rahn/concepts/deterministic-state/">Deterministic state</a>
+        <a href="/rahn/concepts/content-addressing/">Content addressing</a>
+        <a href="/rahn/concepts/network-verification/">Verification</a>
+        <a href="/rahn/concepts/network-invariants/">Invariants</a>
+        <a href="/rahn/concepts/causal-memory/">Causal memory</a>
+        <a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a>
+      </nav>
+      <nav class="footer-col" aria-label="Project">
+        <h3>Project</h3>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specifications</a>
+        <a href="/rahn/whitepaper/">White paper</a>
+        <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>
+        <a href="/rahn/why-rust/">Why Rust</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h3>Community</h3>
+        <a href="/rahn/contributing/">Contributing</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a href="https://github.com/MHAlikhani/rahn/discussions" rel="noopener">Discussions</a>
+        <a href="https://github.com/MHAlikhani/rahn/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+      </nav>
+    </div>
+    <div class="container footer-legal">
+      <p>Code licensed Apache-2.0 · Documents licensed CC-BY-4.0 · RAHN is an architectural research project, not a production network controller.</p>
+      <a href="#top" class="to-top">Back to top ↑</a>
+    </div>
+  </footer>
+  <script src="/rahn/assets/js/main.js" defer></script>
+</body>
+</html>

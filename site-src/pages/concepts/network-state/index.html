@@ -1,0 +1,39 @@
+---
+{
+  "title": "What Is Network State? RAHN's Model Explained",
+  "description": "Network state is the complete modeled condition of a network: nodes, interfaces, links. How RAHN models it as a value with canonical serialization.",
+  "slug": "concepts/network-state/",
+  "crumb": "Network state",
+  "group": { "slug": "concepts", "name": "Concepts" },
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Concept</p>
+<h1>Network state</h1>
+<p class="section-lede">A network's state is the complete, modeled condition of that network at a point in time — the objects that exist and the meaning attached to them. RAHN's founding move is to treat that state as a <strong>first-class computational value</strong> rather than something you reconstruct by interrogating devices.</p>
+
+<h2>What network state means</h2>
+<p>In RAHN, network state is built from a small, explicit object model:</p>
+<ul>
+  <li><strong>Nodes</strong> — the devices (or logical entities) of the network, carrying metadata such as role and zone.</li>
+  <li><strong>Interfaces</strong> — first-class objects owned by nodes; a link never connects bare nodes (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0011-interfaces-canonical-v2.md">ADR 0011</a>).</li>
+  <li><strong>Links</strong> — connections between <code>(node, interface)</code> endpoints, with isolation constraints.</li>
+</ul>
+<p>Everything else — reachability, connectivity, causality — is derived from or attached to this model with explicit provenance. That keeps the state small enough to be exact and honest about the boundary between the model and reality (see <a href="/rahn/research/#limitations">limitations</a>).</p>
+
+<h2>Why it matters</h2>
+<p>Without an owned state object, network work is scattered across device configs, live command output, monitoring dashboards, and tribal knowledge. Questions like "what changed since last week?" or "can I safely apply this change?" have no precise answer. When state is a value, those questions become computations: diff, branch, merge, and <a href="/rahn/concepts/network-verification/">verify</a> are operations on data, not archaeology.</p>
+
+<h2>How RAHN represents it</h2>
+<p>State is serialized in a canonical format (version 2) with a strict, total encoding: total ordering of objects, no ambient information, no dependence on insertion order. The canonical bytes are the state's identity (see <a href="/rahn/concepts/content-addressing/">content addressing</a>). State is never mutated in place — every change is an explicit transition operation from a closed vocabulary, producing a new state value. The normative rules live in the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/state.md">state specification</a> and <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/serialization.md">serialization specification</a>.</p>
+
+<h2>What it does not cover</h2>
+<p>RAHN models a chosen subset of network meaning. Dynamic or hidden state (TCAM contents, kernel caches, vendor-specific behavior) is out of the model — and that honesty is load-bearing: RAHN must never execute against a real network it cannot observe. This is one of the recorded limitations, not an oversight.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/deterministic-state/">Deterministic state</a> — why the same inputs give byte-identical results</li>
+  <li><a href="/rahn/concepts/content-addressing/">Content addressing</a> — how state gets its identity</li>
+  <li><a href="/rahn/architecture/">Architecture overview</a> — the lifecycle of a state value</li>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/objects.md">Object model specification</a> — the normative definition</li>
+</ul>

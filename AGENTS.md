@@ -27,6 +27,8 @@ RAHN is a stateful execution architecture for evolving networks: network state i
 | `docs/community/` | Discussion categories, curated good-first-issues, grounded issue drafts |
 | `docs/whitepaper/` | Claim-status-marked white paper |
 | `examples/` | `cli-walkthrough.md`, `network-ci.yml`, runnable `demo/demo.sh` |
+| `site-src/` | Website page sources (front matter + HTML); `site/` is generated output |
+| `scripts/build-site.mjs`, `scripts/validate-site.mjs` | Zero-dependency website generator and SEO validator (Node ≥ 18) |
 | `.github/workflows/ci.yml` | CI: `test` (fmt, clippy, tests on Ubuntu + Windows), `linux-execution`, `license-check`, `docs` |
 
 ## Mandatory reading order

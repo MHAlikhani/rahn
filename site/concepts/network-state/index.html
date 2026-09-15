@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What Is Network State? RAHN's Model Explained</title>
+  <meta name="description" content="Network state is the complete modeled condition of a network: nodes, interfaces, links. How RAHN models it as a value with canonical serialization.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mhalikhani.github.io/rahn/concepts/network-state/">
+  <meta name="theme-color" content="#264c54">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="RAHN">
+  <meta property="og:title" content="What Is Network State? RAHN's Model Explained">
+  <meta property="og:description" content="Network state is the complete modeled condition of a network: nodes, interfaces, links. How RAHN models it as a value with canonical serialization.">
+  <meta property="og:url" content="https://mhalikhani.github.io/rahn/concepts/network-state/">
+  <meta property="og:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <meta property="og:image:width" content="1672">
+  <meta property="og:image:height" content="536">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="What Is Network State? RAHN's Model Explained">
+  <meta name="twitter:description" content="Network state is the complete modeled condition of a network: nodes, interfaces, links. How RAHN models it as a value with canonical serialization.">
+  <meta name="twitter:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rahn/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="/rahn/assets/img/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/rahn/assets/img/favicon-512.png">
+  <link rel="apple-touch-icon" href="/rahn/assets/img/favicon-180.png">
+  <link rel="stylesheet" href="/rahn/assets/css/style.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"RAHN","item":"https://mhalikhani.github.io/rahn/"},{"@type":"ListItem","position":2,"name":"Concepts","item":"https://mhalikhani.github.io/rahn/concepts/"},{"@type":"ListItem","position":3,"name":"Network state","item":"https://mhalikhani.github.io/rahn/concepts/network-state/"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"What Is Network State? RAHN's Model Explained","description":"Network state is the complete modeled condition of a network: nodes, interfaces, links. How RAHN models it as a value with canonical serialization.","url":"https://mhalikhani.github.io/rahn/concepts/network-state/","image":"https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"RAHN","url":"https://mhalikhani.github.io/rahn/"},"about":{"@type":"SoftwareSourceCode","name":"RAHN","codeRepository":"https://github.com/MHAlikhani/rahn","programmingLanguage":"Rust"},"license":"https://spdx.org/licenses/Apache-2.0"}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="/rahn/" aria-label="RAHN home">
+        <span class="brand-mark" aria-hidden="true"><img src="/rahn/assets/img/mark-teal.png" alt="" width="24" height="35"></span>
+        <span class="brand-name">RAHN</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="/rahn/">Home</a>
+        <a href="/rahn/concepts/">Concepts</a>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specs</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a class="nav-github" href="https://github.com/MHAlikhani/rahn" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+<main id="main">
+<article class="doc"><nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="/">RAHN</a></li><li aria-hidden="true">›</li><li><a href="/concepts/">Concepts</a></li><li aria-hidden="true">›</li><li aria-current="page">Network state</li></ol></nav><p class="eyebrow">Concept</p>
+<h1>Network state</h1>
+<p class="section-lede">A network's state is the complete, modeled condition of that network at a point in time — the objects that exist and the meaning attached to them. RAHN's founding move is to treat that state as a <strong>first-class computational value</strong> rather than something you reconstruct by interrogating devices.</p>
+
+<h2>What network state means</h2>
+<p>In RAHN, network state is built from a small, explicit object model:</p>
+<ul>
+  <li><strong>Nodes</strong> — the devices (or logical entities) of the network, carrying metadata such as role and zone.</li>
+  <li><strong>Interfaces</strong> — first-class objects owned by nodes; a link never connects bare nodes (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0011-interfaces-canonical-v2.md">ADR 0011</a>).</li>
+  <li><strong>Links</strong> — connections between <code>(node, interface)</code> endpoints, with isolation constraints.</li>
+</ul>
+<p>Everything else — reachability, connectivity, causality — is derived from or attached to this model with explicit provenance. That keeps the state small enough to be exact and honest about the boundary between the model and reality (see <a href="/rahn/research/#limitations">limitations</a>).</p>
+
+<h2>Why it matters</h2>
+<p>Without an owned state object, network work is scattered across device configs, live command output, monitoring dashboards, and tribal knowledge. Questions like "what changed since last week?" or "can I safely apply this change?" have no precise answer. When state is a value, those questions become computations: diff, branch, merge, and <a href="/rahn/concepts/network-verification/">verify</a> are operations on data, not archaeology.</p>
+
+<h2>How RAHN represents it</h2>
+<p>State is serialized in a canonical format (version 2) with a strict, total encoding: total ordering of objects, no ambient information, no dependence on insertion order. The canonical bytes are the state's identity (see <a href="/rahn/concepts/content-addressing/">content addressing</a>). State is never mutated in place — every change is an explicit transition operation from a closed vocabulary, producing a new state value. The normative rules live in the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/state.md">state specification</a> and <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/serialization.md">serialization specification</a>.</p>
+
+<h2>What it does not cover</h2>
+<p>RAHN models a chosen subset of network meaning. Dynamic or hidden state (TCAM contents, kernel caches, vendor-specific behavior) is out of the model — and that honesty is load-bearing: RAHN must never execute against a real network it cannot observe. This is one of the recorded limitations, not an oversight.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/deterministic-state/">Deterministic state</a> — why the same inputs give byte-identical results</li>
+  <li><a href="/rahn/concepts/content-addressing/">Content addressing</a> — how state gets its identity</li>
+  <li><a href="/rahn/architecture/">Architecture overview</a> — the lifecycle of a state value</li>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/objects.md">Object model specification</a> — the normative definition</li>
+</ul></article>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">RAHN</span>
+        <p>A stateful execution architecture for evolving networks. Research project — not production software.</p>
+      </div>
+      <nav class="footer-col" aria-label="Concepts">
+        <h3>Concepts</h3>
+        <a href="/rahn/concepts/network-state/">Network state</a>
+        <a href="/rahn/concepts/deterministic-state/">Deterministic state</a>
+        <a href="/rahn/concepts/content-addressing/">Content addressing</a>
+        <a href="/rahn/concepts/network-verification/">Verification</a>
+        <a href="/rahn/concepts/network-invariants/">Invariants</a>
+        <a href="/rahn/concepts/causal-memory/">Causal memory</a>
+        <a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a>
+      </nav>
+      <nav class="footer-col" aria-label="Project">
+        <h3>Project</h3>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specifications</a>
+        <a href="/rahn/whitepaper/">White paper</a>
+        <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>
+        <a href="/rahn/why-rust/">Why Rust</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h3>Community</h3>
+        <a href="/rahn/contributing/">Contributing</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a href="https://github.com/MHAlikhani/rahn/discussions" rel="noopener">Discussions</a>
+        <a href="https://github.com/MHAlikhani/rahn/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+      </nav>
+    </div>
+    <div class="container footer-legal">
+      <p>Code licensed Apache-2.0 · Documents licensed CC-BY-4.0 · RAHN is an architectural research project, not a production network controller.</p>
+      <a href="#top" class="to-top">Back to top ↑</a>
+    </div>
+  </footer>
+  <script src="/rahn/assets/js/main.js" defer></script>
+</body>
+</html>

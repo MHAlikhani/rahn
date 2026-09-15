@@ -1,0 +1,37 @@
+---
+{
+  "title": "Content-Addressed Network State — Identity from Content",
+  "description": "Content addressing gives RAHN state identity from content: sha256 over canonical bytes. What it enables and where the idea stops, stated honestly.",
+  "slug": "concepts/content-addressing/",
+  "crumb": "Content addressing",
+  "group": { "slug": "concepts", "name": "Concepts" },
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Concept</p>
+<h1>Content-addressed network state</h1>
+<p class="section-lede">In RAHN, a network state's identity is not a name someone assigned — it is a <strong>sha256 hash over the state's canonical serialization</strong>. Identity depends only on content. Two states with the same bytes are the same state, wherever they occur.</p>
+
+<h2>How it works</h2>
+<p>The pipeline is short and strict: a <a href="/rahn/concepts/network-state/">network state</a> is encoded in canonical format v2 (total ordering, no ambient information), and the state id is the SHA-256 of those bytes. Commits, stores, and peer synchronization all speak in these ids. Because the encoding is <a href="/rahn/concepts/deterministic-state/">deterministic</a>, the id is stable across machines — the same state computed on Linux and Windows yields the same id, which is exactly what CI verifies.</p>
+
+<h2>What content addressing buys</h2>
+<ul>
+  <li><strong>Integrity you can check.</strong> Any stored or transmitted state can be verified by re-hashing it; corrupted objects are refused loudly, never partially loaded.</li>
+  <li><strong>Immutability by construction.</strong> A state with a given id cannot change — changing it produces different bytes and therefore a different id. History becomes a graph of immutable values.</li>
+  <li><strong>Meaningful diffs and merges.</strong> Equality is byte equality; a diff is a computation over canonical structures, not a text comparison of configs.</li>
+  <li><strong>Synchronization without trust.</strong> <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0015-distributed-state.md">Peer sync (ADR 0015)</a> ships objects over content addresses; a replica can verify everything it receives without trusting the sender.</li>
+</ul>
+
+<h2>Where the analogy to Git holds — and stops</h2>
+<p>The mechanism is cousins with Git's object model, and that is deliberate. But RAHN's payload is a typed network model with topology semantics, its changes are explicit transition operations, and its history is gated by a <a href="/rahn/concepts/network-verification/">constitution of invariants</a>. The full comparison is on the <a href="/rahn/rahn-vs-git/">RAHN vs Git</a> page.</p>
+
+<h2>Limits, honestly</h2>
+<p>Content addressing does not make the model complete — it makes the modeled part verifiable. Unmodeled reality (dynamic device state, hidden platform behavior) has no id. And hashing everything costs CPU and storage; both costs are recorded in the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a>. Identity decisions are recorded in <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0002-state-identity.md">ADR 0002</a> and <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0003-canonical-serialization.md">ADR 0003</a>.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/deterministic-state/">Deterministic state</a> — the precondition for stable ids</li>
+  <li><a href="/rahn/concepts/network-invariants/">Network invariants</a> — the gate applied to states and transitions</li>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/storage.md">Storage specification</a> — the content-addressed object store</li>
+</ul>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why RAHN Is Written in Rust — Determinism, Correctness, and Explicit State</title>
+  <meta name="description" content="Why RAHN is written in Rust: compile-time pure transitions, strict parsing of untrusted input, memory safety at the execution edge, determinism-friendly runtime.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mhalikhani.github.io/rahn/why-rust/">
+  <meta name="theme-color" content="#264c54">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="RAHN">
+  <meta property="og:title" content="Why RAHN Is Written in Rust — Determinism, Correctness, and Explicit State">
+  <meta property="og:description" content="Why RAHN is written in Rust: compile-time pure transitions, strict parsing of untrusted input, memory safety at the execution edge, determinism-friendly runtime.">
+  <meta property="og:url" content="https://mhalikhani.github.io/rahn/why-rust/">
+  <meta property="og:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <meta property="og:image:width" content="1672">
+  <meta property="og:image:height" content="536">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Why RAHN Is Written in Rust — Determinism, Correctness, and Explicit State">
+  <meta name="twitter:description" content="Why RAHN is written in Rust: compile-time pure transitions, strict parsing of untrusted input, memory safety at the execution edge, determinism-friendly runtime.">
+  <meta name="twitter:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rahn/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="/rahn/assets/img/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/rahn/assets/img/favicon-512.png">
+  <link rel="apple-touch-icon" href="/rahn/assets/img/favicon-180.png">
+  <link rel="stylesheet" href="/rahn/assets/css/style.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"RAHN","item":"https://mhalikhani.github.io/rahn/"},{"@type":"ListItem","position":2,"name":"Why Rust","item":"https://mhalikhani.github.io/rahn/why-rust/"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Why RAHN Is Written in Rust — Determinism, Correctness, and Explicit State","description":"Why RAHN is written in Rust: compile-time pure transitions, strict parsing of untrusted input, memory safety at the execution edge, determinism-friendly runtime.","url":"https://mhalikhani.github.io/rahn/why-rust/","image":"https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"RAHN","url":"https://mhalikhani.github.io/rahn/"},"about":{"@type":"SoftwareSourceCode","name":"RAHN","codeRepository":"https://github.com/MHAlikhani/rahn","programmingLanguage":"Rust"},"license":"https://spdx.org/licenses/Apache-2.0"}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="/rahn/" aria-label="RAHN home">
+        <span class="brand-mark" aria-hidden="true"><img src="/rahn/assets/img/mark-teal.png" alt="" width="24" height="35"></span>
+        <span class="brand-name">RAHN</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="/rahn/">Home</a>
+        <a href="/rahn/concepts/">Concepts</a>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specs</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a class="nav-github" href="https://github.com/MHAlikhani/rahn" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+<main id="main">
+<article class="doc"><p class="eyebrow">Implementation choice</p>
+<h1>Why Rust</h1>
+<p class="section-lede">The architecture would be expressible in several languages. Rust was chosen for reasons that connect directly to RAHN's design goals — determinism, explicit state, verifiable boundaries, and safety at the execution edge — and the choice is recorded honestly, including its costs (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations, item 8</a>: "Rust is an implementation choice with consequences").</p>
+
+<h2>1. Purity and explicit state can be enforced, not hoped for</h2>
+<p>RAHN's core rule is that states are never mutated in place: transitions are pure functions from a state plus operations to a new state. Rust's ownership model makes this enforceable at compile time — an <code>&amp;Network</code> cannot be mutated, so a transition that "just fixes things in place" does not compile. In garbage-collected languages the same rule lives in conventions and reviews; here it lives in the type system, which matters for a project whose entire premise is that state identity is trustworthy.</p>
+
+<h2>2. Strict, total parsing of untrusted input</h2>
+<p>The canonical state parser is the project's untrusted-input boundary: malformed or corrupted state must be rejected loudly, never partially loaded (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/security.md">security specification</a>). Rust's absence of null, its exhaustive <code>match</code>, and explicit error types make "every failure path is a typed value that must be handled" the default rather than an aspiration. The structured malformed-input test suites and the planned fuzzer (an open issue) build on that foundation.</p>
+
+<h2>3. Safety at the only edge that touches reality</h2>
+<p>RAHN's one real-world capability — shell-outs to <code>ip netns</code> inside isolated Linux namespaces — is precisely where memory-safety and argv-construction bugs would matter most. A memory-safe implementation of the execution backend shrinks the attack surface of the only code path that can affect a host, which complements (never replaces) the structural host-safety invariant of <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0012-linux-ns-execution.md">ADR 0012</a>.</p>
+
+<h2>4. Determinism-friendly runtime</h2>
+<p>Determinism is achieved by excluding nondeterministic sources. Rust helps by not fighting the exclusion: no hidden GC pauses, no implicit runtime magic, iteration order controllable via ordered structures (the canonical format demands total ordering), and compilation to native code so a "same input, same output" claim does not drift with a VM version. Reproducible-from-source behavior is also what makes the cross-platform identity tests (E1) meaningful.</p>
+
+<h2>5. Dependency discipline</h2>
+<p>RAHN ships with a single direct dependency (<code>sha2</code>) and an audited transitive closure, recorded in <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/third-party.md">docs/third-party.md</a>. Cargo's deterministic lockfiles and the ability to audit the whole tree make that posture sustainable — relevant for a project that asks people to verify claims rather than trust them.</p>
+
+<h2>The costs, stated plainly</h2>
+<p>Compile-time strictness slows exploration, and the project carries an explicit warning against becoming Rust-shaped rather than problem-shaped (limitations, item 8). Ergonomics of explicit transitions are higher than editing configs — Rust amplifies that tax rather than hiding it. These are accepted deliberately: the architecture needs a language that refuses silent shortcuts.</p>
+
+<h2>Go deeper</h2>
+<ul>
+  <li><a href="/rahn/concepts/deterministic-state/">Deterministic state</a> — the property the language serves</li>
+  <li><a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a> — the safety edge in question</li>
+  <li><a href="/rahn/contributing/">Contributing</a> — the workspace layout and how to build it</li>
+</ul></article>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">RAHN</span>
+        <p>A stateful execution architecture for evolving networks. Research project — not production software.</p>
+      </div>
+      <nav class="footer-col" aria-label="Concepts">
+        <h3>Concepts</h3>
+        <a href="/rahn/concepts/network-state/">Network state</a>
+        <a href="/rahn/concepts/deterministic-state/">Deterministic state</a>
+        <a href="/rahn/concepts/content-addressing/">Content addressing</a>
+        <a href="/rahn/concepts/network-verification/">Verification</a>
+        <a href="/rahn/concepts/network-invariants/">Invariants</a>
+        <a href="/rahn/concepts/causal-memory/">Causal memory</a>
+        <a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a>
+      </nav>
+      <nav class="footer-col" aria-label="Project">
+        <h3>Project</h3>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specifications</a>
+        <a href="/rahn/whitepaper/">White paper</a>
+        <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>
+        <a href="/rahn/why-rust/">Why Rust</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h3>Community</h3>
+        <a href="/rahn/contributing/">Contributing</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a href="https://github.com/MHAlikhani/rahn/discussions" rel="noopener">Discussions</a>
+        <a href="https://github.com/MHAlikhani/rahn/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+      </nav>
+    </div>
+    <div class="container footer-legal">
+      <p>Code licensed Apache-2.0 · Documents licensed CC-BY-4.0 · RAHN is an architectural research project, not a production network controller.</p>
+      <a href="#top" class="to-top">Back to top ↑</a>
+    </div>
+  </footer>
+  <script src="/rahn/assets/js/main.js" defer></script>
+</body>
+</html>

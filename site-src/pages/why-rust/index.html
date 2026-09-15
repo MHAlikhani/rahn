@@ -1,0 +1,37 @@
+---
+{
+  "title": "Why RAHN Is Written in Rust — Determinism, Correctness, and Explicit State",
+  "description": "Why RAHN is written in Rust: compile-time pure transitions, strict parsing of untrusted input, memory safety at the execution edge, determinism-friendly runtime.",
+  "slug": "why-rust/",
+  "crumb": "Why Rust",
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Implementation choice</p>
+<h1>Why Rust</h1>
+<p class="section-lede">The architecture would be expressible in several languages. Rust was chosen for reasons that connect directly to RAHN's design goals — determinism, explicit state, verifiable boundaries, and safety at the execution edge — and the choice is recorded honestly, including its costs (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations, item 8</a>: "Rust is an implementation choice with consequences").</p>
+
+<h2>1. Purity and explicit state can be enforced, not hoped for</h2>
+<p>RAHN's core rule is that states are never mutated in place: transitions are pure functions from a state plus operations to a new state. Rust's ownership model makes this enforceable at compile time — an <code>&amp;Network</code> cannot be mutated, so a transition that "just fixes things in place" does not compile. In garbage-collected languages the same rule lives in conventions and reviews; here it lives in the type system, which matters for a project whose entire premise is that state identity is trustworthy.</p>
+
+<h2>2. Strict, total parsing of untrusted input</h2>
+<p>The canonical state parser is the project's untrusted-input boundary: malformed or corrupted state must be rejected loudly, never partially loaded (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/security.md">security specification</a>). Rust's absence of null, its exhaustive <code>match</code>, and explicit error types make "every failure path is a typed value that must be handled" the default rather than an aspiration. The structured malformed-input test suites and the planned fuzzer (an open issue) build on that foundation.</p>
+
+<h2>3. Safety at the only edge that touches reality</h2>
+<p>RAHN's one real-world capability — shell-outs to <code>ip netns</code> inside isolated Linux namespaces — is precisely where memory-safety and argv-construction bugs would matter most. A memory-safe implementation of the execution backend shrinks the attack surface of the only code path that can affect a host, which complements (never replaces) the structural host-safety invariant of <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0012-linux-ns-execution.md">ADR 0012</a>.</p>
+
+<h2>4. Determinism-friendly runtime</h2>
+<p>Determinism is achieved by excluding nondeterministic sources. Rust helps by not fighting the exclusion: no hidden GC pauses, no implicit runtime magic, iteration order controllable via ordered structures (the canonical format demands total ordering), and compilation to native code so a "same input, same output" claim does not drift with a VM version. Reproducible-from-source behavior is also what makes the cross-platform identity tests (E1) meaningful.</p>
+
+<h2>5. Dependency discipline</h2>
+<p>RAHN ships with a single direct dependency (<code>sha2</code>) and an audited transitive closure, recorded in <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/third-party.md">docs/third-party.md</a>. Cargo's deterministic lockfiles and the ability to audit the whole tree make that posture sustainable — relevant for a project that asks people to verify claims rather than trust them.</p>
+
+<h2>The costs, stated plainly</h2>
+<p>Compile-time strictness slows exploration, and the project carries an explicit warning against becoming Rust-shaped rather than problem-shaped (limitations, item 8). Ergonomics of explicit transitions are higher than editing configs — Rust amplifies that tax rather than hiding it. These are accepted deliberately: the architecture needs a language that refuses silent shortcuts.</p>
+
+<h2>Go deeper</h2>
+<ul>
+  <li><a href="/rahn/concepts/deterministic-state/">Deterministic state</a> — the property the language serves</li>
+  <li><a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a> — the safety edge in question</li>
+  <li><a href="/rahn/contributing/">Contributing</a> — the workspace layout and how to build it</li>
+</ul>

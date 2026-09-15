@@ -1,0 +1,37 @@
+---
+{
+  "title": "Network Invariants and RAHN's Constitution",
+  "description": "Network invariants in RAHN: the structural floor, declared connectivity constraints, and deterministic evaluation. Verification is only as good as its encoding.",
+  "slug": "concepts/network-invariants/",
+  "crumb": "Network invariants",
+  "group": { "slug": "concepts", "name": "Concepts" },
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Concept</p>
+<h1>Network invariants</h1>
+<p class="section-lede">An invariant is a rule that must hold for a network state to be acceptable — for example, "no link refers to a missing interface" or "segment A must always reach segment B". In RAHN, the set of invariants in force is called the <strong>constitution</strong>, and it is data, not code reviews.</p>
+
+<h2>The structural floor</h2>
+<p>Every RAHN state automatically carries a floor of structural invariants (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/invariants.md">invariants specification</a>):</p>
+<ul>
+  <li><code>referential-integrity</code> — every reference points at an existing object</li>
+  <li><code>link-endpoints-exist</code> — links connect declared <code>(node, interface)</code> endpoints</li>
+  <li><code>no-duplicate-links</code>, <code>no-self-loops</code> — topology sanity</li>
+</ul>
+
+<h2>The constitution layer</h2>
+<p>On top of the floor, a constitution file declares named constraints evaluated over the node graph induced by interface links: <code>require-connectivity a b</code> and <code>prohibit-connectivity a b</code> (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/constitution.md">constitution specification</a>). The vocabulary is deliberately small and decidable; what it can and cannot express against real-world invariants is research question <a href="/rahn/research/#questions">RQ4</a>, which is open.</p>
+
+<h2>Deterministic evaluation</h2>
+<p>Invariant evaluation is <a href="/rahn/concepts/deterministic-state/">deterministic</a>: same state, same constitution, same verdict — on every machine, every run. Failures are explainable by design: an error carries the violated invariant, the offending objects, and the transition that produced them. Violations are data, which is what makes <a href="/rahn/concepts/network-verification/">CI integration</a> with an exit-code contract possible.</p>
+
+<h2>The epistemic honesty rule</h2>
+<p>The constitution only protects what it encodes. "Verified" means "all encoded invariants hold" — nothing more. This is stated as a limitation, not a footnote: <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations</a>, item "verification is only as good as its encoding". Expressiveness work (what real incident-derived invariants the vocabulary can capture) is a <a href="/rahn/contributing/">contribution path</a>, not a closed question.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/network-verification/">Network verification</a> — how invariants gate change</li>
+  <li><a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a> — the boundary after verification</li>
+  <li><a href="/rahn/research/">Research</a> — RQ2 and RQ4, the open measurement questions</li>
+</ul>

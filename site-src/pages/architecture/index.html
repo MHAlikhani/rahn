@@ -1,0 +1,38 @@
+---
+{
+  "title": "RAHN Architecture — Goals, Design, Trade-offs, Failure Modes",
+  "description": "RAHN architecture: the problem, design goals, the content-addressed state model with constitution-gated transitions, and the recorded trade-offs and failure modes.",
+  "slug": "architecture/",
+  "crumb": "Architecture",
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Design</p>
+<h1>Architecture</h1>
+<p class="section-lede">This page summarizes RAHN's architecture — <a href="https://github.com/MHAlikhani/rahn/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a> is the canonical document, and the accepted <a href="https://github.com/MHAlikhani/rahn/tree/main/docs/adr">ADRs</a> are the authority. What follows is the shape of the design and where its trade-offs are recorded.</p>
+
+<h2>The problem</h2>
+<p>Networks have no first-class state object. Desired-config tools and symptom-observing tools both exist; the state itself — the thing that fails — is reconstructed by hand. RAHN's answer is to make state a <a href="/rahn/concepts/network-state/">value</a>: deterministic, <a href="/rahn/concepts/content-addressing/">content-addressed</a>, changed only by explicit transitions.</p>
+
+<h2>Core lifecycle</h2>
+<ol>
+  <li><strong>Declare state</strong> — nodes, interfaces, links in canonical format v2.</li>
+  <li><strong>Propose transitions</strong> — explicit operations from a closed vocabulary.</li>
+  <li><strong>Verify</strong> — the <a href="/rahn/concepts/network-invariants/">constitution</a> must hold; <code>rahn test</code> makes the verdict CI-consumable.</li>
+  <li><strong>Simulate</strong> — apply produces an execution plan, simulated by default.</li>
+  <li><strong>Execute — opt-in</strong> — isolated Linux namespaces only, after verification, behind <code>--yes-i-know</code>.</li>
+</ol>
+
+<h2>Implementation shape (v1.0)</h2>
+<p>A Cargo workspace with one responsibility per crate: <code>rahn-core</code> (object model), <code>rahn-state</code> (canonical serialization, transitions, diff, history, graph queries, observations, causal records), <code>rahn-store</code> (content-addressed persistence), <code>rahn-verify</code> (invariant engine, constitution parsing, fail-closed merge), <code>rahn-sim</code> (default, host-touching-free backend), <code>rahn-exec</code> (isolated namespace backend), <code>rahn-dist</code> (peer sync), <code>rahn-sdk</code> (curated semver-stable facade), and <code>rahn-cli</code> (the <code>rahn</code> binary). See <a href="/rahn/why-rust/">why Rust</a> for the language rationale.</p>
+
+<h2>Trade-offs, recorded</h2>
+<ul>
+  <li><strong>Explicitness costs ergonomics.</strong> Transitions, verification, and provenance are more work than editing configs — accepted deliberately.</li>
+  <li><strong>Determinism costs resources.</strong> Canonical serialization and hashing cost CPU and storage; history grows until pruning is designed.</li>
+  <li><strong>Fail-closed merge rejects some mergeable states.</strong> Wrong merges are worse than rejected ones; the price is quantified in open research (<a href="/rahn/research/">RQ3/E3</a>).</li>
+  <li><strong>Per-replica authority, no cross-replica strong consistency.</strong> The distributed model (ADR 0015) chose fail-closed divergence over consensus.</li>
+</ul>
+
+<h2>Failure modes</h2>
+<p>ARCHITECTURE.md §8 reasons about them explicitly: unmodeled reality, over-trusted verification, blind-spot encoding, and the gap between the model and the network. The recurring theme — verification is only as good as its encoding — is why <a href="/rahn/research/#limitations">limitations</a> are part of the architecture rather than a footnote. For the decision history, read the <a href="https://github.com/MHAlikhani/rahn/tree/main/docs/adr">19 ADRs</a>; for the normative rules, the <a href="/rahn/specifications/">specifications</a>.</p>

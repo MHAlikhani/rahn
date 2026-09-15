@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-# Deploys the marketing/landing site in site/ to GitHub Pages.
-# The repository's technical documentation stays in docs/ (served from the repo).
+# Builds and deploys the RAHN website (site-src/ → site/) to GitHub Pages.
 
 name: pages
 
 on:
   push:
     branches: [main]
-    paths: [site/**, .github/workflows/pages.yml]
+    paths: [site/**, site-src/**, scripts/build-site.mjs, scripts/validate-site.mjs, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +26,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build site
+        run: node scripts/build-site.mjs
+      - name: Validate site
+        run: node scripts/validate-site.mjs
       - uses: actions/configure-pages@v5
         with:
           enablement: true

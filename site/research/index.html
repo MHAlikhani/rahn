@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAHN Research — Questions, Experiments, Evidence, and Open Problems</title>
+  <meta name="description" content="RAHN research: ten questions, the E1-E7 experiment plan, evidence today, and the honest limitations baseline. Nothing claimed beyond what is implemented.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mhalikhani.github.io/rahn/research/">
+  <meta name="theme-color" content="#264c54">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="RAHN">
+  <meta property="og:title" content="RAHN Research — Questions, Experiments, Evidence, and Open Problems">
+  <meta property="og:description" content="RAHN research: ten questions, the E1-E7 experiment plan, evidence today, and the honest limitations baseline. Nothing claimed beyond what is implemented.">
+  <meta property="og:url" content="https://mhalikhani.github.io/rahn/research/">
+  <meta property="og:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <meta property="og:image:width" content="1672">
+  <meta property="og:image:height" content="536">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RAHN Research — Questions, Experiments, Evidence, and Open Problems">
+  <meta name="twitter:description" content="RAHN research: ten questions, the E1-E7 experiment plan, evidence today, and the honest limitations baseline. Nothing claimed beyond what is implemented.">
+  <meta name="twitter:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rahn/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="/rahn/assets/img/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/rahn/assets/img/favicon-512.png">
+  <link rel="apple-touch-icon" href="/rahn/assets/img/favicon-180.png">
+  <link rel="stylesheet" href="/rahn/assets/css/style.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"RAHN","item":"https://mhalikhani.github.io/rahn/"},{"@type":"ListItem","position":2,"name":"Research","item":"https://mhalikhani.github.io/rahn/research/"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"RAHN Research — Questions, Experiments, Evidence, and Open Problems","description":"RAHN research: ten questions, the E1-E7 experiment plan, evidence today, and the honest limitations baseline. Nothing claimed beyond what is implemented.","url":"https://mhalikhani.github.io/rahn/research/","image":"https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"RAHN","url":"https://mhalikhani.github.io/rahn/"},"about":{"@type":"SoftwareSourceCode","name":"RAHN","codeRepository":"https://github.com/MHAlikhani/rahn","programmingLanguage":"Rust"},"license":"https://spdx.org/licenses/Apache-2.0"}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="/rahn/" aria-label="RAHN home">
+        <span class="brand-mark" aria-hidden="true"><img src="/rahn/assets/img/mark-teal.png" alt="" width="24" height="35"></span>
+        <span class="brand-name">RAHN</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="/rahn/">Home</a>
+        <a href="/rahn/concepts/">Concepts</a>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/" aria-current="page">Research</a>
+        <a href="/rahn/specifications/">Specs</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a class="nav-github" href="https://github.com/MHAlikhani/rahn" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+<main id="main">
+<article class="doc"><p class="eyebrow">Research program</p>
+<h1>Research</h1>
+<p class="section-lede">RAHN is not a product with a research garnish — it is a research program with an implementation attached. Every claim in the repository is claim-status-marked, every measurement carries its method, and the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a> is the honesty floor. This page maps the program and states plainly what is implemented, what is demonstrated, what is designed, and what is open.</p>
+
+<h2 id="motivation">Motivation and problem statement</h2>
+<p>The <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/problem-statement.md">problem statement</a> is one paragraph long: networks have no first-class state object. Config tools push desired state, monitoring observes symptoms, and the actual state — the thing that fails — is reconstructed by hand. The underlying question: <em>can network state become a first-class computational object — versioned, causal, verifiable, replayable, and safely evolvable?</em></p>
+
+<h2 id="questions">The ten research questions</h2>
+<dl class="rq-list">
+  <dt><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/research-questions.md">RQ1</a> — Deterministic, content-addressed network state</dt><dd>Implemented for the v0.1 vocabulary; identity stability is test-enforced with cross-platform CI runs (E1).</dd>
+  <dt>RQ2 — Verification before execution</dt><dd>Implemented; <strong>cost measurement pending</strong> — latency distribution at 10²–10⁵ objects (E2) has not been run.</dd>
+  <dt>RQ3 — Semantic branches and merges</dt><dd>Implemented with fail-closed semantics; the E3 conflict study (precision, recall, false-rejection rate) is pending.</dd>
+  <dt>RQ4 — Constitution expressiveness</dt><dd>Open: which real-world invariants can the current vocabulary express, and at what check cost?</dd>
+  <dt>RQ5 — Causal attribution fidelity</dt><dd>Open: how faithful can asserted causal chains be?</dd>
+  <dt>RQ6 — Incident reconstruction / replay</dt><dd>Future work; depends on RQ5.</dd>
+  <dt>RQ7 — Consistency requirements for distributed state</dt><dd>Requirements-first approach taken; per-replica authority chosen (ADR 0015) after rejecting Raft, CRDTs, and op-shipping on requirements grounds.</dd>
+  <dt>RQ8 — Multi-backend execution</dt><dd>Backend abstraction implemented (ADR 0016); further backends are future work.</dd>
+  <dt>RQ9 — AI as advisor, not authority</dt><dd>Framed; nothing AI-related is in the core by design.</dd>
+  <dt>RQ10 — Usefulness without AI</dt><dd>Framed; the core is deliberately model-free.</dd>
+</dl>
+
+<h2 id="experiments">Experiments and evidence today</h2>
+<p>The <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/experiment-plan.md">experiment plan</a> (E1–E7) defines what would count as evidence; the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/benchmark-methodology.md">benchmark methodology</a> defines the rules (a result without an environment block is void; p99 is the story; negative results are published). Status, honestly:</p>
+<ul>
+  <li><strong>Implemented and test-enforced:</strong> determinism of state and identity (E1 via CI on Linux and Windows), canonical round-trips, merge properties (100-seed commutativity checks), observation ingestion baselines, causal-graph operations, sync transport.</li>
+  <li><strong>Partially run:</strong> E2 and E6 (scoped prototype measurements exist — e.g. the reverse-adjacency causal query improvement from ~2.7 s to ~5.7 ms on a 10k-edge chain — explicitly labeled prototype results, not guarantees).</li>
+  <li><strong>Not run:</strong> E3 (merge conflict study), E4, E5, E7.</li>
+  <li><strong>Recorded debt:</strong> O(m·n) batch-apply cost; single-machine baselines only; no production deployment exists anywhere.</li>
+</ul>
+
+<h2 id="prior-art">Prior art</h2>
+<p>The <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/prior-art.md">prior-art survey</a> covers source-of-truth systems, intent-based networking, formal verification of networks (Header Space Analysis, VeriFlow, NetKAT, Minesweeper), and content-addressed systems. Its own status is honest: a working survey with provisional claims that must be deepened before any novelty assertion. RAHN makes no novelty claims at this stage.</p>
+
+<h2 id="limitations">Limitations — the honesty baseline</h2>
+<p>The <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations document</a> is normative for every other document. Highlights: stable architecture but young implementation (no production use, no external review); causality asserted, never inferred; evidence is partial and single-machine; no novelty claims warranted; O(m·n) apply debt; merge incomplete in principle (compensated by failing closed); determinism costs; and Rust as a choice with consequences. If any page of this site or repository claims past that baseline, it is a bug — report it.</p>
+
+<h2 id="open">Open problems for contributors</h2>
+<p>The highest-value open work is measurement, not features: run E2 (verification latency), run E3 (merge conflict study), execute the RQ4 expressiveness study, perform an independent host-safety review of the execution backend. Each has a methodology document and acceptance criteria — see <a href="/rahn/contributing/">contributing</a> and the curated <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md">good first issues</a>.</p></article>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">RAHN</span>
+        <p>A stateful execution architecture for evolving networks. Research project — not production software.</p>
+      </div>
+      <nav class="footer-col" aria-label="Concepts">
+        <h3>Concepts</h3>
+        <a href="/rahn/concepts/network-state/">Network state</a>
+        <a href="/rahn/concepts/deterministic-state/">Deterministic state</a>
+        <a href="/rahn/concepts/content-addressing/">Content addressing</a>
+        <a href="/rahn/concepts/network-verification/">Verification</a>
+        <a href="/rahn/concepts/network-invariants/">Invariants</a>
+        <a href="/rahn/concepts/causal-memory/">Causal memory</a>
+        <a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a>
+      </nav>
+      <nav class="footer-col" aria-label="Project">
+        <h3>Project</h3>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specifications</a>
+        <a href="/rahn/whitepaper/">White paper</a>
+        <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>
+        <a href="/rahn/why-rust/">Why Rust</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h3>Community</h3>
+        <a href="/rahn/contributing/">Contributing</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a href="https://github.com/MHAlikhani/rahn/discussions" rel="noopener">Discussions</a>
+        <a href="https://github.com/MHAlikhani/rahn/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+      </nav>
+    </div>
+    <div class="container footer-legal">
+      <p>Code licensed Apache-2.0 · Documents licensed CC-BY-4.0 · RAHN is an architectural research project, not a production network controller.</p>
+      <a href="#top" class="to-top">Back to top ↑</a>
+    </div>
+  </footer>
+  <script src="/rahn/assets/js/main.js" defer></script>
+</body>
+</html>

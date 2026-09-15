@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content-Addressed Network State — Identity from Content</title>
+  <meta name="description" content="Content addressing gives RAHN state identity from content: sha256 over canonical bytes. What it enables and where the idea stops, stated honestly.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mhalikhani.github.io/rahn/concepts/content-addressing/">
+  <meta name="theme-color" content="#264c54">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="RAHN">
+  <meta property="og:title" content="Content-Addressed Network State — Identity from Content">
+  <meta property="og:description" content="Content addressing gives RAHN state identity from content: sha256 over canonical bytes. What it enables and where the idea stops, stated honestly.">
+  <meta property="og:url" content="https://mhalikhani.github.io/rahn/concepts/content-addressing/">
+  <meta property="og:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <meta property="og:image:width" content="1672">
+  <meta property="og:image:height" content="536">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Content-Addressed Network State — Identity from Content">
+  <meta name="twitter:description" content="Content addressing gives RAHN state identity from content: sha256 over canonical bytes. What it enables and where the idea stops, stated honestly.">
+  <meta name="twitter:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rahn/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="/rahn/assets/img/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/rahn/assets/img/favicon-512.png">
+  <link rel="apple-touch-icon" href="/rahn/assets/img/favicon-180.png">
+  <link rel="stylesheet" href="/rahn/assets/css/style.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"RAHN","item":"https://mhalikhani.github.io/rahn/"},{"@type":"ListItem","position":2,"name":"Concepts","item":"https://mhalikhani.github.io/rahn/concepts/"},{"@type":"ListItem","position":3,"name":"Content addressing","item":"https://mhalikhani.github.io/rahn/concepts/content-addressing/"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Content-Addressed Network State — Identity from Content","description":"Content addressing gives RAHN state identity from content: sha256 over canonical bytes. What it enables and where the idea stops, stated honestly.","url":"https://mhalikhani.github.io/rahn/concepts/content-addressing/","image":"https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"RAHN","url":"https://mhalikhani.github.io/rahn/"},"about":{"@type":"SoftwareSourceCode","name":"RAHN","codeRepository":"https://github.com/MHAlikhani/rahn","programmingLanguage":"Rust"},"license":"https://spdx.org/licenses/Apache-2.0"}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="/rahn/" aria-label="RAHN home">
+        <span class="brand-mark" aria-hidden="true"><img src="/rahn/assets/img/mark-teal.png" alt="" width="24" height="35"></span>
+        <span class="brand-name">RAHN</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="/rahn/">Home</a>
+        <a href="/rahn/concepts/">Concepts</a>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specs</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a class="nav-github" href="https://github.com/MHAlikhani/rahn" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+<main id="main">
+<article class="doc"><nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="/">RAHN</a></li><li aria-hidden="true">›</li><li><a href="/concepts/">Concepts</a></li><li aria-hidden="true">›</li><li aria-current="page">Content addressing</li></ol></nav><p class="eyebrow">Concept</p>
+<h1>Content-addressed network state</h1>
+<p class="section-lede">In RAHN, a network state's identity is not a name someone assigned — it is a <strong>sha256 hash over the state's canonical serialization</strong>. Identity depends only on content. Two states with the same bytes are the same state, wherever they occur.</p>
+
+<h2>How it works</h2>
+<p>The pipeline is short and strict: a <a href="/rahn/concepts/network-state/">network state</a> is encoded in canonical format v2 (total ordering, no ambient information), and the state id is the SHA-256 of those bytes. Commits, stores, and peer synchronization all speak in these ids. Because the encoding is <a href="/rahn/concepts/deterministic-state/">deterministic</a>, the id is stable across machines — the same state computed on Linux and Windows yields the same id, which is exactly what CI verifies.</p>
+
+<h2>What content addressing buys</h2>
+<ul>
+  <li><strong>Integrity you can check.</strong> Any stored or transmitted state can be verified by re-hashing it; corrupted objects are refused loudly, never partially loaded.</li>
+  <li><strong>Immutability by construction.</strong> A state with a given id cannot change — changing it produces different bytes and therefore a different id. History becomes a graph of immutable values.</li>
+  <li><strong>Meaningful diffs and merges.</strong> Equality is byte equality; a diff is a computation over canonical structures, not a text comparison of configs.</li>
+  <li><strong>Synchronization without trust.</strong> <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0015-distributed-state.md">Peer sync (ADR 0015)</a> ships objects over content addresses; a replica can verify everything it receives without trusting the sender.</li>
+</ul>
+
+<h2>Where the analogy to Git holds — and stops</h2>
+<p>The mechanism is cousins with Git's object model, and that is deliberate. But RAHN's payload is a typed network model with topology semantics, its changes are explicit transition operations, and its history is gated by a <a href="/rahn/concepts/network-verification/">constitution of invariants</a>. The full comparison is on the <a href="/rahn/rahn-vs-git/">RAHN vs Git</a> page.</p>
+
+<h2>Limits, honestly</h2>
+<p>Content addressing does not make the model complete — it makes the modeled part verifiable. Unmodeled reality (dynamic device state, hidden platform behavior) has no id. And hashing everything costs CPU and storage; both costs are recorded in the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a>. Identity decisions are recorded in <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0002-state-identity.md">ADR 0002</a> and <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0003-canonical-serialization.md">ADR 0003</a>.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/deterministic-state/">Deterministic state</a> — the precondition for stable ids</li>
+  <li><a href="/rahn/concepts/network-invariants/">Network invariants</a> — the gate applied to states and transitions</li>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/storage.md">Storage specification</a> — the content-addressed object store</li>
+</ul></article>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">RAHN</span>
+        <p>A stateful execution architecture for evolving networks. Research project — not production software.</p>
+      </div>
+      <nav class="footer-col" aria-label="Concepts">
+        <h3>Concepts</h3>
+        <a href="/rahn/concepts/network-state/">Network state</a>
+        <a href="/rahn/concepts/deterministic-state/">Deterministic state</a>
+        <a href="/rahn/concepts/content-addressing/">Content addressing</a>
+        <a href="/rahn/concepts/network-verification/">Verification</a>
+        <a href="/rahn/concepts/network-invariants/">Invariants</a>
+        <a href="/rahn/concepts/causal-memory/">Causal memory</a>
+        <a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a>
+      </nav>
+      <nav class="footer-col" aria-label="Project">
+        <h3>Project</h3>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specifications</a>
+        <a href="/rahn/whitepaper/">White paper</a>
+        <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>
+        <a href="/rahn/why-rust/">Why Rust</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h3>Community</h3>
+        <a href="/rahn/contributing/">Contributing</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a href="https://github.com/MHAlikhani/rahn/discussions" rel="noopener">Discussions</a>
+        <a href="https://github.com/MHAlikhani/rahn/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+      </nav>
+    </div>
+    <div class="container footer-legal">
+      <p>Code licensed Apache-2.0 · Documents licensed CC-BY-4.0 · RAHN is an architectural research project, not a production network controller.</p>
+      <a href="#top" class="to-top">Back to top ↑</a>
+    </div>
+  </footer>
+  <script src="/rahn/assets/js/main.js" defer></script>
+</body>
+</html>

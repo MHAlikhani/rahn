@@ -1,0 +1,29 @@
+---
+{
+  "title": "RAHN Specifications — Normative Documents for Every Subsystem",
+  "description": "Index of RAHN normative specifications: state, objects, serialization, storage, transitions, invariants, constitution, execution, observation, causality, security.",
+  "slug": "specifications/",
+  "crumb": "Specifications",
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Normative documents</p>
+<h1>Specifications</h1>
+<p class="section-lede">The <a href="https://github.com/MHAlikhani/rahn/tree/main/docs/spec">specification directory</a> holds RAHN's normative rules. When documentation and implementation disagree, the discrepancy is investigated and the wrong side is fixed — the spec is the contract the tests enforce.</p>
+
+<div class="idea-cards">
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/state.md">State</a></h3><p>The state value, its object model boundaries, and lifecycle.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/objects.md">Objects</a></h3><p>Nodes, interfaces, links — the typed building blocks.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/serialization.md">Serialization</a></h3><p>Canonical format v2: total ordering, strict total parsing, format-version rules.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/storage.md">Storage</a></h3><p>The content-addressed object store: objects, commits, refs, index.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/transitions.md">Transitions</a></h3><p>The closed operation vocabulary and purity rules.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/invariants.md">Invariants</a></h3><p>The structural floor and CI verification contract.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/constitution.md">Constitution</a></h3><p>Declared connectivity constraints and their evaluation.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/execution.md">Execution</a></h3><p>Planning, backends, and the isolation boundary.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/observation.md">Observation</a></h3><p>The deterministic observation model and ingestion.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/causality.md">Causality</a></h3><p>Anchors, epistemic-status edges, DAG enforcement.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/protocol.md">Protocol</a></h3><p>Peer synchronization semantics over content-addressed history.</p></article>
+  <article class="card"><h3><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/security.md">Security</a></h3><p>Untrusted input, integrity, the simulation default, and the threat posture.</p></article>
+</div>
+
+<p>Specifications pair with the <a href="https://github.com/MHAlikhani/rahn/tree/main/docs/adr">architecture decision records</a>, which record <em>why</em> each rule exists. To propose a change to any of this, start from the <a href="/rahn/contributing/">contributing</a> path.</p>

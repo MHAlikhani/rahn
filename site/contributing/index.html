@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contributing to RAHN — Process, First Issues, and the ADR Path</title>
+  <meta name="description" content="How to contribute to RAHN: fit questions, the design-proposal to ADR path, curated good first issues, and licensing. Measurement and critique matter most now.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mhalikhani.github.io/rahn/contributing/">
+  <meta name="theme-color" content="#264c54">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="RAHN">
+  <meta property="og:title" content="Contributing to RAHN — Process, First Issues, and the ADR Path">
+  <meta property="og:description" content="How to contribute to RAHN: fit questions, the design-proposal to ADR path, curated good first issues, and licensing. Measurement and critique matter most now.">
+  <meta property="og:url" content="https://mhalikhani.github.io/rahn/contributing/">
+  <meta property="og:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <meta property="og:image:width" content="1672">
+  <meta property="og:image:height" content="536">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Contributing to RAHN — Process, First Issues, and the ADR Path">
+  <meta name="twitter:description" content="How to contribute to RAHN: fit questions, the design-proposal to ADR path, curated good first issues, and licensing. Measurement and critique matter most now.">
+  <meta name="twitter:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rahn/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="/rahn/assets/img/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/rahn/assets/img/favicon-512.png">
+  <link rel="apple-touch-icon" href="/rahn/assets/img/favicon-180.png">
+  <link rel="stylesheet" href="/rahn/assets/css/style.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"RAHN","item":"https://mhalikhani.github.io/rahn/"},{"@type":"ListItem","position":2,"name":"Contributing","item":"https://mhalikhani.github.io/rahn/contributing/"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Contributing to RAHN — Process, First Issues, and the ADR Path","description":"How to contribute to RAHN: fit questions, the design-proposal to ADR path, curated good first issues, and licensing. Measurement and critique matter most now.","url":"https://mhalikhani.github.io/rahn/contributing/","image":"https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"RAHN","url":"https://mhalikhani.github.io/rahn/"},"about":{"@type":"SoftwareSourceCode","name":"RAHN","codeRepository":"https://github.com/MHAlikhani/rahn","programmingLanguage":"Rust"},"license":"https://spdx.org/licenses/Apache-2.0"}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="/rahn/" aria-label="RAHN home">
+        <span class="brand-mark" aria-hidden="true"><img src="/rahn/assets/img/mark-teal.png" alt="" width="24" height="35"></span>
+        <span class="brand-name">RAHN</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="/rahn/">Home</a>
+        <a href="/rahn/concepts/">Concepts</a>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specs</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a class="nav-github" href="https://github.com/MHAlikhani/rahn" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+<main id="main">
+<article class="doc"><p class="eyebrow">Join the research</p>
+<h1>Contributing</h1>
+<p class="section-lede">RAHN is an open research project, and the highest-value contributions right now are measurement and critique, not features. <a href="https://github.com/MHAlikhani/rahn/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> is the canonical process; this page is the map.</p>
+
+<h2>The fit questions first</h2>
+<p>CONTRIBUTING.md opens with fit questions, because RAHN is deliberately narrow: does the change strengthen verifiable, evolving network state? Features that strengthen that abstraction are in scope; everything else is deferred, and the boundary is a <a href="https://github.com/MHAlikhani/rahn/blob/main/ROADMAP.md">roadmap</a> of post-v1.0 candidates that each require their own ADR. Nothing post-v1.0 is scheduled.</p>
+
+<h2>Two paths</h2>
+<ol>
+  <li><strong>Architectural change:</strong> design-proposal issue → accepted → ADR → spec/ARCHITECTURE update → implementation. Implementation is never first, and accepted ADRs are immutable — they are superseded, never edited.</li>
+  <li><strong>Everything else:</strong> pick a curated issue from <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md">good-first-issues.md</a>. Each carries acceptance criteria, related documents, and a scope that fits in a weekend.</li>
+</ol>
+
+<h2>Where help is most valuable now</h2>
+<ul>
+  <li><strong>Measurement studies:</strong> E2 verification-latency benchmark, E3 merge-conflict study, the RQ4 constitution-expressiveness report — each has a methodology document and needs hands (see <a href="/rahn/research/">research</a>).</li>
+  <li><strong>Independent review:</strong> an adversarial host-safety review of the Linux namespace backend; a deepening of the prior-art survey.</li>
+  <li><strong>Engineering:</strong> structured fuzzing of the canonical parser; a design RFC for the O(m·n) batch-apply debt; macOS in the CI determinism matrix.</li>
+  <li><strong>Documentation:</strong> an ADR index and reading guide; SDK doc examples.</li>
+</ul>
+
+<h2>Ground rules</h2>
+<ul>
+  <li>Determinism is non-negotiable: no wall-clock, RNG, or nondeterministic iteration in the core; behavior changes need tests.</li>
+  <li>No AI in the core; simulation is the default; real execution stays opt-in and isolated.</li>
+  <li>SPDX headers on new files (Apache-2.0 for source, CC-BY-4.0 for documents).</li>
+  <li>Security issues go to the private channel in <a href="https://github.com/MHAlikhani/rahn/blob/main/SECURITY.md">SECURITY.md</a>, never to public issues.</li>
+</ul>
+
+<p>Build, test, and lint commands are in <a href="https://github.com/MHAlikhani/rahn/blob/main/DEVELOPMENT.md">DEVELOPMENT.md</a>. Start here: <a href="https://github.com/MHAlikhani/rahn">github.com/MHAlikhani/rahn</a> · <a href="https://github.com/MHAlikhani/rahn/discussions">Discussions</a> · <a href="https://github.com/MHAlikhani/rahn/issues">Issues</a>.</p></article>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">RAHN</span>
+        <p>A stateful execution architecture for evolving networks. Research project — not production software.</p>
+      </div>
+      <nav class="footer-col" aria-label="Concepts">
+        <h3>Concepts</h3>
+        <a href="/rahn/concepts/network-state/">Network state</a>
+        <a href="/rahn/concepts/deterministic-state/">Deterministic state</a>
+        <a href="/rahn/concepts/content-addressing/">Content addressing</a>
+        <a href="/rahn/concepts/network-verification/">Verification</a>
+        <a href="/rahn/concepts/network-invariants/">Invariants</a>
+        <a href="/rahn/concepts/causal-memory/">Causal memory</a>
+        <a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a>
+      </nav>
+      <nav class="footer-col" aria-label="Project">
+        <h3>Project</h3>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specifications</a>
+        <a href="/rahn/whitepaper/">White paper</a>
+        <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>
+        <a href="/rahn/why-rust/">Why Rust</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h3>Community</h3>
+        <a href="/rahn/contributing/">Contributing</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a href="https://github.com/MHAlikhani/rahn/discussions" rel="noopener">Discussions</a>
+        <a href="https://github.com/MHAlikhani/rahn/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+      </nav>
+    </div>
+    <div class="container footer-legal">
+      <p>Code licensed Apache-2.0 · Documents licensed CC-BY-4.0 · RAHN is an architectural research project, not a production network controller.</p>
+      <a href="#top" class="to-top">Back to top ↑</a>
+    </div>
+  </footer>
+  <script src="/rahn/assets/js/main.js" defer></script>
+</body>
+</html>

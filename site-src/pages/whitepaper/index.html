@@ -1,0 +1,32 @@
+---
+{
+  "title": "The RAHN White Paper — A Stateful Execution Architecture for Evolving Networks",
+  "description": "The RAHN white paper: problem, conceptual model, state identity, transitions, constitution, causal memory, and claim-status-marked conclusions.",
+  "slug": "whitepaper/",
+  "crumb": "White paper",
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Publication</p>
+<h1>White paper</h1>
+<p class="section-lede">The <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/whitepaper/RAHN-Whitepaper.md">RAHN white paper</a> is the project's formal statement: what problem it attacks, what model it proposes, and — unusually for a white paper — <strong>which claims are marked with their status</strong>. Sections carry explicit markers: <em>[Implemented]</em>, <em>[Implemented for v0.1 scope]</em>, and scoped language where evidence is still partial.</p>
+
+<h2>What it covers</h2>
+<ul>
+  <li><strong>Problem and motivation (§3–4)</strong> — why network state has no first-class object today, and what follows from that absence.</li>
+  <li><strong>Existing abstractions and related work (§5–6)</strong> — config management, SDN, IBN, formal verification, and content-addressed systems; the survey is explicitly a working draft whose provisional claims must be deepened before any novelty assertion.</li>
+  <li><strong>Conceptual model (§9–13)</strong> — <a href="/rahn/concepts/network-state/">network state</a>, state identity, transitions, and the constitution.</li>
+  <li><strong>Verification and execution (§14+)</strong> — what is implemented for the v0.1 scope and how the boundary to real execution is drawn.</li>
+  <li><strong>Causal memory and evolution</strong> — asserted causality with epistemic status; branching and fail-closed merging.</li>
+</ul>
+
+<h2>The claim-status discipline</h2>
+<p>Most white papers assert; this one grades itself. A claim is either implemented (and test-enforced), experimentally demonstrated (with recorded method and environment), or open. The <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a> backs this: no novelty claims are warranted yet, the prior-art analysis must be deepened, and v1.0 is architectural stability — not production readiness. The paper cannot assert past the baseline even if a section reads better with a stronger claim.</p>
+
+<h2>Reading paths</h2>
+<ul>
+  <li>Technical reader: white paper §9–14, then the <a href="/rahn/specifications/">specifications</a>.</li>
+  <li>Research reader: §5–6, then the <a href="/rahn/research/">research program</a> and open experiments.</li>
+  <li>Skeptical reader: the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations</a> first — they are the shortest honest description of the project.</li>
+</ul>
+<p>Citation metadata is available in the repository's <a href="https://github.com/MHAlikhani/rahn/blob/main/CITATION.cff">CITATION.cff</a>.</p>

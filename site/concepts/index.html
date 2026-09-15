@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAHN Concepts — Network State, Verification, Causal Memory</title>
+  <meta name="description" content="The core concepts behind RAHN: network state as a value, content-addressed identity, invariants and verification, causal memory, and simulation-first execution.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mhalikhani.github.io/rahn/concepts/">
+  <meta name="theme-color" content="#264c54">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RAHN">
+  <meta property="og:title" content="RAHN Concepts — Network State, Verification, Causal Memory">
+  <meta property="og:description" content="The core concepts behind RAHN: network state as a value, content-addressed identity, invariants and verification, causal memory, and simulation-first execution.">
+  <meta property="og:url" content="https://mhalikhani.github.io/rahn/concepts/">
+  <meta property="og:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <meta property="og:image:width" content="1672">
+  <meta property="og:image:height" content="536">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RAHN Concepts — Network State, Verification, Causal Memory">
+  <meta name="twitter:description" content="The core concepts behind RAHN: network state as a value, content-addressed identity, invariants and verification, causal memory, and simulation-first execution.">
+  <meta name="twitter:image" content="https://mhalikhani.github.io/rahn/assets/img/rahn-hero.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rahn/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="/rahn/assets/img/favicon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/rahn/assets/img/favicon-512.png">
+  <link rel="apple-touch-icon" href="/rahn/assets/img/favicon-180.png">
+  <link rel="stylesheet" href="/rahn/assets/css/style.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"RAHN","item":"https://mhalikhani.github.io/rahn/"},{"@type":"ListItem","position":2,"name":"Concepts","item":"https://mhalikhani.github.io/rahn/concepts/"}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="/rahn/" aria-label="RAHN home">
+        <span class="brand-mark" aria-hidden="true"><img src="/rahn/assets/img/mark-teal.png" alt="" width="24" height="35"></span>
+        <span class="brand-name">RAHN</span>
+      </a>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a href="/rahn/">Home</a>
+        <a href="/rahn/concepts/" aria-current="page">Concepts</a>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specs</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a class="nav-github" href="https://github.com/MHAlikhani/rahn" rel="noopener"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+<main id="main">
+<section class="section" style="padding-top:2.6rem;">
+  <div class="container narrow">
+    <p class="eyebrow">Concept cluster</p>
+    <h1>The concepts behind RAHN</h1>
+    <p class="section-lede">RAHN is built from a small set of ideas, each specified, implemented, and test-enforced in its own right. These pages explain each concept: what it means, why it matters, how RAHN approaches it, and where the honest limits are.</p>
+    <div class="idea-cards">
+      <article class="card"><h3><a href="/rahn/concepts/network-state/">Network state</a></h3><p>What it means to treat a network's state as a first-class value — objects, canonical form, and ownership.</p></article>
+      <article class="card"><h3><a href="/rahn/concepts/deterministic-state/">Deterministic state</a></h3><p>Why the same inputs must produce byte-identical states and ids on every machine — and how RAHN enforces it.</p></article>
+      <article class="card"><h3><a href="/rahn/concepts/content-addressing/">Content addressing</a></h3><p>Identity from content: how sha256 over canonical bytes makes state verifiable, shareable, and immutable.</p></article>
+      <article class="card"><h3><a href="/rahn/concepts/network-verification/">Network verification</a></h3><p>Check before change: how verification gates commits and executions, and what "verified" does and does not mean.</p></article>
+      <article class="card"><h3><a href="/rahn/concepts/network-invariants/">Network invariants</a></h3><p>The constitution: structural floors, named connectivity, and the honesty rule that verification is only as good as its encoding.</p></article>
+      <article class="card"><h3><a href="/rahn/concepts/causal-memory/">Causal memory</a></h3><p>Explicit causal edges between observations and commits — with epistemic status, never inference.</p></article>
+      <article class="card"><h3><a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a></h3><p>Why every plan executes in simulation by default, and why real execution is opt-in, isolated, and gated.</p></article>
+    </div>
+    <p>For the design reasoning behind these concepts, read the <a href="/rahn/architecture/">architecture overview</a>; for the normative rules, see the <a href="/rahn/specifications/">specifications</a>.</p>
+  </div>
+</section>
+</main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="brand-name">RAHN</span>
+        <p>A stateful execution architecture for evolving networks. Research project — not production software.</p>
+      </div>
+      <nav class="footer-col" aria-label="Concepts">
+        <h3>Concepts</h3>
+        <a href="/rahn/concepts/network-state/">Network state</a>
+        <a href="/rahn/concepts/deterministic-state/">Deterministic state</a>
+        <a href="/rahn/concepts/content-addressing/">Content addressing</a>
+        <a href="/rahn/concepts/network-verification/">Verification</a>
+        <a href="/rahn/concepts/network-invariants/">Invariants</a>
+        <a href="/rahn/concepts/causal-memory/">Causal memory</a>
+        <a href="/rahn/concepts/simulation-first-execution/">Simulation-first execution</a>
+      </nav>
+      <nav class="footer-col" aria-label="Project">
+        <h3>Project</h3>
+        <a href="/rahn/architecture/">Architecture</a>
+        <a href="/rahn/research/">Research</a>
+        <a href="/rahn/specifications/">Specifications</a>
+        <a href="/rahn/whitepaper/">White paper</a>
+        <a href="/rahn/rahn-vs-git/">RAHN vs Git</a>
+        <a href="/rahn/why-rust/">Why Rust</a>
+      </nav>
+      <nav class="footer-col" aria-label="Community">
+        <h3>Community</h3>
+        <a href="/rahn/contributing/">Contributing</a>
+        <a href="/rahn/faq/">FAQ</a>
+        <a href="https://github.com/MHAlikhani/rahn/discussions" rel="noopener">Discussions</a>
+        <a href="https://github.com/MHAlikhani/rahn/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+      </nav>
+    </div>
+    <div class="container footer-legal">
+      <p>Code licensed Apache-2.0 · Documents licensed CC-BY-4.0 · RAHN is an architectural research project, not a production network controller.</p>
+      <a href="#top" class="to-top">Back to top ↑</a>
+    </div>
+  </footer>
+  <script src="/rahn/assets/js/main.js" defer></script>
+</body>
+</html>

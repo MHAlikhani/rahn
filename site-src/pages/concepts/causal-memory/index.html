@@ -1,0 +1,38 @@
+---
+{
+  "title": "Causal Memory in RAHN — Explicit Causal Edges, Never Inference",
+  "description": "RAHN causal memory: explicit causal edges between observations and commits with epistemic status labels. Asserted by humans, never inferred.",
+  "slug": "concepts/causal-memory/",
+  "crumb": "Causal memory",
+  "group": { "slug": "concepts", "name": "Concepts" },
+  "schema": "TechArticle"
+}
+---
+<p class="eyebrow">Concept</p>
+<h1>Causal memory</h1>
+<p class="section-lede">When something breaks, the question is never just "what is the state now?" — it is "what caused this?". RAHN's causal memory is a graph of <strong>explicit causal edges</strong> between observations and commits, each carrying an honest epistemic status. The rule that defines the feature: <strong>causality is asserted, never inferred</strong>.</p>
+
+<h2>The model</h2>
+<p>Two kinds of anchors exist: observation anchors (from the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0013-observation-model.md">deterministic observation model, ADR 0013</a>) and commit anchors (from state history). Causal edges connect them, and every edge carries one of three statuses (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0014-causal-memory.md">ADR 0014</a>):</p>
+<ul>
+  <li><code>temporal-correlation</code> — it happened near the event; nothing more is claimed</li>
+  <li><code>hypothesis</code> — someone believes there is a causal link</li>
+  <li><code>verified</code> — demonstrably true; between commits only, because commits can be re-verified while observations cannot</li>
+</ul>
+<p>The graph is enforced as a DAG (cycles rejected), anchors are validated (no dangling references), and the log is append-only. The CLI exposes <code>rahn relate</code> and <code>rahn explain</code> for writing and tracing causal chains.</p>
+
+<h2>Why not infer automatically?</h2>
+<p>Because inference produces confident-sounding claims with hidden assumptions — the opposite of RAHN's epistemology. The system records relationships and their epistemic status; it performs no automatic causal inference and contains no AI in the core. The <code>verified</code> status's restriction to commit-to-commit edges is itself an honesty mechanism: machine-verifiable facts get the strongest label, human assertions get honest weaker ones.</p>
+
+<h2>What it enables</h2>
+<p>Incident query: given an incident, walk the causal graph to the commits and observations involved. Provenance: every causal claim traces to who asserted it and at what strength. Replay support: causal chains feed the incident reconstruction direction (research question <a href="/rahn/research/#questions">RQ6</a>, future work).</p>
+
+<h2>Recorded measurement and limits</h2>
+<p>Benchmarking during Stage 5 found an O(V·E) incident query; a reverse-adjacency prototype reduced a 10k-edge-chain query from ~2.7 s to ~5.7 ms — scoped prototype measurements, not production guarantees. Causality remains asserted-only, there is no distributed causal memory yet, and explainability is bounded by what was recorded (gaps in observation are gaps in the chain). All of it is stated in the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a>.</p>
+
+<h2>Where to go next</h2>
+<ul>
+  <li><a href="/rahn/concepts/network-state/">Network state</a> — what commits anchor to</li>
+  <li><a href="/rahn/research/">Research</a> — RQ5 (attribution fidelity) and RQ6 (reconstruction)</li>
+  <li><a href="https://github.com/MHAlikhani/rahn/blob/main/docs/spec/causality.md">Causality specification</a> — the normative model</li>
+</ul>
