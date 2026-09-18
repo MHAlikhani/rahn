@@ -24,7 +24,7 @@
 <p>Since v0.7 (<a href="https://github.com/MHAlikhani/rahn/blob/main/docs/adr/0016-execution-backends.md">ADR 0016</a>), backends sit behind an <code>ExecutionBackend</code> trait with capability negotiation: the simulation backend and the <code>linux-ns</code> backend implement the same interface, and unsupported capabilities are refused explicitly. <code>rahn apply --backend</code> selects the target.</p>
 
 <h2>Honest limits of the boundary</h2>
-<p>The model-reality gap is the deepest limitation: RAHN models a subset of network meaning, and it must never execute against a real network it cannot observe. The Linux execution path is validated by CI only — no independent host-safety review has been performed yet (that review is an open <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/community/issue-drafts.md">contribution opportunity</a>). Both facts are recorded in the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a>. v1.0 marks architectural stability, not production readiness.</p>
+<p>The model-reality gap is the deepest limitation: RAHN models a subset of network meaning, and it must never execute against a real network it cannot observe. The Linux execution path is validated by CI only — no independent host-safety review has been performed yet (that review is an open <a href="https://github.com/MHAlikhani/rahn/issues">contribution opportunity</a>). Both facts are recorded in the <a href="https://github.com/MHAlikhani/rahn/blob/main/docs/research/limitations.md">limitations baseline</a>. v1.0 marks architectural stability, not production readiness.</p>
 
 <h2>Where to go next</h2>
 <ul>

@@ -164,19 +164,20 @@ RAHN is not a router, VPN, SDN controller, monitoring dashboard, packet analyzer
 
 ## Documentation
 
+**[docs/README.md](docs/README.md) is the documentation index - start there.**
+
 | | |
 |---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | The architecture: goals, trade-offs, failure modes |
-| [docs/concepts.md](docs/concepts.md) | Core concepts in depth · [concept pages](https://mhalikhani.github.io/rahn/concepts/) on the web |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | The architecture: goals, design principles, trade-offs, failure modes |
+| [docs/README.md](docs/README.md) | The documentation index: what to read, in what order |
+| [docs/concepts.md](docs/concepts.md) | Core concepts in depth - [concept pages](https://mhalikhani.github.io/rahn/concepts/) on the web |
 | [docs/adr/](docs/adr/) | 19 Architecture Decision Records |
 | [docs/spec/](docs/spec/) | Normative technical specification |
-| [docs/research/](docs/research/) | Problem statement, prior art, research questions, experiments · [research overview](https://mhalikhani.github.io/rahn/research/) |
+| [docs/research/](docs/research/) | Problem statement, prior art, research questions, experiments - [research overview](https://mhalikhani.github.io/rahn/research/) |
 | [docs/whitepaper/RAHN-Whitepaper.md](docs/whitepaper/RAHN-Whitepaper.md) | Technical white paper (claim-status-marked) |
 | [ROADMAP.md](ROADMAP.md) | Completed stages and post-v1.0 extensions |
-| [CONTRIBUTOR_PATH.md](CONTRIBUTOR_PATH.md) | How a contributor grows, from a first issue to maintainer |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | Workspace layout, commands, and pull-request checks |
-| [docs/community/](docs/community/) | Discussion categories, curated first issues, and planned issues |
-| [AGENTS.md](AGENTS.md) | Instructions for coding agents; [llms.txt](llms.txt) indexes these docs for AI tools |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Workspace layout, commands, verification matrix, contributor path, licensing |
+| [GOVERNANCE.md](GOVERNANCE.md) | Roles and the decision process |
 
 ## Post-v1.0 direction
 

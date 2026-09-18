@@ -22,3 +22,6 @@ target
 
 # Local site-design scratch (screenshots, one-off scripts)
 .shots/
+
+# Generated website output (built by scripts/build-site.mjs, deployed by CI)
+site/

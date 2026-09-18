@@ -2,11 +2,11 @@
 
 # RAHN Testing Strategy
 
-Testing is part of the architecture (DESIGN.md implementation rules; charter §27). This document describes the strategy, the current suite, and the rules for extending it.
+Testing is part of the architecture (the design principles in [ARCHITECTURE.md](../ARCHITECTURE.md); charter §27). This document describes the strategy, the current suite, and the rules for extending it.
 
 ## Principles
 
-1. **Correctness over speed** (DESIGN.md priority order). Tests may be slow; wrong results may not.
+1. **Correctness over speed** (priority order in [ARCHITECTURE.md](../ARCHITECTURE.md)). Tests may be slow; wrong results may not.
 2. **Tests live close to semantics.** Unit tests sit next to the code whose semantics they pin; end-to-end tests encode user-visible flows.
 3. **Determinism extends to tests.** No wall-clock, no network, no system randomness in test inputs. Property tests use a seeded xorshift PRNG so any failure reproduces from the printed seed.
 4. **Every regression gets a test.** Edge cases discovered in review or incident analysis are added as named tests referencing the scenario.

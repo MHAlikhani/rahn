@@ -8,7 +8,7 @@ Every architectural change follows: create/update ADR → update ARCHITECTURE.md
 
 ## Stage 0 — Research / Foundation *(completed)*
 
-Prior-art analysis, terminology, architecture specification, invariants, threat model, state model, open questions, repository bootstrap. Deliverables: ARCHITECTURE.md, DESIGN.md, research corpus, ROADMAP.md, ADRs. No large implementation.
+Prior-art analysis, terminology, architecture specification, invariants, threat model, state model, open questions, repository bootstrap. Deliverables: ARCHITECTURE.md, research corpus, ROADMAP.md, ADRs. No large implementation.
 
 ## Stage 1 — RAHN 0.1: smallest credible state engine
 

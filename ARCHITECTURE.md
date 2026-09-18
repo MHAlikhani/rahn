@@ -119,3 +119,38 @@ Rust workspace with small crates: `rahn-core`, `rahn-state`, `rahn-store`, `rahn
 ## 9. Future evolution
 
 The staged roadmap ([ROADMAP.md](ROADMAP.md)) extended the same core through v1.0: richer topology and services (0.2), Linux-namespace execution (0.3), observations and provenance (0.4), causal memory (0.5), distributed state with an *evidence-driven* consistency model (0.6), execution backends behind a stable abstraction (0.7), network CI (0.8), programmability/IR (0.9), and 1.0 once state semantics, execution trustworthiness, and the security model were mature. Post-v1.0, each extension on ROADMAP's list requires its own ADR, specification, and evidence, and follows the ADR → ARCHITECTURE.md → white paper update sequence.
+
+## 10. Design principles
+
+Status: living document. These principles govern how the architecture above is applied, and they are the priority order used when goals conflict.
+
+1. **Determinism first.** Every operation is a pure function of its inputs where possible; all randomness, iteration order, and timestamps are either eliminated or explicitly recorded as inputs. Canonical serialization ([ADR 0003](docs/adr/0003-canonical-serialization.md)) is the enforcement point.
+2. **Explicit state transitions.** No function mutates a state in place; operations return new states.
+3. **Immutable historical state.** Committed states are content-addressed and never rewritten.
+4. **Strong typing.** Invalid states are hard to represent: link endpoints must reference existing nodes at the type/validation boundary, not deep in the engine.
+5. **No hidden global mutable state.** All mutable context is passed explicitly.
+6. **No unnecessary runtime magic.** No reflection-driven behavior, no dynamic dispatch where static suffices.
+7. **No AI dependency in the core.** AI is an optional reasoning layer consuming state, proposing candidates that pass through the same verifier as any other transition.
+8. **No network side effects by default.** Simulation is the default; the isolated namespace backend is opt-in ([ADR 0012](docs/adr/0012-linux-ns-execution.md)).
+9. **Verify before execute.** Enforced structurally: the execution engine cannot be reached without a verification result.
+10. **Simple primitives over frameworks.**
+11-13. **Separation** of control plane from execution plane, representation from execution, observation from decision.
+14. **Explainable failures.** Errors carry the violated invariant, the offending objects, and the transition that produced them.
+15. **Inspectable transitions.** Every committed transition is queryable (`rahn log`, `rahn inspect`).
+16-17. **No premature** distributed-systems complexity or optimization.
+18. **Long-term API compatibility** over short-term convenience.
+19. **Experimental features behind clear boundaries** (crate and feature-gate boundaries).
+
+### Philosophy
+
+> Make the network understandable before trying to make it autonomous.
+>
+> Observe before acting. Verify before executing. Record before forgetting.
+>
+> Intelligence may propose. The architecture must verify.
+>
+> The system should remain useful without AI.
+
+### Implementation rules
+
+Small modules; no giant files; no speculative abstractions, premature plugins, or dynamic behavior where static behavior suffices; explicit errors; strong types; documented invariants; deterministic behavior; tests close to semantics; public API separated from implementation details.

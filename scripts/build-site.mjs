@@ -187,7 +187,7 @@ function footer() {
         <a href="/rahn/faq/">FAQ</a>
         <a href="${GH}/discussions" rel="noopener">Discussions</a>
         <a href="${GH}/releases" rel="noopener">Releases</a>
-        <a href="${GH}/blob/main/docs/community/good-first-issues.md" rel="noopener">Good first issues</a>
+        <a href="${GH}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22" rel="noopener">Good first issues</a>
       </nav>
     </div>
     <div class="container footer-legal">

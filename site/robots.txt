@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://mhalikhani.github.io/rahn/sitemap.xml

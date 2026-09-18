@@ -33,7 +33,7 @@ The two licenses apply to different classes of material. Examples:
 |---|---|
 | `crates/**` (Rust source) | Apache-2.0 |
 | `examples/*.rs`, `tests/**`, `scripts/*`, CI configs | Apache-2.0 |
-| `README.md`, `ARCHITECTURE.md`, `DESIGN.md`, `docs/**` prose | CC-BY-4.0 |
+| `README.md`, `ARCHITECTURE.md`, `docs/**` prose | CC-BY-4.0 |
 | `docs/spec/**` specification prose | CC-BY-4.0 |
 | `docs/whitepaper/RAHN-Whitepaper.md` | CC-BY-4.0 |
 | Code snippets inside documentation | Apache-2.0 (marked where practical) |

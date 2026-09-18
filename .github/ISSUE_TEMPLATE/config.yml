@@ -5,10 +5,10 @@
 blank_issues_enabled: false
 contact_links:
   # Category links use the slugs of the categories that exist on the
-  # repository; the full category design is in docs/community/discussions.md.
+  # repository.
   - name: Technical Questions
     url: https://github.com/MHAlikhani/rahn/discussions/categories/technical-questions
-    about: Ask how to build, run, or reason about RAHN (see docs/community/discussions.md for where posts belong)
+    about: Ask how to build, run, or reason about RAHN
   - name: Research Ideas
     url: https://github.com/MHAlikhani/rahn/discussions/categories/research-ideas
     about: Hypotheses, prior-art pointers, and experiment proposals

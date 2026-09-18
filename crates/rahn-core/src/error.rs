@@ -3,7 +3,7 @@
 //! Structured errors for the core object model.
 //!
 //! Every error carries the information needed to explain the failure
-//! (DESIGN.md principle 14); errors are never bare strings at the API
+//! (ARCHITECTURE.md, design principle 14); errors are never bare strings at the API
 //! boundary.
 
 use std::fmt;

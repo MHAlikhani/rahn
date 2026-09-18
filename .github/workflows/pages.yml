@@ -6,7 +6,7 @@ name: pages
 on:
   push:
     branches: [main]
-    paths: [site/**, site-src/**, scripts/build-site.mjs, scripts/validate-site.mjs, .github/workflows/pages.yml]
+    paths: [site-src/**, scripts/build-site.mjs, scripts/validate-site.mjs, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:

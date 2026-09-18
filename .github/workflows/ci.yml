@@ -83,5 +83,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Links, SPDX headers, roadmap drift, llms.txt
+      - name: Links and SPDX headers
         run: python3 scripts/check_docs.py
